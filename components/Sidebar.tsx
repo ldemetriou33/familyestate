@@ -7,9 +7,9 @@ import {
   Building2,
   Wallet,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react'
-import { UserButton } from '@clerk/nextjs'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance'
 
@@ -93,16 +93,12 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
       {/* User Section */}
       <div className="p-4 border-t border-bloomberg-border">
         <div className="flex items-center gap-3 px-4 py-2">
-          <UserButton 
-            appearance={{
-              elements: {
-                avatarBox: 'w-8 h-8',
-              },
-            }}
-          />
+          <div className="w-8 h-8 rounded-full bg-bloomberg-accent/20 flex items-center justify-center">
+            <User className="w-4 h-4 text-bloomberg-accent" />
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-bloomberg-text truncate">Account</p>
-            <p className="text-xs text-bloomberg-textMuted">Settings & Logout</p>
+            <p className="text-sm font-medium text-bloomberg-text truncate">Admin</p>
+            <p className="text-xs text-bloomberg-textMuted">Estate Manager</p>
           </div>
         </div>
       </div>

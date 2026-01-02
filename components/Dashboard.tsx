@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useUser } from '@clerk/nextjs'
 import Sidebar, { Section } from './Sidebar'
 import Header from './Header'
 import CommandCenterSection from './sections/CommandCenterSection'
@@ -11,27 +10,15 @@ import PortfolioSection from './sections/PortfolioSection'
 import FinanceSection from './sections/FinanceSection'
 import { alerts } from '@/lib/mock-data/seed'
 
+// Check if Clerk is configured at runtime
+const isClerkConfigured = typeof window !== 'undefined' && 
+  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+
 export default function Dashboard() {
-  const { user, isLoaded } = useUser()
   const [activeSection, setActiveSection] = useState<Section>('home')
 
   // Count critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed).length
-
-  if (!isLoaded) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-bloomberg-dark">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-bloomberg-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-bloomberg-text">Loading Abbey OS...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return null // Middleware will redirect to sign-in
-  }
 
   const renderSection = () => {
     switch (activeSection) {

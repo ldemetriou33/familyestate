@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Bell, Settings, Search, RefreshCw } from 'lucide-react'
-import { useUser, UserButton } from '@clerk/nextjs'
+import { Clock, Bell, Settings, Search, RefreshCw, User } from 'lucide-react'
 import { Section } from './Sidebar'
 
 interface HeaderProps {
@@ -26,7 +25,6 @@ const sectionDescriptions: Record<Section, string> = {
 }
 
 export default function Header({ activeSection }: HeaderProps) {
-  const { user } = useUser()
   const [currentTime, setCurrentTime] = useState<string>('--:--:--')
   const [currentDate, setCurrentDate] = useState<string>('')
 
@@ -100,24 +98,16 @@ export default function Header({ activeSection }: HeaderProps) {
           <Settings className="w-5 h-5 text-bloomberg-textMuted" />
         </button>
 
-        {/* User */}
-        {user && (
-          <div className="flex items-center gap-3 pl-4 border-l border-bloomberg-border">
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: 'w-8 h-8',
-                },
-              }}
-            />
-            <div className="hidden md:block">
-              <p className="text-sm font-medium text-bloomberg-text">
-                {user.firstName || 'User'}
-              </p>
-              <p className="text-xs text-bloomberg-textMuted">Admin</p>
-            </div>
+        {/* User Avatar */}
+        <div className="flex items-center gap-3 pl-4 border-l border-bloomberg-border">
+          <div className="w-8 h-8 rounded-full bg-bloomberg-accent/20 flex items-center justify-center">
+            <User className="w-4 h-4 text-bloomberg-accent" />
           </div>
-        )}
+          <div className="hidden md:block">
+            <p className="text-sm font-medium text-bloomberg-text">Admin</p>
+            <p className="text-xs text-bloomberg-textMuted">Estate Manager</p>
+          </div>
+        </div>
       </div>
     </header>
   )
