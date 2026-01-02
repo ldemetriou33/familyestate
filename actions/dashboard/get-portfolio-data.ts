@@ -114,33 +114,39 @@ export async function getPortfolioData(): Promise<PortfolioData> {
     totalArrears += roll.arrearsAmount
   }
 
-  return {
-    properties: properties.map(p => {
-      const occupiedCount = p.units.filter(u => u.status === 'OCCUPIED').length
-      const vacantCount = p.units.filter(u => u.status === 'VACANT').length
-      
-      let propertyRentRoll = 0
-      let propertyArrears = 0
-      for (const unit of p.units) {
-        propertyRentRoll += unit.rentRolls[0]?.monthlyRent || 0
-        propertyArrears += unit.rentRolls[0]?.arrearsAmount || 0
-      }
+  // Build properties array
+  const propertiesResult: PortfolioData['properties'] = []
+  for (const p of properties) {
+    let occupiedCount = 0
+    let vacantCount = 0
+    let propertyRentRoll = 0
+    let propertyArrears = 0
+    
+    for (const unit of p.units) {
+      if (unit.status === 'OCCUPIED') occupiedCount++
+      if (unit.status === 'VACANT') vacantCount++
+      propertyRentRoll += unit.rentRolls[0]?.monthlyRent || 0
+      propertyArrears += unit.rentRolls[0]?.arrearsAmount || 0
+    }
 
-      return {
-        id: p.id,
-        name: p.name,
-        type: p.type,
-        address: p.address,
-        city: p.city,
-        totalUnits: p.units.length,
-        occupiedUnits: occupiedCount,
-        vacantUnits: vacantCount,
-        monthlyRentRoll: propertyRentRoll,
-        totalArrears: propertyArrears,
-      }
-    }),
+    propertiesResult.push({
+      id: p.id,
+      name: p.name,
+      type: p.type,
+      address: p.address,
+      city: p.city,
+      totalUnits: p.units.length,
+      occupiedUnits: occupiedCount,
+      vacantUnits: vacantCount,
+      monthlyRentRoll: propertyRentRoll,
+      totalArrears: propertyArrears,
+    })
+  }
 
-    rentRoll: rentRolls.map(r => ({
+  // Build rent roll array
+  const rentRollResult: PortfolioData['rentRoll'] = []
+  for (const r of rentRolls) {
+    rentRollResult.push({
       id: r.id,
       unitNumber: r.unit.unitNumber,
       propertyName: r.unit.property?.name || 'Unknown',
@@ -151,7 +157,13 @@ export async function getPortfolioData(): Promise<PortfolioData> {
       arrearsDays: r.arrearsDays,
       nextDueDate: r.nextDueDate,
       leaseEnd: r.leaseEnd,
-    })),
+    })
+  }
+
+  return {
+    properties: propertiesResult,
+
+    rentRoll: rentRollResult,
 
     summary: {
       totalProperties: properties.length,
@@ -183,21 +195,42 @@ export async function getPropertyRentRoll(propertyId: string) {
     orderBy: { nextDueDate: 'asc' },
   })
 
-  return rentRolls.map(r => ({
-    id: r.id,
-    unitNumber: r.unit.unitNumber,
-    tenantName: r.tenantName,
-    tenantEmail: r.tenantEmail,
-    tenantPhone: r.tenantPhone,
-    monthlyRent: r.monthlyRent,
-    paymentStatus: r.paymentStatus,
-    arrearsAmount: r.arrearsAmount,
-    arrearsDays: r.arrearsDays,
-    lastPaymentDate: r.lastPaymentDate,
-    nextDueDate: r.nextDueDate,
-    leaseStart: r.leaseStart,
-    leaseEnd: r.leaseEnd,
-    depositHeld: r.depositHeld,
-  }))
+  const result: Array<{
+    id: string
+    unitNumber: string
+    tenantName: string
+    tenantEmail: string | null
+    tenantPhone: string | null
+    monthlyRent: number
+    paymentStatus: string
+    arrearsAmount: number
+    arrearsDays: number
+    lastPaymentDate: Date | null
+    nextDueDate: Date
+    leaseStart: Date
+    leaseEnd: Date
+    depositHeld: number
+  }> = []
+
+  for (const r of rentRolls) {
+    result.push({
+      id: r.id,
+      unitNumber: r.unit.unitNumber,
+      tenantName: r.tenantName,
+      tenantEmail: r.tenantEmail,
+      tenantPhone: r.tenantPhone,
+      monthlyRent: r.monthlyRent,
+      paymentStatus: r.paymentStatus,
+      arrearsAmount: r.arrearsAmount,
+      arrearsDays: r.arrearsDays,
+      lastPaymentDate: r.lastPaymentDate,
+      nextDueDate: r.nextDueDate,
+      leaseStart: r.leaseStart,
+      leaseEnd: r.leaseEnd,
+      depositHeld: r.depositHeld,
+    })
+  }
+
+  return result
 }
 

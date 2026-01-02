@@ -131,7 +131,10 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   }
 
   // Count critical alerts
-  const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL').length
+  let criticalAlerts = 0
+  for (const alert of alerts) {
+    if (alert.severity === 'CRITICAL') criticalAlerts++
+  }
 
   return {
     cashPosition: {
@@ -145,26 +148,38 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
       projected90Day: cashPosition?.projected90Day || null,
     },
 
-    alerts: alerts.map(a => ({
-      id: a.id,
-      title: a.title,
-      message: a.message,
-      severity: a.severity,
-      category: a.category,
-      createdAt: a.createdAt,
-      propertyName: a.property?.name || null,
-    })),
+    alerts: (() => {
+      const result: CommandCenterData['alerts'] = []
+      for (const a of alerts) {
+        result.push({
+          id: a.id,
+          title: a.title,
+          message: a.message,
+          severity: a.severity as 'CRITICAL' | 'WARNING' | 'INFO',
+          category: a.category,
+          createdAt: a.createdAt,
+          propertyName: a.property?.name || null,
+        })
+      }
+      return result
+    })(),
 
-    actionItems: actionSummary.pendingActions.map(a => ({
-      id: a.id,
-      title: a.title,
-      description: a.description,
-      priority: a.priority,
-      status: a.status,
-      category: a.category,
-      estimatedImpactGbp: a.estimatedImpactGbp,
-      dueDate: a.dueDate,
-    })),
+    actionItems: (() => {
+      const result: CommandCenterData['actionItems'] = []
+      for (const a of actionSummary.pendingActions) {
+        result.push({
+          id: a.id,
+          title: a.title,
+          description: a.description,
+          priority: a.priority as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
+          status: a.status,
+          category: a.category,
+          estimatedImpactGbp: a.estimatedImpactGbp,
+          dueDate: a.dueDate,
+        })
+      }
+      return result
+    })(),
 
     metrics: {
       criticalAlerts,
