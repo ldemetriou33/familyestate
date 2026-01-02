@@ -253,7 +253,7 @@ export async function getResidentialData() {
       units: {
         include: {
           rentRolls: {
-            orderBy: { dueDate: 'desc' },
+            orderBy: { nextDueDate: 'desc' },
             take: 1,
           },
           leases: {
