@@ -147,7 +147,7 @@ export default function FBSection() {
           {/* Current Week Progress */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-bloomberg-text">This Week's Progress</span>
+              <span className="text-sm font-semibold text-bloomberg-text">This Week&apos;s Progress</span>
               <span className={`text-sm font-bold ${
                 isOnTrack ? 'text-bloomberg-success' : 'text-bloomberg-danger'
               }`}>
@@ -235,7 +235,7 @@ export default function FBSection() {
             <div className="mb-6">
               <h4 className="text-sm font-semibold text-bloomberg-text mb-3 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                This Week's Sales
+                This Week&apos;s Sales
               </h4>
               <div className="space-y-2">
                 {currentWeekSales

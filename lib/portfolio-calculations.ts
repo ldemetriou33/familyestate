@@ -1,4 +1,4 @@
-import { rentalProperties, hotel, cafe } from './constants'
+import { rentalProperties, hotel, cafe, RentalProperty } from './constants'
 import { calculateMonthlyMortgagePayment } from './utils'
 import { getSONIAServerRate } from './services/sonia-server'
 
@@ -12,7 +12,7 @@ export interface PortfolioMetrics {
   totalMonthlyMortgagePayments: number
 }
 
-export interface PropertyWithPayments extends import('./constants').RentalProperty {
+export interface PropertyWithPayments extends RentalProperty {
   monthlyMortgagePayment: number
   monthlyCashflow: number
   ltv: number

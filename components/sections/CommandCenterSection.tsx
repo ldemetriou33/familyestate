@@ -39,7 +39,7 @@ export default function CommandCenterSection() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-bloomberg-textMuted">Today's Revenue</p>
+                <p className="text-xs text-bloomberg-textMuted">Today&apos;s Revenue</p>
                 <p className="text-lg font-semibold text-bloomberg-success">{formatGBP(hotelMetrics.revenueToday)}</p>
               </div>
             </div>
@@ -62,7 +62,7 @@ export default function CommandCenterSection() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-bloomberg-textMuted">Today's Sales</p>
+                <p className="text-xs text-bloomberg-textMuted">Today&apos;s Sales</p>
                 <p className="text-lg font-semibold text-bloomberg-text">{formatGBP(cafeMetrics.salesToday)}</p>
               </div>
             </div>

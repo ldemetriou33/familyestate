@@ -45,9 +45,9 @@ export function CashPositionWidget({ cashPosition }: CashPositionWidgetProps) {
           </div>
         </div>
 
-        {/* Today's Movement */}
+        {/* Today&apos;s Movement */}
         <div className="pt-3 border-t border-bloomberg-border">
-          <p className="text-xs text-bloomberg-textMuted mb-2">Today's Movement</p>
+          <p className="text-xs text-bloomberg-textMuted mb-2">Today&apos;s Movement</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <ArrowUpRight className="w-4 h-4 text-bloomberg-success" />

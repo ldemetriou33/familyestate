@@ -45,7 +45,7 @@ export function ActionEngineWidget({ actions, onComplete }: ActionEngineWidgetPr
             </span>
           </div>
         </div>
-        <p className="text-xs text-bloomberg-textMuted mt-1">Today's Top 5 Actions (by £ impact)</p>
+        <p className="text-xs text-bloomberg-textMuted mt-1">Today&apos;s Top 5 Actions (by £ impact)</p>
       </CardHeader>
       <CardContent className="space-y-2">
         {sortedActions.map((action, index) => {
