@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "git add -A && git commit -m 'Auto-deploy: Update code' && git push origin main"
+    "deploy": "git add -A && git commit -m \"Auto-deploy: $(date '+%Y-%m-%d %H:%M:%S')\" && git push origin main",
+    "watch": "node auto-deploy.js"
   },
   "dependencies": {
     "react": "^18.2.0",
