@@ -9,9 +9,9 @@ import {
   AlertTriangle,
   ChevronRight,
   User,
-  LogOut
+  X
 } from 'lucide-react'
-import { UserButton, useUser, SignOutButton } from '@clerk/nextjs'
+import { UserButton, useUser } from '@clerk/nextjs'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance'
 
@@ -19,6 +19,7 @@ interface SidebarProps {
   activeSection: Section
   setActiveSection: (section: Section) => void
   criticalAlerts?: number
+  onClose?: () => void
 }
 
 const menuItems = [
@@ -29,21 +30,32 @@ const menuItems = [
   { id: 'finance' as Section, label: 'Finance', icon: Wallet, description: 'Cashflow & Debt' },
 ]
 
-export default function Sidebar({ activeSection, setActiveSection, criticalAlerts = 0 }: SidebarProps) {
+export default function Sidebar({ activeSection, setActiveSection, criticalAlerts = 0, onClose }: SidebarProps) {
   const { user, isLoaded } = useUser()
 
   return (
-    <aside className="w-72 border-r border-bloomberg-border bg-bloomberg-darker flex flex-col">
-      {/* Logo */}
+    <aside className="w-72 h-full border-r border-bloomberg-border bg-bloomberg-darker flex flex-col">
+      {/* Logo & Close button */}
       <div className="p-5 border-b border-bloomberg-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-bloomberg-accent to-blue-600 flex items-center justify-center">
-            <Building2 className="w-6 h-6 text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-bloomberg-accent to-blue-600 flex items-center justify-center">
+              <Building2 className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-bloomberg-text">Abbey OS</h1>
+              <p className="text-xs text-bloomberg-textMuted">Family Estate Autopilot</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-bloomberg-text">Abbey OS</h1>
-            <p className="text-xs text-bloomberg-textMuted">Family Estate Autopilot</p>
-          </div>
+          {/* Close button - only on mobile */}
+          {onClose && (
+            <button 
+              onClick={onClose}
+              className="lg:hidden p-2 hover:bg-bloomberg-panel rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-bloomberg-textMuted" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -60,7 +72,7 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
       )}
       
       {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
@@ -80,7 +92,7 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
               `}
             >
               <div className="flex items-center gap-3">
-                <Icon className="w-5 h-5" />
+                <Icon className="w-5 h-5 flex-shrink-0" />
                 <div className="text-left">
                   <span className="font-medium block">{item.label}</span>
                   <span className={`text-xs ${isActive ? 'text-white/70' : 'text-bloomberg-textMuted'}`}>
@@ -88,7 +100,7 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
                   </span>
                 </div>
               </div>
-              <ChevronRight className={`w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'opacity-100' : ''}`} />
+              <ChevronRight className={`w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${isActive ? 'opacity-100' : ''}`} />
             </button>
           )
         })}
