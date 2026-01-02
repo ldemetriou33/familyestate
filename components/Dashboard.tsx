@@ -12,9 +12,10 @@ import LegalBrainSection from './sections/LegalBrainSection'
 import { SettingsPage } from './settings/SettingsPage'
 import { IntegrationsPage } from './integrations/IntegrationsPage'
 import { AIAssistant, AIFloatingButton } from './ai/AIAssistant'
-import { alerts } from '@/lib/mock-data/seed'
+import { DashboardDataProvider, useAlertsData } from '@/contexts/DashboardDataContext'
 
-export default function Dashboard() {
+// Inner component that uses the data context
+function DashboardContent() {
   const [activeSection, setActiveSection] = useState<Section>('home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -22,8 +23,9 @@ export default function Dashboard() {
   const [integrationsOpen, setIntegrationsOpen] = useState(false)
   const [aiOpen, setAiOpen] = useState(false)
 
-  // Count critical alerts
-  const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed).length
+  // Use real data for alerts
+  const { data: alertsData } = useAlertsData()
+  const criticalAlerts = alertsData?.counts.critical ?? 0
 
   const handleSectionChange = (section: Section) => {
     setActiveSection(section)
@@ -132,5 +134,14 @@ export default function Dashboard() {
       {/* AI Floating Button */}
       {!aiOpen && <AIFloatingButton onClick={() => setAiOpen(true)} />}
     </div>
+  )
+}
+
+// Main export wraps with data provider
+export default function Dashboard() {
+  return (
+    <DashboardDataProvider>
+      <DashboardContent />
+    </DashboardDataProvider>
   )
 }
