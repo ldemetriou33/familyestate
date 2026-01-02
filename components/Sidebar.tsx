@@ -8,8 +8,10 @@ import {
   Wallet,
   AlertTriangle,
   ChevronRight,
-  User
+  User,
+  LogOut
 } from 'lucide-react'
+import { UserButton, useUser, SignOutButton } from '@clerk/nextjs'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance'
 
@@ -28,6 +30,8 @@ const menuItems = [
 ]
 
 export default function Sidebar({ activeSection, setActiveSection, criticalAlerts = 0 }: SidebarProps) {
+  const { user, isLoaded } = useUser()
+
   return (
     <aside className="w-72 border-r border-bloomberg-border bg-bloomberg-darker flex flex-col">
       {/* Logo */}
@@ -90,17 +94,43 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
         })}
       </nav>
 
-      {/* User Section */}
+      {/* User Section with Clerk */}
       <div className="p-4 border-t border-bloomberg-border">
-        <div className="flex items-center gap-3 px-4 py-2">
-          <div className="w-8 h-8 rounded-full bg-bloomberg-accent/20 flex items-center justify-center">
-            <User className="w-4 h-4 text-bloomberg-accent" />
+        {isLoaded && user ? (
+          <div className="flex items-center gap-3 px-2">
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: 'w-10 h-10',
+                  userButtonPopoverCard: 'bg-bloomberg-panel border border-bloomberg-border',
+                  userButtonPopoverActionButton: 'text-bloomberg-text hover:bg-bloomberg-darker',
+                  userButtonPopoverActionButtonText: 'text-bloomberg-text',
+                  userButtonPopoverActionButtonIcon: 'text-bloomberg-textMuted',
+                  userButtonPopoverFooter: 'hidden',
+                },
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-bloomberg-text truncate">
+                {user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User'}
+              </p>
+              <p className="text-xs text-bloomberg-textMuted truncate">
+                {user.emailAddresses[0]?.emailAddress || 'Estate Manager'}
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-bloomberg-text truncate">Admin</p>
-            <p className="text-xs text-bloomberg-textMuted">Estate Manager</p>
+        ) : (
+          <div className="flex items-center gap-3 px-4 py-2">
+            <div className="w-8 h-8 rounded-full bg-bloomberg-accent/20 flex items-center justify-center">
+              <User className="w-4 h-4 text-bloomberg-accent" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-bloomberg-text truncate">Loading...</p>
+              <p className="text-xs text-bloomberg-textMuted">Estate Manager</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       <div className="px-4 pb-4">
@@ -111,4 +141,3 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
     </aside>
   )
 }
-
