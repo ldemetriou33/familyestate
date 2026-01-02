@@ -369,16 +369,16 @@ export async function getFinanceData() {
   const monthExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
   const avgMonthlyExpenses = monthExpenses // This month so far
 
-  // Upcoming payments
+  // Upcoming payments - use maturity date as reference
   const upcomingPayments = debts
-    .filter(d => d.nextPaymentDate)
+    .filter(d => d.maturityDate)
     .map(d => ({
-      name: d.name,
+      name: d.lender,
       amount: d.monthlyPayment,
-      dueDate: d.nextPaymentDate,
+      dueDate: d.maturityDate,
       property: d.property?.name,
     }))
-    .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
+    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
 
   return {
     cashPosition: latestCash,
@@ -390,8 +390,8 @@ export async function getFinanceData() {
     monthlyDebtService,
     debts: debts.map(d => ({
       id: d.id,
-      name: d.name,
-      type: d.type,
+      name: d.lender,
+      type: d.loanType,
       balance: d.currentBalance,
       interestRate: d.interestRate,
       monthlyPayment: d.monthlyPayment,
