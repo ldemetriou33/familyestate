@@ -121,9 +121,14 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   })
 
   // Calculate unit stats
-  const totalUnits = unitStats.reduce((sum, s) => sum + s._count._all, 0)
-  const occupiedUnits = unitStats.find(s => s.status === 'OCCUPIED')?._count._all || 0
-  const vacantUnits = unitStats.find(s => s.status === 'VACANT')?._count._all || 0
+  let totalUnits = 0
+  let occupiedUnits = 0
+  let vacantUnits = 0
+  for (const stat of unitStats) {
+    totalUnits += stat._count._all
+    if (stat.status === 'OCCUPIED') occupiedUnits = stat._count._all
+    if (stat.status === 'VACANT') vacantUnits = stat._count._all
+  }
 
   // Count critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL').length
