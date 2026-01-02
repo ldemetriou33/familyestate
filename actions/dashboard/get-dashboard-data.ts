@@ -362,7 +362,7 @@ export async function getFinanceData() {
     }),
   ])
 
-  const latestCash = cashPositions[0]?.closingBalance || 0
+  const latestCash = (cashPositions[0]?.operatingBalance || 0) + (cashPositions[0]?.reserveBalance || 0)
   const totalDebt = debts.reduce((sum, d) => sum + (d.currentBalance || 0), 0)
   const monthlyDebtService = debts.reduce((sum, d) => sum + (d.monthlyPayment || 0), 0)
   
@@ -384,7 +384,7 @@ export async function getFinanceData() {
     cashPosition: latestCash,
     cashHistory: cashPositions.map(c => ({
       date: c.date,
-      balance: c.closingBalance,
+      balance: c.operatingBalance + c.reserveBalance,
     })),
     totalDebt,
     monthlyDebtService,
