@@ -1,12 +1,14 @@
 'use client'
 
-import { Hotel, Users, TrendingUp, Calendar, Bed, DollarSign } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Hotel, Users, TrendingUp, Calendar, Bed, DollarSign, Sparkles, ArrowRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { formatGBP, formatUKDate } from '@/lib/utils'
 import { hotelMetrics, units, bookings, properties } from '@/lib/mock-data/seed'
 
 export default function HotelSection() {
+  const router = useRouter()
   const hotelProperty = properties.find(p => p.type === 'HOTEL')
   const hotelUnits = units.filter(u => u.propertyId === hotelProperty?.id)
   
@@ -33,21 +35,49 @@ export default function HotelSection() {
 
   const inHouseGuests = bookings.filter(b => b.status === 'CHECKED_IN')
 
+  const handleRoomClick = (unitId: string) => {
+    router.push(`/dashboard/hotel/rooms/${unitId}`)
+  }
+
   return (
     <div className="space-y-6">
+      {/* Quick Actions Bar */}
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => router.push('/dashboard/hotel/housekeeping')}
+          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:opacity-90 transition-opacity"
+        >
+          <Sparkles className="w-4 h-4" />
+          Housekeeping
+          <ArrowRight className="w-4 h-4" />
+        </button>
+        <button
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+        >
+          <Calendar className="w-4 h-4" />
+          Booking Calendar
+        </button>
+        <button
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+        >
+          <DollarSign className="w-4 h-4" />
+          Rate Manager
+        </button>
+      </div>
+
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <Hotel className="w-5 h-5 text-bloomberg-accent" />
-              <span className="text-xs px-2 py-0.5 bg-bloomberg-success/10 text-bloomberg-success rounded-full">
+              <Hotel className="w-5 h-5 text-[var(--accent)]" />
+              <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded-full">
                 Live
               </span>
             </div>
-            <p className="text-sm text-bloomberg-textMuted mb-1">Occupancy Rate</p>
-            <p className="text-2xl font-bold text-bloomberg-text">{hotelMetrics.occupancyRate}%</p>
-            <p className="text-xs text-bloomberg-textMuted mt-1">
+            <p className="text-sm text-[var(--text-muted)] mb-1">Occupancy Rate</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{hotelMetrics.occupancyRate}%</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
               {occupiedRooms}/{totalRooms} rooms
             </p>
           </CardContent>
@@ -56,22 +86,22 @@ export default function HotelSection() {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <DollarSign className="w-5 h-5 text-bloomberg-success" />
+              <DollarSign className="w-5 h-5 text-green-500" />
             </div>
-            <p className="text-sm text-bloomberg-textMuted mb-1">ADR (Avg Daily Rate)</p>
-            <p className="text-2xl font-bold text-bloomberg-text">{formatGBP(hotelMetrics.adr)}</p>
-            <p className="text-xs text-bloomberg-textMuted mt-1">RevPAR: {formatGBP(hotelMetrics.revpar)}</p>
+            <p className="text-sm text-[var(--text-muted)] mb-1">ADR (Avg Daily Rate)</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{formatGBP(hotelMetrics.adr)}</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">RevPAR: {formatGBP(hotelMetrics.revpar)}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <TrendingUp className="w-5 h-5 text-bloomberg-success" />
+              <TrendingUp className="w-5 h-5 text-green-500" />
             </div>
-            <p className="text-sm text-bloomberg-textMuted mb-1">Revenue MTD</p>
-            <p className="text-2xl font-bold text-bloomberg-text">{formatGBP(hotelMetrics.revenueMTD)}</p>
-            <p className="text-xs text-bloomberg-success mt-1">
+            <p className="text-sm text-[var(--text-muted)] mb-1">Revenue MTD</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{formatGBP(hotelMetrics.revenueMTD)}</p>
+            <p className="text-xs text-green-500 mt-1">
               +12% vs last month
             </p>
           </CardContent>
@@ -80,18 +110,18 @@ export default function HotelSection() {
         <Card>
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <Users className="w-5 h-5 text-bloomberg-accent" />
+              <Users className="w-5 h-5 text-[var(--accent)]" />
             </div>
-            <p className="text-sm text-bloomberg-textMuted mb-1">Today</p>
+            <p className="text-sm text-[var(--text-muted)] mb-1">Today</p>
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-2xl font-bold text-bloomberg-success">{hotelMetrics.arrivalsToday}</p>
-                <p className="text-xs text-bloomberg-textMuted">Arrivals</p>
+                <p className="text-2xl font-bold text-green-500">{hotelMetrics.arrivalsToday}</p>
+                <p className="text-xs text-[var(--text-muted)]">Arrivals</p>
               </div>
-              <div className="w-px h-10 bg-bloomberg-border" />
+              <div className="w-px h-10 bg-[var(--border-primary)]" />
               <div>
-                <p className="text-2xl font-bold text-bloomberg-warning">{hotelMetrics.departuresToday}</p>
-                <p className="text-xs text-bloomberg-textMuted">Departures</p>
+                <p className="text-2xl font-bold text-amber-500">{hotelMetrics.departuresToday}</p>
+                <p className="text-xs text-[var(--text-muted)]">Departures</p>
               </div>
             </div>
           </CardContent>
@@ -104,22 +134,22 @@ export default function HotelSection() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Bed className="w-5 h-5 text-bloomberg-accent" />
+              <Bed className="w-5 h-5 text-[var(--accent)]" />
               Room Status
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-bloomberg-success/10 rounded-lg">
-              <span className="text-sm text-bloomberg-text">Occupied</span>
-              <span className="text-lg font-bold text-bloomberg-success">{occupiedRooms}</span>
+            <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
+              <span className="text-sm text-[var(--text-primary)]">Occupied</span>
+              <span className="text-lg font-bold text-green-500">{occupiedRooms}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-bloomberg-accent/10 rounded-lg">
-              <span className="text-sm text-bloomberg-text">Vacant</span>
-              <span className="text-lg font-bold text-bloomberg-accent">{vacantRooms}</span>
+            <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg">
+              <span className="text-sm text-[var(--text-primary)]">Vacant</span>
+              <span className="text-lg font-bold text-blue-500">{vacantRooms}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-bloomberg-warning/10 rounded-lg">
-              <span className="text-sm text-bloomberg-text">Maintenance</span>
-              <span className="text-lg font-bold text-bloomberg-warning">{maintenanceRooms}</span>
+            <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg">
+              <span className="text-sm text-[var(--text-primary)]">Maintenance</span>
+              <span className="text-lg font-bold text-amber-500">{maintenanceRooms}</span>
             </div>
           </CardContent>
         </Card>
@@ -128,7 +158,7 @@ export default function HotelSection() {
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="w-5 h-5 text-bloomberg-accent" />
+              <Users className="w-5 h-5 text-[var(--accent)]" />
               In-House Guests
             </CardTitle>
           </CardHeader>
@@ -147,21 +177,25 @@ export default function HotelSection() {
                 {inHouseGuests.map((booking) => {
                   const unit = units.find(u => u.id === booking.unitId)
                   return (
-                    <TableRow key={booking.id}>
+                    <TableRow 
+                      key={booking.id}
+                      className="cursor-pointer hover:bg-[var(--bg-secondary)]"
+                      onClick={() => handleRoomClick(booking.unitId)}
+                    >
                       <TableCell>
-                        <span className="font-mono text-bloomberg-text">{unit?.unitNumber}</span>
+                        <span className="font-mono text-[var(--text-primary)]">{unit?.unitNumber}</span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-bloomberg-text">{booking.guestName}</span>
+                        <span className="text-[var(--text-primary)]">{booking.guestName}</span>
                       </TableCell>
-                      <TableCell className="text-bloomberg-textMuted">
+                      <TableCell className="text-[var(--text-muted)]">
                         {formatUKDate(new Date(booking.checkIn))}
                       </TableCell>
-                      <TableCell className="text-bloomberg-textMuted">
+                      <TableCell className="text-[var(--text-muted)]">
                         {formatUKDate(new Date(booking.checkOut))}
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={`font-mono ${booking.balance > 0 ? 'text-bloomberg-warning' : 'text-bloomberg-success'}`}>
+                        <span className={`font-mono ${booking.balance > 0 ? 'text-amber-500' : 'text-green-500'}`}>
                           {formatGBP(booking.balance)}
                         </span>
                       </TableCell>
@@ -174,44 +208,48 @@ export default function HotelSection() {
         </Card>
       </div>
 
-      {/* Room Grid Visual */}
+      {/* Room Grid Visual - Clickable */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Room Grid</CardTitle>
+          <CardTitle className="flex items-center justify-between text-base">
+            <span>Room Grid</span>
+            <span className="text-xs text-[var(--text-muted)] font-normal">Click any room for details</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
             {hotelUnits.map((unit) => {
               const statusColors = {
-                OCCUPIED: 'bg-bloomberg-success/20 border-bloomberg-success text-bloomberg-success',
-                VACANT: 'bg-bloomberg-accent/20 border-bloomberg-accent text-bloomberg-accent',
-                MAINTENANCE: 'bg-bloomberg-warning/20 border-bloomberg-warning text-bloomberg-warning',
+                OCCUPIED: 'bg-green-500/20 border-green-500 text-green-500 hover:bg-green-500/30',
+                VACANT: 'bg-blue-500/20 border-blue-500 text-blue-500 hover:bg-blue-500/30',
+                MAINTENANCE: 'bg-amber-500/20 border-amber-500 text-amber-500 hover:bg-amber-500/30',
               }
 
               return (
-                <div
+                <button
                   key={unit.id}
-                  className={`p-3 rounded-lg border text-center cursor-pointer hover:scale-105 transition-transform ${statusColors[unit.status]}`}
+                  onClick={() => handleRoomClick(unit.id)}
+                  className={`p-3 rounded-lg border text-center cursor-pointer hover:scale-105 transition-all ${statusColors[unit.status]}`}
                   title={`${unit.unitNumber} - ${unit.type} - ${unit.status}`}
                 >
                   <p className="text-sm font-bold">{unit.unitNumber}</p>
                   <p className="text-xs opacity-70">{unit.type}</p>
-                </div>
+                </button>
               )
             })}
           </div>
-          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-bloomberg-border">
+          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-[var(--border-primary)]">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-bloomberg-success/40" />
-              <span className="text-xs text-bloomberg-textMuted">Occupied</span>
+              <div className="w-3 h-3 rounded bg-green-500/40" />
+              <span className="text-xs text-[var(--text-muted)]">Occupied</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-bloomberg-accent/40" />
-              <span className="text-xs text-bloomberg-textMuted">Vacant</span>
+              <div className="w-3 h-3 rounded bg-blue-500/40" />
+              <span className="text-xs text-[var(--text-muted)]">Vacant</span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded bg-bloomberg-warning/40" />
-              <span className="text-xs text-bloomberg-textMuted">Maintenance</span>
+              <div className="w-3 h-3 rounded bg-amber-500/40" />
+              <span className="text-xs text-[var(--text-muted)]">Maintenance</span>
             </div>
           </div>
         </CardContent>
@@ -219,4 +257,3 @@ export default function HotelSection() {
     </div>
   )
 }
-

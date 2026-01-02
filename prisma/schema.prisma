@@ -527,6 +527,15 @@ model Property {
   mortgageBalance Float?
   interestRate    Float?
   
+  // Mortgage & Strategy (Empire Brain)
+  mortgageRate          Float?          // Current mortgage rate
+  mortgageTermEndDate   DateTime?       // When current term ends
+  penaltyFreeDate       DateTime?       // When early repayment penalty expires
+  mortgageLender        String?         // Current lender name
+  mortgageType          String?         // FIXED, VARIABLE, TRACKER
+  lastValuationDate     DateTime?       // Date of last property valuation
+  rentalYield           Float?          // Calculated annual rental yield %
+  
   // Data provenance
   dataSource      DataSource     @default(MANUAL)
   lastUpdatedAt   DateTime       @default(now())
