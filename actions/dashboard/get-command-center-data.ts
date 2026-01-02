@@ -138,7 +138,7 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   })
 
   // Calculate unit stats
-  const totalUnits = unitStats.reduce((sum, s) => sum + s._count._all, 0)
+  const totalUnits = unitStats.reduce((sum: number, s) => sum + s._count._all, 0)
   const occupiedUnits = unitStats.find(s => s.status === 'OCCUPIED')?._count._all || 0
   const vacantUnits = unitStats.find(s => s.status === 'VACANT')?._count._all || 0
 

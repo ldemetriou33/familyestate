@@ -96,22 +96,22 @@ export async function getPortfolioData(): Promise<PortfolioData> {
   })
 
   // Calculate summaries
-  const totalUnits = unitStats.reduce((sum, s) => sum + s._count._all, 0)
+  const totalUnits = unitStats.reduce((sum: number, s) => sum + s._count._all, 0)
   const occupiedUnits = unitStats.find(s => s.status === 'OCCUPIED')?._count._all || 0
   const vacantUnits = unitStats.find(s => s.status === 'VACANT')?._count._all || 0
   const maintenanceUnits = unitStats.find(s => s.status === 'MAINTENANCE')?._count._all || 0
 
-  const totalRentRoll = rentRolls.reduce((sum, r) => sum + r.monthlyRent, 0)
-  const totalArrears = rentRolls.reduce((sum, r) => sum + r.arrearsAmount, 0)
+  const totalRentRoll = rentRolls.reduce((sum: number, r) => sum + r.monthlyRent, 0)
+  const totalArrears = rentRolls.reduce((sum: number, r) => sum + r.arrearsAmount, 0)
 
   return {
     properties: properties.map(p => {
       const occupiedCount = p.units.filter(u => u.status === 'OCCUPIED').length
       const vacantCount = p.units.filter(u => u.status === 'VACANT').length
-      const propertyRentRoll = p.units.reduce((sum, u) => 
+      const propertyRentRoll = p.units.reduce((sum: number, u) => 
         sum + (u.rentRolls[0]?.monthlyRent || 0), 0
       )
-      const propertyArrears = p.units.reduce((sum, u) => 
+      const propertyArrears = p.units.reduce((sum: number, u) => 
         sum + (u.rentRolls[0]?.arrearsAmount || 0), 0
       )
 
