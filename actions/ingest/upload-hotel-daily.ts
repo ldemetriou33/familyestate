@@ -134,7 +134,8 @@ export async function uploadHotelDaily(
               otherRevenue: totalRevenue - roomRevenue,
               arrivals,
               departures,
-              source: 'PMS',
+              dataSource: 'CSV_UPLOAD',
+              lastUpdatedAt: new Date(),
             },
           })
           updated++
@@ -153,7 +154,8 @@ export async function uploadHotelDaily(
               otherRevenue: totalRevenue - roomRevenue,
               arrivals,
               departures,
-              source: 'PMS',
+              dataSource: 'CSV_UPLOAD',
+              lastUpdatedAt: new Date(),
             },
           })
           imported++
