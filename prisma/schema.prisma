@@ -1,0 +1,461 @@
+// Abbey OS - Family Estate Autopilot Schema
+// Mixed-use portfolio: Hotel, Cafe, Residential Flats
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum PropertyType {
+  HOTEL
+  CAFE
+  RESIDENTIAL
+}
+
+enum UnitStatus {
+  OCCUPIED
+  VACANT
+  MAINTENANCE
+}
+
+enum BookingChannel {
+  BOOKING_COM
+  EXPEDIA
+  AIRBNB
+  DIRECT
+  PHONE
+}
+
+enum BookingStatus {
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PAID
+  PARTIAL
+  OVERDUE
+  PENDING
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum ExpenseCategory {
+  UTILITIES
+  MAINTENANCE
+  SUPPLIES
+  PAYROLL
+  INSURANCE
+  TAXES
+  MARKETING
+  PROFESSIONAL_FEES
+  OTHER
+}
+
+enum AlertSeverity {
+  CRITICAL
+  WARNING
+  INFO
+}
+
+enum AlertCategory {
+  MAINTENANCE
+  FINANCIAL
+  COMPLIANCE
+  OCCUPANCY
+  OPERATIONAL
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+model Property {
+  id          String       @id @default(cuid())
+  name        String
+  type        PropertyType
+  address     String
+  city        String
+  postcode    String
+  description String?
+  imageUrl    String?
+  
+  // Financial
+  purchasePrice    Float?
+  currentValue     Float?
+  mortgageBalance  Float?
+  interestRate     Float?
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  
+  // Relations
+  units       Unit[]
+  dailyLogs   DailyLog[]
+  expenses    Expense[]
+  debts       Debt[]
+  alerts      Alert[]
+  
+  @@map("properties")
+}
+
+model Unit {
+  id           String     @id @default(cuid())
+  propertyId   String
+  property     Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  unitNumber   String     // Room number, flat number, etc.
+  floor        Int?
+  type         String?    // Suite, Standard, Studio, 1-Bed, etc.
+  status       UnitStatus @default(VACANT)
+  currentRate  Float      // Nightly rate for hotel, monthly rent for residential
+  
+  // Size & Features
+  squareMeters Float?
+  bedrooms     Int?
+  bathrooms    Int?
+  features     String[]   // ["Sea View", "Balcony", "Ensuite"]
+  
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  // Relations
+  bookings     Booking[]
+  leases       Lease[]
+  
+  @@unique([propertyId, unitNumber])
+  @@map("units")
+}
+
+// ============================================
+// BUSINESS MODULES
+// ============================================
+
+// Hotel Bookings
+model Booking {
+  id           String        @id @default(cuid())
+  unitId       String
+  unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  guestName    String
+  guestEmail   String?
+  guestPhone   String?
+  adults       Int           @default(1)
+  children     Int           @default(0)
+  
+  checkIn      DateTime
+  checkOut     DateTime
+  nights       Int
+  
+  channel      BookingChannel
+  status       BookingStatus @default(CONFIRMED)
+  
+  // Financials
+  roomRate     Float         // Per night
+  totalPrice   Float
+  deposit      Float         @default(0)
+  balance      Float         @default(0)
+  
+  // Additional
+  specialRequests String?
+  internalNotes   String?
+  
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  @@map("bookings")
+}
+
+// Residential Leases
+model Lease {
+  id              String        @id @default(cuid())
+  unitId          String
+  unit            Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  tenantName      String
+  tenantEmail     String?
+  tenantPhone     String?
+  
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Financials
+  rentAmount      Float         // Monthly rent
+  deposit         Float
+  paymentStatus   PaymentStatus @default(PENDING)
+  arrearsAmount   Float         @default(0)
+  lastPaymentDate DateTime?
+  
+  // Compliance
+  rightToRentCheck Boolean      @default(false)
+  gasCertExpiry    DateTime?
+  epcRating        String?
+  
+  // Additional
+  notes           String?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  payments        LeasePayment[]
+  
+  @@map("leases")
+}
+
+model LeasePayment {
+  id          String   @id @default(cuid())
+  leaseId     String
+  lease       Lease    @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  
+  amount      Float
+  dueDate     DateTime
+  paidDate    DateTime?
+  status      PaymentStatus @default(PENDING)
+  method      String?       // "Bank Transfer", "Cash", "Card"
+  reference   String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@map("lease_payments")
+}
+
+// Daily Operational Logs (Cafe & Hotel)
+model DailyLog {
+  id           String   @id @default(cuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  date         DateTime @db.Date
+  
+  // Revenue
+  salesTotal   Float    @default(0)
+  roomRevenue  Float    @default(0)
+  fbRevenue    Float    @default(0)
+  otherRevenue Float    @default(0)
+  
+  // Costs
+  laborCost    Float    @default(0)
+  foodCost     Float    @default(0)
+  utilityCost  Float    @default(0)
+  otherCost    Float    @default(0)
+  
+  // Metrics
+  covers       Int      @default(0)    // Number of guests served (cafe)
+  occupancy    Float?                  // Percentage (hotel)
+  adr          Float?                  // Average Daily Rate (hotel)
+  revpar       Float?                  // Revenue Per Available Room
+  
+  // Notes
+  notes        String?
+  weatherNote  String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([propertyId, date])
+  @@map("daily_logs")
+}
+
+// Action Items - The Command Center Tasks
+model ActionItem {
+  id                String       @id @default(cuid())
+  
+  title             String
+  description       String?
+  
+  priority          Priority     @default(MEDIUM)
+  status            ActionStatus @default(PENDING)
+  
+  // Impact & Urgency
+  estimatedImpactGbp Float?      // Potential £ impact
+  urgencyScore       Int?        // 1-10 scale
+  
+  // Assignment
+  assignedTo        String?
+  
+  // Dates
+  dueDate           DateTime?
+  completedAt       DateTime?
+  
+  // Categorization
+  category          String?      // "Maintenance", "Finance", "Legal", etc.
+  relatedPropertyId String?
+  
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  
+  @@map("action_items")
+}
+
+// ============================================
+// FINANCE LAYER
+// ============================================
+
+model Expense {
+  id           String         @id @default(cuid())
+  propertyId   String?
+  property     Property?      @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  amount       Float
+  category     ExpenseCategory
+  vendor       String
+  description  String?
+  invoiceRef   String?
+  
+  status       ExpenseStatus  @default(PENDING)
+  
+  dueDate      DateTime?
+  paidDate     DateTime?
+  
+  isRecurring  Boolean        @default(false)
+  recurringDay Int?           // Day of month for recurring
+  
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  @@map("expenses")
+}
+
+model Debt {
+  id            String   @id @default(cuid())
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  lender        String
+  loanType      String   // "Commercial Mortgage", "BTL Mortgage", "Development Loan"
+  
+  principal     Float
+  currentBalance Float
+  interestRate  Float    // Annual percentage
+  
+  monthlyPayment Float
+  
+  startDate     DateTime
+  maturityDate  DateTime
+  
+  isFixed       Boolean  @default(true)
+  fixedUntil    DateTime?
+  
+  notes         String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@map("debts")
+}
+
+// ============================================
+// ALERTS & NOTIFICATIONS
+// ============================================
+
+model Alert {
+  id           String        @id @default(cuid())
+  propertyId   String?
+  property     Property?     @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  title        String
+  message      String
+  
+  severity     AlertSeverity
+  category     AlertCategory
+  
+  isRead       Boolean       @default(false)
+  isDismissed  Boolean       @default(false)
+  
+  // Auto-generated or manual
+  source       String?       // "SYSTEM", "USER", "API"
+  
+  // Link to related item
+  relatedType  String?       // "LEASE", "BOOKING", "EXPENSE", etc.
+  relatedId    String?
+  
+  createdAt    DateTime      @default(now())
+  
+  @@map("alerts")
+}
+
+// ============================================
+// FORECASTING & ANALYTICS
+// ============================================
+
+model Forecast {
+  id           String   @id @default(cuid())
+  
+  date         DateTime @db.Date
+  propertyId   String?
+  
+  // Predicted values
+  predictedRevenue   Float?
+  predictedOccupancy Float?
+  predictedCovers    Float?
+  
+  // Confidence
+  confidenceLevel    Float?   // 0-1
+  
+  // Model info
+  modelVersion       String?
+  
+  createdAt    DateTime @default(now())
+  
+  @@unique([date, propertyId])
+  @@map("forecasts")
+}
+
+// ============================================
+// CASH POSITION
+// ============================================
+
+model CashPosition {
+  id           String   @id @default(cuid())
+  
+  date         DateTime @db.Date @unique
+  
+  // Bank balances
+  operatingBalance   Float @default(0)
+  reserveBalance     Float @default(0)
+  
+  // Today's movements
+  inflows      Float    @default(0)
+  outflows     Float    @default(0)
+  
+  // Projected
+  projected30Day     Float?
+  projected90Day     Float?
+  
+  notes        String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("cash_positions")
+}
