@@ -1,12 +1,71 @@
 'use client'
 
-import { UtensilsCrossed, TrendingUp, DollarSign, Store, Target, Calendar } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { UtensilsCrossed, TrendingUp, DollarSign, Store, Target, Calendar, Plus } from 'lucide-react'
 import { cafe } from '@/lib/constants'
 import { formatGBP, formatUKDate, formatPercentage } from '@/lib/utils'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
+interface DailySale {
+  date: string
+  amount: number
+}
+
 export default function FBSection() {
-  // Weekly sales data for Abbey Café (last 8 weeks)
+  const weeklyTarget = cafe.weeklyTarget // £15,000
+  const [dailySales, setDailySales] = useState<DailySale[]>([])
+  const [newSaleAmount, setNewSaleAmount] = useState('')
+  const [newSaleDate, setNewSaleDate] = useState('')
+
+  // Get current week's sales
+  const getCurrentWeekSales = () => {
+    const now = new Date()
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()))
+    startOfWeek.setHours(0, 0, 0, 0)
+
+    return dailySales.filter(sale => {
+      const saleDate = new Date(sale.date)
+      return saleDate >= startOfWeek
+    })
+  }
+
+  const currentWeekSales = getCurrentWeekSales()
+  const currentWeekTotal = currentWeekSales.reduce((sum, sale) => sum + sale.amount, 0)
+  const daysRemaining = 7 - currentWeekSales.length
+  const targetRemaining = weeklyTarget - currentWeekTotal
+  const dailyAverageNeeded = daysRemaining > 0 ? targetRemaining / daysRemaining : 0
+  const isOnTrack = currentWeekTotal >= weeklyTarget || (daysRemaining > 0 && dailyAverageNeeded <= weeklyTarget / 7)
+  const progressPercentage = Math.min((currentWeekTotal / weeklyTarget) * 100, 100)
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('cafe-daily-sales')
+    if (saved) {
+      try {
+        setDailySales(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to load sales data')
+      }
+    }
+  }, [])
+
+  // Save to localStorage when sales change
+  useEffect(() => {
+    localStorage.setItem('cafe-daily-sales', JSON.stringify(dailySales))
+  }, [dailySales])
+
+  const handleAddSale = () => {
+    if (!newSaleAmount || !newSaleDate) return
+
+    const amount = parseFloat(newSaleAmount)
+    if (isNaN(amount) || amount <= 0) return
+
+    setDailySales([...dailySales, { date: newSaleDate, amount }])
+    setNewSaleAmount('')
+    setNewSaleDate('')
+  }
+
+  // Weekly sales data for Abbey Café (last 8 weeks) - historical
   const weeklySales = [
     { week: 'Week 1', date: new Date(2024, 10, 4), sales: 15250 },
     { week: 'Week 2', date: new Date(2024, 10, 11), sales: 14800 },
@@ -18,7 +77,6 @@ export default function FBSection() {
     { week: 'Week 8', date: new Date(2024, 11, 23), sales: 15500 },
   ]
 
-  const weeklyTarget = cafe.weeklyTarget // £15,000
   const averageWeeklySales =
     weeklySales.reduce((sum, week) => sum + week.sales, 0) / weeklySales.length
   const targetAchievement = (averageWeeklySales / weeklyTarget) * 100
@@ -73,7 +131,7 @@ export default function FBSection() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Target className="w-5 h-5 text-bloomberg-accent" />
-                Abbey Café - Weekly Target Tracker
+                Abbey Café - Weekly Revenue Dashboard
               </CardTitle>
               <p className="text-sm text-bloomberg-textMuted mt-1">
                 {cafe.name} - {cafe.location}
@@ -86,49 +144,120 @@ export default function FBSection() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="bg-bloomberg-darker rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-4 h-4 text-bloomberg-textMuted" />
-                <span className="text-sm text-bloomberg-textMuted">Average Weekly Sales</span>
-              </div>
-              <p className="text-2xl font-bold text-bloomberg-text">{formatGBP(averageWeeklySales)}</p>
+          {/* Current Week Progress */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-semibold text-bloomberg-text">This Week's Progress</span>
+              <span className={`text-sm font-bold ${
+                isOnTrack ? 'text-bloomberg-success' : 'text-bloomberg-danger'
+              }`}>
+                {formatGBP(currentWeekTotal)} / {formatGBP(weeklyTarget)}
+              </span>
             </div>
-            <div className="bg-bloomberg-darker rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-4 h-4 text-bloomberg-textMuted" />
-                <span className="text-sm text-bloomberg-textMuted">Target Achievement</span>
-              </div>
-              <p
-                className={`text-2xl font-bold ${
-                  targetAchievement >= 100
-                    ? 'text-bloomberg-success'
-                    : targetAchievement >= 90
-                    ? 'text-bloomberg-warning'
-                    : 'text-bloomberg-danger'
+            <div className="h-4 bg-bloomberg-darker rounded-full overflow-hidden mb-2">
+              <div
+                className={`h-full rounded-full transition-all ${
+                  isOnTrack ? 'bg-bloomberg-success' : 'bg-bloomberg-danger'
                 }`}
-              >
-                {formatPercentage(targetAchievement)}
-              </p>
+                style={{ width: `${progressPercentage}%` }}
+              />
             </div>
-            <div className="bg-bloomberg-darker rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-bloomberg-textMuted" />
-                <span className="text-sm text-bloomberg-textMuted">vs Target</span>
-              </div>
-              <p
-                className={`text-2xl font-bold ${
-                  averageWeeklySales >= weeklyTarget
-                    ? 'text-bloomberg-success'
-                    : 'text-bloomberg-danger'
-                }`}
-              >
-                {averageWeeklySales >= weeklyTarget ? '+' : ''}
-                {formatGBP(averageWeeklySales - weeklyTarget)}
-              </p>
+            <div className="flex items-center justify-between text-xs text-bloomberg-textMuted">
+              <span>{formatPercentage(progressPercentage)} complete</span>
+              {daysRemaining > 0 && (
+                <span>
+                  {daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining
+                </span>
+              )}
             </div>
           </div>
 
+          {/* Daily Average Needed */}
+          {daysRemaining > 0 && (
+            <div className={`mb-6 p-4 rounded-lg ${
+              isOnTrack ? 'bg-bloomberg-success/10 border border-bloomberg-success/20' : 'bg-bloomberg-danger/10 border border-bloomberg-danger/20'
+            }`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Target className={`w-4 h-4 ${isOnTrack ? 'text-bloomberg-success' : 'text-bloomberg-danger'}`} />
+                <span className="text-sm font-semibold text-bloomberg-text">
+                  Daily Average Needed to Hit Target
+                </span>
+              </div>
+              <p className={`text-2xl font-bold ${isOnTrack ? 'text-bloomberg-success' : 'text-bloomberg-danger'}`}>
+                {formatGBP(dailyAverageNeeded)}
+              </p>
+              <p className="text-xs text-bloomberg-textMuted mt-1">
+                {formatGBP(targetRemaining)} remaining over {daysRemaining} day{daysRemaining !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
+
+          {/* Add Daily Sales Input */}
+          <div className="mb-6 p-4 bg-bloomberg-darker rounded-lg">
+            <h4 className="text-sm font-semibold text-bloomberg-text mb-3 flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              Add Daily Sales
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-xs text-bloomberg-textMuted mb-1 block">Date</label>
+                <input
+                  type="date"
+                  value={newSaleDate}
+                  onChange={(e) => setNewSaleDate(e.target.value)}
+                  className="w-full px-3 py-2 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-sm text-bloomberg-text focus:outline-none focus:ring-2 focus:ring-bloomberg-accent"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-bloomberg-textMuted mb-1 block">Sales Amount (£)</label>
+                <input
+                  type="number"
+                  value={newSaleAmount}
+                  onChange={(e) => setNewSaleAmount(e.target.value)}
+                  placeholder="0.00"
+                  step="0.01"
+                  className="w-full px-3 py-2 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-sm text-bloomberg-text focus:outline-none focus:ring-2 focus:ring-bloomberg-accent"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleAddSale}
+                  className="w-full px-4 py-2 bg-bloomberg-accent hover:bg-bloomberg-accentHover text-white rounded-lg text-sm font-medium transition-colors"
+                >
+                  Add Sale
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Week Sales List */}
+          {currentWeekSales.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-bloomberg-text mb-3 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                This Week's Sales
+              </h4>
+              <div className="space-y-2">
+                {currentWeekSales
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((sale, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-bloomberg-darker rounded-lg"
+                    >
+                      <span className="text-sm text-bloomberg-text">
+                        {formatUKDate(new Date(sale.date))}
+                      </span>
+                      <span className="text-sm font-semibold text-bloomberg-success">
+                        {formatGBP(sale.amount)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* Historical Weekly Performance */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-bloomberg-text mb-3 flex items-center gap-2">
               <Calendar className="w-4 h-4" />
@@ -179,6 +308,7 @@ export default function FBSection() {
         </CardContent>
       </Card>
 
+      {/* Outlet Performance Table */}
       <div className="bg-bloomberg-panel border border-bloomberg-border rounded-lg overflow-hidden">
         <div className="p-4 border-b border-bloomberg-border">
           <h3 className="text-lg font-semibold text-bloomberg-text">Outlet Performance</h3>
@@ -233,4 +363,3 @@ export default function FBSection() {
     </div>
   )
 }
-

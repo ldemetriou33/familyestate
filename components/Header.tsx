@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Bell, Settings, Search } from 'lucide-react'
+import { Clock, Bell, Settings, Search, LogOut, User } from 'lucide-react'
+import { useUser, UserButton } from '@clerk/nextjs'
 
 type Section = 'portfolio' | 'uk-debt' | 'hospitality' | 'f&b'
 
@@ -17,6 +18,7 @@ const sectionTitles: Record<Section, string> = {
 }
 
 export default function Header({ activeSection }: HeaderProps) {
+  const { user } = useUser()
   const [currentTime, setCurrentTime] = useState<string>('--:--:--')
 
   useEffect(() => {
@@ -66,8 +68,19 @@ export default function Header({ activeSection }: HeaderProps) {
         <button className="p-2 hover:bg-bloomberg-darker rounded-lg transition-colors">
           <Settings className="w-5 h-5 text-bloomberg-textMuted" />
         </button>
+
+        {user && (
+          <div className="flex items-center gap-2 pl-4 border-l border-bloomberg-border">
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: 'w-8 h-8',
+                },
+              }}
+            />
+          </div>
+        )}
       </div>
     </header>
   )
 }
-

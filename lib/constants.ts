@@ -1,4 +1,6 @@
 // TypeScript interfaces for property data
+export type LoanType = 'fixed' | 'variable'
+
 export interface RentalProperty {
   id: string
   name: string
@@ -6,7 +8,10 @@ export interface RentalProperty {
   purchasePrice: number
   currentMortgageBalance: number
   currentInterestRate: number // as percentage (e.g., 5.5 for 5.5%)
+  loanType: LoanType // 'fixed' or 'variable' - variable loans use SONIA rate
   monthlyRentalIncome: number
+  maintenanceFee?: number // Monthly maintenance fee
+  managementFee?: number // Monthly management fee (as percentage of rent)
 }
 
 export interface Hotel {
@@ -39,7 +44,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 850000,
     currentMortgageBalance: 595000,
     currentInterestRate: 5.25,
+    loanType: 'fixed',
     monthlyRentalIncome: 3200,
+    maintenanceFee: 150,
+    managementFee: 10, // 10% of rent
   },
   {
     id: 'rental-002',
@@ -48,7 +56,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 625000,
     currentMortgageBalance: 437500,
     currentInterestRate: 5.45,
+    loanType: 'variable', // Uses SONIA rate
     monthlyRentalIncome: 2450,
+    maintenanceFee: 120,
+    managementFee: 10,
   },
   {
     id: 'rental-003',
@@ -57,7 +68,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 285000,
     currentMortgageBalance: 199500,
     currentInterestRate: 5.15,
+    loanType: 'fixed',
     monthlyRentalIncome: 1250,
+    maintenanceFee: 80,
+    managementFee: 8,
   },
   {
     id: 'rental-004',
@@ -66,7 +80,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 195000,
     currentMortgageBalance: 136500,
     currentInterestRate: 5.35,
+    loanType: 'variable',
     monthlyRentalIncome: 850,
+    maintenanceFee: 60,
+    managementFee: 8,
   },
   {
     id: 'rental-005',
@@ -75,7 +92,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 165000,
     currentMortgageBalance: 115500,
     currentInterestRate: 5.20,
+    loanType: 'fixed',
     monthlyRentalIncome: 750,
+    maintenanceFee: 50,
+    managementFee: 8,
   },
   {
     id: 'rental-006',
@@ -84,7 +104,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 275000,
     currentMortgageBalance: 192500,
     currentInterestRate: 5.30,
+    loanType: 'variable',
     monthlyRentalIncome: 1100,
+    maintenanceFee: 70,
+    managementFee: 10,
   },
   {
     id: 'rental-007',
@@ -93,7 +116,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 320000,
     currentMortgageBalance: 224000,
     currentInterestRate: 5.10,
+    loanType: 'fixed',
     monthlyRentalIncome: 1350,
+    maintenanceFee: 90,
+    managementFee: 10,
   },
   {
     id: 'rental-008',
@@ -102,7 +128,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 185000,
     currentMortgageBalance: 129500,
     currentInterestRate: 5.40,
+    loanType: 'variable',
     monthlyRentalIncome: 800,
+    maintenanceFee: 55,
+    managementFee: 8,
   },
   {
     id: 'rental-009',
@@ -111,7 +140,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 145000,
     currentMortgageBalance: 101500,
     currentInterestRate: 5.25,
+    loanType: 'fixed',
     monthlyRentalIncome: 650,
+    maintenanceFee: 45,
+    managementFee: 8,
   },
   {
     id: 'rental-010',
@@ -120,7 +152,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 125000,
     currentMortgageBalance: 87500,
     currentInterestRate: 5.15,
+    loanType: 'variable',
     monthlyRentalIncome: 550,
+    maintenanceFee: 40,
+    managementFee: 8,
   },
   {
     id: 'rental-011',
@@ -129,7 +164,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 155000,
     currentMortgageBalance: 108500,
     currentInterestRate: 5.30,
+    loanType: 'fixed',
     monthlyRentalIncome: 700,
+    maintenanceFee: 50,
+    managementFee: 8,
   },
   {
     id: 'rental-012',
@@ -138,7 +176,10 @@ export const rentalProperties: RentalProperty[] = [
     purchasePrice: 175000,
     currentMortgageBalance: 122500,
     currentInterestRate: 5.20,
+    loanType: 'variable',
     monthlyRentalIncome: 750,
+    maintenanceFee: 50,
+    managementFee: 8,
   },
 ]
 
