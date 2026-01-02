@@ -4,6 +4,7 @@ import { CashPositionWidget } from '@/components/command-center/CashPositionWidg
 import { CriticalAlertsWidget } from '@/components/command-center/CriticalAlertsWidget'
 import { ActionEngineWidget } from '@/components/command-center/ActionEngineWidget'
 import { ForecastWidget } from '@/components/command-center/ForecastWidget'
+import { AIInsightsWidget } from '@/components/command-center/AIInsightsWidget'
 import { 
   cashPosition, 
   alerts, 
@@ -14,12 +15,27 @@ import {
   portfolioMetrics 
 } from '@/lib/mock-data/seed'
 import { formatGBP } from '@/lib/utils'
-import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown } from 'lucide-react'
+import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Brain } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { BusinessContext } from '@/lib/ai'
 
 export default function CommandCenterSection() {
   // Filter for critical alerts count
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed)
+
+  // Build AI context from current data
+  const aiContext: BusinessContext = {
+    hotelOccupancy: hotelMetrics.occupancyRate / 100,
+    hotelADR: hotelMetrics.adr,
+    cafeMargin: cafeMetrics.grossMargin,
+    cafeSales: cafeMetrics.salesToday,
+    arrearsTotal: portfolioMetrics.totalArrears,
+    rentRoll: portfolioMetrics.totalRentRoll,
+    cashBalance: cashPosition.operatingBalance + cashPosition.reserveBalance,
+    vacantUnits: portfolioMetrics.vacantUnits,
+    maintenanceIssues: portfolioMetrics.maintenanceUnits,
+    complianceIssues: portfolioMetrics.complianceIssues,
+  }
 
   return (
     <div className="space-y-6">
@@ -92,6 +108,9 @@ export default function CommandCenterSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Insights - Full Width */}
+      <AIInsightsWidget context={aiContext} />
 
       {/* Main Widgets Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -173,4 +192,3 @@ export default function CommandCenterSection() {
     </div>
   )
 }
-
