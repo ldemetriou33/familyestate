@@ -9,6 +9,7 @@ import { formatGBP, formatUKDate } from '@/lib/utils'
 import { hotelMetrics, units, bookings, properties } from '@/lib/mock-data/seed'
 import { BookingCalendarModal } from '@/components/modals/BookingCalendarModal'
 import { RateManagerModal } from '@/components/modals/RateManagerModal'
+import { EnergyDashboard } from '@/components/energy'
 
 export default function HotelSection() {
   const router = useRouter()
@@ -262,6 +263,9 @@ export default function HotelSection() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Energy & Grid Management */}
+      <EnergyDashboard />
 
       {/* Modals */}
       <BookingCalendarModal 

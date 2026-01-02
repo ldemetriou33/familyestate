@@ -13,6 +13,7 @@ import { BaseAgent } from './BaseAgent'
 import { maintenanceAgent } from './MaintenanceAgent'
 import { arrearsAgent } from './ArrearsAgent'
 import { pricingAgent } from './PricingAgent'
+import { energyAgent } from './EnergyAgent'
 import { 
   AgentRunContext, 
   AgentRunResult, 
@@ -66,6 +67,7 @@ export class Orchestrator {
     this.registerAgent('maintenance', maintenanceAgent)
     this.registerAgent('arrears', arrearsAgent)
     this.registerAgent('pricing', pricingAgent)
+    this.registerAgent('energy', energyAgent)
   }
 
   // ============================================
@@ -226,6 +228,15 @@ export class Orchestrator {
   async endOfDayRun(): Promise<OrchestratorRunResult> {
     this.log('Starting END OF DAY run')
     return this.runAll('cron')
+  }
+
+  /**
+   * Energy run - Every 15 minutes
+   * Runs: EnergyAgent (HVAC sync and grid arbitrage)
+   */
+  async energyRun(): Promise<OrchestratorRunResult> {
+    this.log('Starting ENERGY run')
+    return this.runAgents(['energy'], 'cron')
   }
 
   // ============================================

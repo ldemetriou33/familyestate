@@ -32,12 +32,14 @@ const agentIcons: Record<string, React.ElementType> = {
   MaintenanceManager: Wrench,
   ArrearsCollector: Wallet,
   RevenueManager: TrendingUp,
+  EnergyManager: Zap,
 }
 
 const agentColors: Record<string, string> = {
   MaintenanceManager: 'text-blue-500',
   ArrearsCollector: 'text-amber-500',
   RevenueManager: 'text-emerald-500',
+  EnergyManager: 'text-cyan-500',
 }
 
 export function AgentDashboard() {

@@ -1450,3 +1450,181 @@ model CashPosition {
   
   @@map("cash_positions")
 }
+
+// ============================================
+// ENERGY & GRID MANAGEMENT (NEW)
+// ============================================
+
+enum SensorType {
+  THERMOSTAT
+  SMART_PLUG
+  ENERGY_METER
+  MOTION_SENSOR
+  DOOR_SENSOR
+  WATER_HEATER
+  HVAC_CONTROLLER
+}
+
+enum SensorStatus {
+  ONLINE
+  OFFLINE
+  ERROR
+  MAINTENANCE
+}
+
+enum HVACMode {
+  ECO          // 16°C - Vacant rooms
+  COMFORT      // 21°C - Occupied rooms
+  BOOST        // 24°C - Guest request
+  OFF
+  AUTO
+}
+
+enum EnergyActionType {
+  HVAC_ECO_MODE
+  HVAC_COMFORT_MODE
+  HVAC_BOOST_MODE
+  HVAC_OFF
+  WATER_HEATER_ON
+  WATER_HEATER_OFF
+  SMART_PLUG_ON
+  SMART_PLUG_OFF
+  GRID_ARBITRAGE_START
+  GRID_ARBITRAGE_END
+}
+
+model RoomSensor {
+  id           String       @id @default(cuid())
+  unitId       String
+  
+  // Sensor identification
+  type         SensorType
+  vendorId     String       // External device ID (e.g., Hive, Nest, Tado)
+  vendorName   String?      // "Hive", "Nest", "Tado", "Shelly"
+  name         String?      // Friendly name "Room 101 Thermostat"
+  
+  // Current state
+  status       SensorStatus @default(ONLINE)
+  lastSeen     DateTime     @default(now())
+  
+  // For thermostats
+  currentTemp  Float?       // Current temperature reading
+  targetTemp   Float?       // Target temperature
+  hvacMode     HVACMode?    // Current mode
+  humidity     Float?       // If sensor supports it
+  
+  // For smart plugs / energy meters
+  currentPower Float?       // Current wattage
+  todayKwh     Float?       // kWh used today
+  isOn         Boolean?     // On/Off state
+  
+  // For motion/door sensors
+  lastMotion   DateTime?
+  doorOpen     Boolean?
+  
+  // Metadata
+  batteryLevel Int?         // 0-100 for battery-powered sensors
+  firmwareVersion String?
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  // Relations
+  energyEvents EnergyEvent[]
+  
+  @@unique([unitId, type, vendorId])
+  @@index([type])
+  @@index([status])
+  @@map("room_sensors")
+}
+
+model EnergyEvent {
+  id           String          @id @default(cuid())
+  sensorId     String?
+  sensor       RoomSensor?     @relation(fields: [sensorId], references: [id], onDelete: SetNull)
+  
+  // Event details
+  timestamp    DateTime        @default(now())
+  actionType   EnergyActionType
+  actionTaken  String          // Human-readable description
+  
+  // Trigger context
+  triggerReason String?        // "Room vacant", "Guest arriving in 2h", "Grid price low"
+  occupancyStatus String?      // "VACANT", "OCCUPIED", "ARRIVING_SOON"
+  
+  // Energy metrics
+  previousTemp  Float?         // Temperature before action
+  newTemp       Float?         // Temperature after action
+  gridPriceGbp  Float?         // Grid price at time of action (£/kWh)
+  
+  // Savings estimates
+  kwhSavedEst   Float?         // Estimated kWh saved
+  costSavedEst  Float?         // Estimated cost saved (GBP)
+  co2SavedEst   Float?         // Estimated CO2 saved (kg)
+  
+  // Audit
+  initiatedBy   String?        // "EnergyAgent", "Manual", "Schedule"
+  agentRunId    String?        // Reference to the agent run
+  
+  // Verification
+  verified      Boolean        @default(false)
+  verifiedKwh   Float?         // Actual kWh saved (if measured)
+  
+  createdAt     DateTime       @default(now())
+  
+  @@index([timestamp])
+  @@index([actionType])
+  @@index([sensorId])
+  @@map("energy_events")
+}
+
+model GridPrice {
+  id           String   @id @default(cuid())
+  
+  timestamp    DateTime @unique
+  priceGbp     Float    // Price per kWh in GBP
+  
+  // Market data
+  region       String   @default("UK")
+  supplier     String?  // "Octopus Agile", "British Gas", etc.
+  tariffType   String?  // "AGILE", "FIXED", "ECONOMY_7"
+  
+  // Predictions
+  predictedHigh Boolean @default(false)  // Is this a peak period?
+  predictedLow  Boolean @default(false)  // Is this an off-peak bargain?
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([timestamp])
+  @@map("grid_prices")
+}
+
+model EnergySummary {
+  id           String   @id @default(cuid())
+  
+  date         DateTime @db.Date @unique
+  
+  // Daily totals
+  totalKwhUsed    Float @default(0)
+  totalKwhSaved   Float @default(0)
+  totalCostGbp    Float @default(0)
+  totalSavedGbp   Float @default(0)
+  totalCo2Saved   Float @default(0)
+  
+  // Breakdown by action type
+  hvacInterventions  Int   @default(0)
+  gridArbitrageEvents Int  @default(0)
+  
+  // Occupancy-linked stats
+  roomsSetToEco      Int   @default(0)
+  roomsPreHeated     Int   @default(0)
+  
+  // Average metrics
+  avgGridPrice       Float?
+  avgTempDelta       Float?  // Average temperature reduction
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("energy_summaries")
+}

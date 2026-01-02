@@ -13,6 +13,7 @@ export { BaseAgent } from './BaseAgent'
 export { MaintenanceAgent, maintenanceAgent } from './MaintenanceAgent'
 export { ArrearsAgent, arrearsAgent } from './ArrearsAgent'
 export { PricingAgent, pricingAgent } from './PricingAgent'
+export { EnergyAgent, energyAgent } from './EnergyAgent'
 
 // Orchestrator
 export { Orchestrator, orchestrator } from './Orchestrator'

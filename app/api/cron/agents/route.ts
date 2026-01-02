@@ -90,6 +90,11 @@ export async function GET(request: NextRequest) {
           result = await orchestrator.endOfDayRun()
           break
         
+        case 'energy':
+          // Every 15 mins - Energy/HVAC sync
+          result = await orchestrator.energyRun()
+          break
+        
         case 'all':
         default:
           // Run all agents

@@ -325,8 +325,22 @@ export const queueActionItem: AgentTool = {
 }
 
 // ============================================
+// ENERGY TOOLS (Re-export)
+// ============================================
+
+export { 
+  syncOccupancy, 
+  controlHVAC, 
+  gridArbitrage, 
+  getEnergySummary,
+  energyTools 
+} from './energy-tools'
+
+// ============================================
 // TOOL REGISTRY
 // ============================================
+
+import { energyTools } from './energy-tools'
 
 export const allTools: Record<string, AgentTool> = {
   sendSMS,
@@ -337,6 +351,7 @@ export const allTools: Record<string, AgentTool> = {
   classifySeverity,
   applyDiscount,
   queueActionItem,
+  ...energyTools,
 }
 
 export function getTool(name: string): AgentTool | undefined {
