@@ -1,5 +1,6 @@
 // Abbey OS - Family Estate Autopilot Schema
 // Mixed-use portfolio: Hotel, Cafe, Residential Flats
+// Version 3.0 - Enterprise Control System
 
 generator client {
   provider = "prisma-client-js"
@@ -10,7 +11,7 @@ datasource db {
 }
 
 // ============================================
-// ENUMS
+// ENUMS - Core
 // ============================================
 
 enum PropertyType {
@@ -55,13 +56,6 @@ enum Priority {
   LOW
 }
 
-enum ActionStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-}
-
 enum ExpenseStatus {
   PENDING
   APPROVED
@@ -93,12 +87,16 @@ enum AlertCategory {
   COMPLIANCE
   OCCUPANCY
   OPERATIONAL
+  RECONCILIATION
+  INTEGRATION
 }
 
 enum UserRole {
   OWNER
   GM
   STAFF
+  ACCOUNTANT
+  READONLY
 }
 
 enum TransactionCategory {
@@ -123,7 +121,272 @@ enum DocumentType {
   INSURANCE
   LEASE_AGREEMENT
   LICENSE
+  BOARD_PACK
+  PERIOD_CLOSE
   OTHER
+}
+
+// ============================================
+// ENUMS - Trust & Controls Layer (NEW)
+// ============================================
+
+enum DataSource {
+  MANUAL
+  XERO
+  STRIPE
+  PMS_OPERA
+  PMS_CLOUDBEDS
+  POS_SQUARE
+  POS_LIGHTSPEED
+  BANK_FEED
+  API_IMPORT
+  CSV_UPLOAD
+  SYSTEM_GENERATED
+}
+
+enum ReconciliationStatus {
+  PENDING
+  MATCHED
+  UNMATCHED
+  FLAGGED
+  FORCE_MATCHED
+  EXCLUDED
+}
+
+enum DataConfidence {
+  VERIFIED    // Cross-checked and confirmed
+  HIGH        // Single trusted source
+  MEDIUM      // Manual entry, unverified
+  LOW         // Estimated or stale
+  UNKNOWN
+}
+
+enum PeriodStatus {
+  OPEN
+  SOFT_CLOSE  // No new entries, can reopen
+  HARD_CLOSE  // Locked for audit
+  ARCHIVED
+}
+
+// ============================================
+// ENUMS - Action Workflow Layer (NEW)
+// ============================================
+
+enum ActionWorkflowStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  SCHEDULED
+  IN_PROGRESS
+  EXECUTED
+  VERIFICATION_REQ
+  VERIFIED
+  FAILED
+  CANCELLED
+}
+
+enum ActionType {
+  ARREARS_CHASE
+  RATE_CHANGE
+  MAINTENANCE_REQUEST
+  COMPLIANCE_RENEWAL
+  MARKETING_CAMPAIGN
+  VENDOR_PAYMENT
+  TENANT_COMMUNICATION
+  REPORT_GENERATION
+  SYSTEM_TASK
+}
+
+// ============================================
+// ENUMS - Pricing & Revenue Layer (NEW)
+// ============================================
+
+enum RateProposalStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  APPLIED
+  EXPIRED
+}
+
+enum SeasonType {
+  PEAK
+  SHOULDER
+  OFF_PEAK
+  SPECIAL_EVENT
+}
+
+// ============================================
+// ENUMS - Governance Layer (NEW)
+// ============================================
+
+enum ApprovalType {
+  EXPENSE
+  RATE_CHANGE
+  REFUND
+  WRITE_OFF
+  CONTRACT
+  HIRE
+  SYSTEM_CONFIG
+}
+
+enum DecisionType {
+  RATE_CHANGE
+  NEW_LOAN
+  REFINANCE
+  PROPERTY_SALE
+  PROPERTY_PURCHASE
+  MAJOR_CAPEX
+  POLICY_CHANGE
+  SYSTEM_CHANGE
+}
+
+// ============================================
+// ENUMS - Integration Layer (NEW)
+// ============================================
+
+enum IntegrationProvider {
+  XERO
+  QUICKBOOKS
+  STRIPE
+  GOCARDLESS
+  OPERA_PMS
+  CLOUDBEDS
+  MEWS
+  GUESTY
+  SQUARE_POS
+  LIGHTSPEED
+  BANK_OF_ENGLAND
+  COMPANIES_HOUSE
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  PAUSED
+  ERROR
+  DISCONNECTED
+  PENDING_AUTH
+}
+
+enum SyncFrequency {
+  REALTIME
+  HOURLY
+  DAILY
+  WEEKLY
+  MANUAL
+}
+
+// ============================================
+// ORGANIZATION & MULTI-TENANCY (NEW)
+// ============================================
+
+model Organization {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  
+  // Settings
+  timezone        String   @default("Europe/London")
+  currency        String   @default("GBP")
+  fiscalYearStart Int      @default(4)  // April
+  
+  // Subscription/Billing (for SaaS)
+  plan            String   @default("starter")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  members         OrganizationMember[]
+  properties      Property[]
+  integrations    IntegrationConnection[]
+  approvalThresholds ApprovalThreshold[]
+  periods         AccountingPeriod[]
+  
+  @@map("organizations")
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           UserProfile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role           UserRole     @default(STAFF)
+  
+  // Permissions can be more granular
+  permissions    Permission[]
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@unique([organizationId, userId])
+  @@map("organization_members")
+}
+
+model Permission {
+  id             String             @id @default(cuid())
+  memberId       String
+  member         OrganizationMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  
+  resource       String             // "property", "expense", "rate", "report"
+  action         String             // "create", "read", "update", "delete", "approve"
+  propertyId     String?            // Optional: scope to specific property
+  
+  @@unique([memberId, resource, action, propertyId])
+  @@map("permissions")
+}
+
+// ============================================
+// GOVERNANCE - APPROVAL THRESHOLDS (NEW)
+// ============================================
+
+model ApprovalThreshold {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  approvalType    ApprovalType
+  role            UserRole
+  
+  maxAmountGbp    Float?       // null = unlimited
+  requiresSecondApprover Boolean @default(false)
+  
+  createdAt       DateTime     @default(now())
+  
+  @@unique([organizationId, approvalType, role])
+  @@map("approval_thresholds")
+}
+
+model DecisionLog {
+  id              String       @id @default(cuid())
+  organizationId  String
+  
+  decisionType    DecisionType
+  title           String
+  description     String
+  
+  // Financial impact
+  impactAmountGbp Float?
+  
+  // Decision details
+  decisionMadeBy  String       // User ID
+  approvedBy      String?      // Second approver if required
+  
+  // Evidence
+  supportingDocs  String[]     // Document IDs
+  reasoning       String?
+  
+  // Audit
+  decisionDate    DateTime
+  effectiveDate   DateTime?
+  
+  createdAt       DateTime     @default(now())
+  
+  @@map("decision_logs")
 }
 
 // ============================================
@@ -137,38 +400,139 @@ model UserProfile {
   firstName String?
   lastName  String?
   role      UserRole @default(STAFF)
+  phone     String?
+  
+  // Preferences
+  notificationPrefs Json?
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   // Relations
-  auditLogs AuditLog[]
+  auditLogs       AuditLog[]
+  memberships     OrganizationMember[]
+  actionApprovals ActionApproval[]
+  rateProposals   RateProposal[]
   
   @@map("user_profiles")
 }
 
 // ============================================
-// CORE ENTITIES
+// INTEGRATIONS (NEW)
+// ============================================
+
+model IntegrationConnection {
+  id              String             @id @default(cuid())
+  organizationId  String
+  organization    Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  provider        IntegrationProvider
+  name            String             // Friendly name "Main Xero Account"
+  
+  // Connection details (encrypted in production)
+  credentials     Json?              // API keys, tokens, etc.
+  
+  // Sync settings
+  syncFrequency   SyncFrequency      @default(DAILY)
+  lastSyncAt      DateTime?
+  lastSyncStatus  IntegrationStatus  @default(PENDING_AUTH)
+  lastSyncError   String?
+  
+  // Scope
+  propertyIds     String[]           // Which properties this integration covers
+  
+  isActive        Boolean            @default(true)
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  
+  // Relations
+  syncLogs        IntegrationSyncLog[]
+  
+  @@unique([organizationId, provider, name])
+  @@map("integration_connections")
+}
+
+model IntegrationSyncLog {
+  id              String              @id @default(cuid())
+  connectionId    String
+  connection      IntegrationConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  
+  startedAt       DateTime
+  completedAt     DateTime?
+  
+  recordsProcessed Int               @default(0)
+  recordsCreated   Int               @default(0)
+  recordsUpdated   Int               @default(0)
+  recordsFailed    Int               @default(0)
+  
+  status          IntegrationStatus
+  errorMessage    String?
+  errorDetails    Json?
+  
+  @@map("integration_sync_logs")
+}
+
+// ============================================
+// ACCOUNTING PERIODS (NEW)
+// ============================================
+
+model AccountingPeriod {
+  id              String       @id @default(cuid())
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  
+  name            String       // "January 2026", "Q1 2026"
+  startDate       DateTime
+  endDate         DateTime
+  
+  status          PeriodStatus @default(OPEN)
+  
+  // Close info
+  closedBy        String?
+  closedAt        DateTime?
+  closedNotes     String?
+  
+  // Board pack generation
+  boardPackUrl    String?
+  boardPackGeneratedAt DateTime?
+  
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  @@unique([organizationId, startDate])
+  @@map("accounting_periods")
+}
+
+// ============================================
+// CORE ENTITIES (UPDATED with data provenance)
 // ============================================
 
 model Property {
-  id          String       @id @default(cuid())
-  name        String
-  type        PropertyType
-  address     String
-  city        String
-  postcode    String
-  description String?
-  imageUrl    String?
+  id              String         @id @default(cuid())
+  organizationId  String?
+  organization    Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  
+  name            String
+  type            PropertyType
+  address         String
+  city            String
+  postcode        String
+  description     String?
+  imageUrl        String?
   
   // Financial
-  purchasePrice    Float?
-  currentValue     Float?
-  mortgageBalance  Float?
-  interestRate     Float?
+  purchasePrice   Float?
+  currentValue    Float?
+  mortgageBalance Float?
+  interestRate    Float?
   
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  // Data provenance
+  dataSource      DataSource     @default(MANUAL)
+  lastUpdatedAt   DateTime       @default(now())
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
   
   // Relations
   units            Unit[]
@@ -180,6 +544,8 @@ model Property {
   cafeSales        CafeSales[]
   documents        Document[]
   transactions     FinancialTransaction[]
+  pricingRules     PricingRule[]
+  rateProposals    RateProposal[]
   
   @@map("properties")
 }
@@ -189,17 +555,20 @@ model Unit {
   propertyId   String
   property     Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   
-  unitNumber   String     // Room number, flat number, etc.
+  unitNumber   String
   floor        Int?
-  type         String?    // Suite, Standard, Studio, 1-Bed, etc.
+  type         String?
   status       UnitStatus @default(VACANT)
-  currentRate  Float      // Nightly rate for hotel, monthly rent for residential
+  currentRate  Float
   
-  // Size & Features
   squareMeters Float?
   bedrooms     Int?
   bathrooms    Int?
-  features     String[]   // ["Sea View", "Balcony", "Ensuite"]
+  features     String[]
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -215,39 +584,49 @@ model Unit {
 
 // ============================================
 // THE "TRUTH" LAYER - Data Ingestion Models
+// (UPDATED with full data provenance & reconciliation)
 // ============================================
 
-// Bank Statement Transactions
 model FinancialTransaction {
   id            String              @id @default(cuid())
   propertyId    String?
   property      Property?           @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   
   date          DateTime            @db.Date
-  amount        Float               // Positive = income, Negative = expense
+  amount        Float
   category      TransactionCategory
   description   String
   
-  // Bank account info
-  bankAccountId String?
+  bankAccountId   String?
   bankAccountName String?
-  reference     String?
+  reference       String?
   
-  // Deduplication
-  externalId    String?             @unique // External reference for avoiding duplicates
+  externalId    String?             @unique
   
-  // Reconciliation
-  isReconciled  Boolean             @default(false)
+  // ===== RECONCILIATION (NEW) =====
+  reconciliationStatus ReconciliationStatus @default(PENDING)
+  matchedToType        String?              // "HotelMetric", "CafeSales", "LeasePayment"
+  matchedToId          String?
+  matchedAmount        Float?
+  matchVariance        Float?               // Difference if not exact match
+  reconciledAt         DateTime?
+  reconciledBy         String?
+  
+  // ===== DATA PROVENANCE (NEW) =====
+  dataSource         DataSource      @default(MANUAL)
+  confidence         DataConfidence  @default(MEDIUM)
+  lastUpdatedAt      DateTime        @default(now())
+  integrationId      String?         // Which integration imported this
   
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   
   @@index([date])
   @@index([category])
+  @@index([reconciliationStatus])
   @@map("financial_transactions")
 }
 
-// Hotel PMS Import Data
 model HotelMetric {
   id           String   @id @default(cuid())
   propertyId   String
@@ -255,35 +634,40 @@ model HotelMetric {
   
   date         DateTime @db.Date
   
-  // Occupancy metrics
   roomsAvailable  Int
   roomsOccupied   Int
-  occupancy       Float    // Percentage 0-100
+  occupancy       Float
   
-  // Revenue metrics
-  adr             Float    // Average Daily Rate
-  revpar          Float    // Revenue Per Available Room
+  adr             Float
+  revpar          Float
   totalRevenue    Float
   roomRevenue     Float
   otherRevenue    Float    @default(0)
   
-  // Booking stats
   arrivals        Int      @default(0)
   departures      Int      @default(0)
   stayovers       Int      @default(0)
   
-  // Source tracking
-  source          String?  // "PMS", "MANUAL", "API"
+  // ===== DATA PROVENANCE (NEW) =====
+  dataSource         DataSource      @default(MANUAL)
+  confidence         DataConfidence  @default(MEDIUM)
+  lastUpdatedAt      DateTime        @default(now())
+  integrationId      String?
+  
+  // ===== RECONCILIATION (NEW) =====
+  reconciliationStatus ReconciliationStatus @default(PENDING)
+  bankTxMatchedAmount  Float?
+  bankTxVariance       Float?
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
   @@unique([propertyId, date])
   @@index([date])
+  @@index([reconciliationStatus])
   @@map("hotel_metrics")
 }
 
-// Cafe Daily Sales Data
 model CafeSales {
   id           String   @id @default(cuid())
   propertyId   String
@@ -291,63 +675,68 @@ model CafeSales {
   
   date         DateTime @db.Date
   
-  // Revenue
   grossSales   Float
   netSales     Float?
   vat          Float?
   
-  // Covers & Performance
   covers       Int
   avgSpend     Float?
   
-  // Costs
   labourCost   Float    @default(0)
   foodCost     Float    @default(0)
   wastage      Float    @default(0)
   
-  // Calculated metrics
-  grossMargin  Float?   // Percentage
+  grossMargin  Float?
   labourPercentage Float?
   
-  // Source tracking
-  source       String?  // "POS", "MANUAL", "EPOS"
+  // ===== DATA PROVENANCE (NEW) =====
+  dataSource         DataSource      @default(MANUAL)
+  confidence         DataConfidence  @default(MEDIUM)
+  lastUpdatedAt      DateTime        @default(now())
+  integrationId      String?
+  
+  // ===== RECONCILIATION (NEW) =====
+  reconciliationStatus ReconciliationStatus @default(PENDING)
+  bankTxMatchedAmount  Float?
+  bankTxVariance       Float?
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
   @@unique([propertyId, date])
   @@index([date])
+  @@index([reconciliationStatus])
   @@map("cafe_sales")
 }
 
-// Rent Roll - Current State of Residential Units
 model RentRoll {
   id              String        @id @default(cuid())
   unitId          String
   unit            Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
   
-  // Tenant info
   tenantName      String
   tenantEmail     String?
   tenantPhone     String?
   
-  // Lease terms
   leaseStart      DateTime
   leaseEnd        DateTime
   monthlyRent     Float
   
-  // Payment status
   paymentStatus   PaymentStatus @default(PENDING)
   arrearsAmount   Float         @default(0)
   arrearsDays     Int           @default(0)
   lastPaymentDate DateTime?
   nextDueDate     DateTime
   
-  // Compliance
   depositHeld     Float         @default(0)
-  depositScheme   String?       // "DPS", "TDS", "MyDeposits"
+  depositScheme   String?
   
   isActive        Boolean       @default(true)
+  
+  // ===== DATA PROVENANCE (NEW) =====
+  dataSource         DataSource      @default(MANUAL)
+  confidence         DataConfidence  @default(MEDIUM)
+  lastUpdatedAt      DateTime        @default(now())
   
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
@@ -358,24 +747,84 @@ model RentRoll {
 }
 
 // ============================================
+// RECONCILIATION ENGINE (NEW)
+// ============================================
+
+model ReconciliationRun {
+  id              String   @id @default(cuid())
+  
+  runDate         DateTime @default(now())
+  periodStart     DateTime
+  periodEnd       DateTime
+  
+  // Scope
+  propertyId      String?
+  
+  // Results
+  totalBankTx     Int      @default(0)
+  totalPmsTx      Int      @default(0)
+  totalPosTx      Int      @default(0)
+  
+  matchedCount    Int      @default(0)
+  unmatchedCount  Int      @default(0)
+  flaggedCount    Int      @default(0)
+  
+  totalVariance   Float    @default(0)
+  
+  // Audit
+  runBy           String?
+  completedAt     DateTime?
+  notes           String?
+  
+  // Relations
+  items           ReconciliationItem[]
+  
+  @@map("reconciliation_runs")
+}
+
+model ReconciliationItem {
+  id              String              @id @default(cuid())
+  runId           String
+  run             ReconciliationRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  
+  // Source A (Bank)
+  bankTxId        String?
+  bankTxAmount    Float?
+  bankTxDate      DateTime?
+  
+  // Source B (PMS/POS/Rent)
+  sourceType      String              // "HotelMetric", "CafeSales", "LeasePayment"
+  sourceId        String?
+  sourceAmount    Float?
+  sourceDate      DateTime?
+  
+  status          ReconciliationStatus
+  variance        Float               @default(0)
+  
+  // Resolution
+  resolvedBy      String?
+  resolvedAt      DateTime?
+  resolutionNote  String?
+  
+  @@map("reconciliation_items")
+}
+
+// ============================================
 // THE "BRAIN" LAYER - Operations
 // ============================================
 
-// Audit Log - Track all user actions
 model AuditLog {
   id          String      @id @default(cuid())
   userId      String
   user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  action      String      // "CREATE", "UPDATE", "DELETE", "VIEW"
-  entityType  String      // "BOOKING", "LEASE", "EXPENSE", etc.
+  action      String
+  entityType  String
   entityId    String
   
-  // Change details
   oldValue    Json?
   newValue    Json?
   
-  // Context
   ipAddress   String?
   userAgent   String?
   
@@ -386,7 +835,6 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// Documents - Compliance & Legal
 model Document {
   id           String       @id @default(cuid())
   propertyId   String?
@@ -394,16 +842,18 @@ model Document {
   
   type         DocumentType
   name         String
-  url          String       // S3 or storage URL
+  url          String
   
   expiryDate   DateTime?
   
-  // Alerts
-  alertBefore  Int          @default(30) // Days before expiry to alert
+  alertBefore  Int          @default(30)
   
-  // Metadata
   uploadedBy   String?
   notes        String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -413,10 +863,272 @@ model Document {
 }
 
 // ============================================
+// ACTION ITEMS - FULL WORKFLOW (UPDATED)
+// ============================================
+
+model ActionItem {
+  id                String               @id @default(cuid())
+  
+  title             String
+  description       String?
+  
+  priority          Priority             @default(MEDIUM)
+  
+  // ===== WORKFLOW STATUS (UPDATED) =====
+  workflowStatus    ActionWorkflowStatus @default(DRAFT)
+  actionType        ActionType?
+  
+  // Impact & Urgency
+  estimatedImpactGbp Float?
+  urgencyScore       Int?
+  
+  // Assignment
+  assignedTo        String?
+  
+  // Dates
+  dueDate           DateTime?
+  scheduledFor      DateTime?
+  executedAt        DateTime?
+  verifiedAt        DateTime?
+  
+  // Categorization
+  category          String?
+  relatedPropertyId String?
+  
+  // Auto-generation source (for AI evidence)
+  source            String?
+  sourceEntityType  String?
+  sourceEntityId    String?
+  
+  // ===== AI EVIDENCE (NEW) =====
+  aiReasoningJson   Json?                // Full reasoning chain
+  aiConfidence      Float?               // 0-1 confidence score
+  aiSourceRecords   String[]             // IDs of records used
+  
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  
+  // Relations
+  approvals         ActionApproval[]
+  executions        ActionExecution[]
+  
+  @@index([priority, workflowStatus])
+  @@index([dueDate])
+  @@map("action_items")
+}
+
+model ActionApproval {
+  id           String      @id @default(cuid())
+  actionId     String
+  action       ActionItem  @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  
+  approverId   String
+  approver     UserProfile @relation(fields: [approverId], references: [id])
+  
+  approved     Boolean
+  comments     String?
+  
+  createdAt    DateTime    @default(now())
+  
+  @@map("action_approvals")
+}
+
+model ActionExecution {
+  id           String     @id @default(cuid())
+  actionId     String
+  action       ActionItem @relation(fields: [actionId], references: [id], onDelete: Cascade)
+  
+  stepNumber   Int
+  stepName     String     // "GENERATE_EMAIL", "SEND_EMAIL", "LOG_RESPONSE"
+  
+  status       String     // "PENDING", "SUCCESS", "FAILED"
+  
+  inputData    Json?
+  outputData   Json?
+  errorMessage String?
+  
+  executedAt   DateTime?
+  
+  createdAt    DateTime   @default(now())
+  
+  @@map("action_executions")
+}
+
+// ============================================
+// PRICING ENGINE (NEW)
+// ============================================
+
+model PricingRule {
+  id           String    @id @default(cuid())
+  propertyId   String
+  property     Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  name         String
+  
+  // Rate bounds
+  minRate      Float
+  maxRate      Float
+  baseRate     Float
+  
+  // Seasonal multipliers
+  seasonType   SeasonType?
+  seasonMultiplier Float   @default(1.0)
+  
+  // Day of week factors (JSON: {"monday": 0.9, "friday": 1.2, ...})
+  dayOfWeekFactors Json?
+  
+  // Lead time adjustments
+  leadTimeDays     Int?       // If booking is X days out
+  leadTimeMultiplier Float?
+  
+  // Occupancy-based adjustments
+  occupancyThresholdLow  Float?  // Below this, discount
+  occupancyThresholdHigh Float?  // Above this, surge
+  lowOccupancyMultiplier Float?
+  highOccupancyMultiplier Float?
+  
+  isActive     Boolean   @default(true)
+  
+  validFrom    DateTime?
+  validTo      DateTime?
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@map("pricing_rules")
+}
+
+model RateProposal {
+  id           String            @id @default(cuid())
+  propertyId   String
+  property     Property          @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Proposal details
+  currentRate  Float
+  proposedRate Float
+  changePercent Float
+  
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  
+  // Reasoning (AI or manual)
+  reasoning    String
+  aiGenerated  Boolean           @default(false)
+  aiSourceRecords String[]
+  
+  status       RateProposalStatus @default(DRAFT)
+  
+  // Approval
+  createdBy    String
+  creator      UserProfile       @relation(fields: [createdBy], references: [id])
+  approvedBy   String?
+  approvedAt   DateTime?
+  rejectedReason String?
+  
+  // Application
+  appliedAt    DateTime?
+  
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  
+  @@map("rate_proposals")
+}
+
+// ============================================
+// DEBT & COVENANT ENGINE (NEW)
+// ============================================
+
+model Debt {
+  id            String    @id @default(cuid())
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  lender        String
+  loanType      String
+  
+  principal     Float
+  currentBalance Float
+  interestRate  Float
+  
+  monthlyPayment Float
+  
+  startDate     DateTime
+  maturityDate  DateTime
+  
+  isFixed       Boolean   @default(true)
+  fixedUntil    DateTime?
+  
+  notes         String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  covenants     LoanCovenant[]
+  stressTests   DebtStressTest[]
+  
+  @@map("debts")
+}
+
+model LoanCovenant {
+  id           String   @id @default(cuid())
+  debtId       String
+  debt         Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  
+  metric       String   // "DSCR", "LTV", "ICR" (Interest Coverage Ratio)
+  threshold    Float    // e.g., 1.25 for DSCR
+  operator     String   // ">=", "<=", ">"
+  
+  currentValue Float?
+  lastCheckedAt DateTime?
+  
+  isBreached   Boolean  @default(false)
+  breachDate   DateTime?
+  breachNotes  String?
+  
+  // Next test date
+  nextTestDate DateTime?
+  testFrequency String?  // "MONTHLY", "QUARTERLY", "ANNUAL"
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("loan_covenants")
+}
+
+model DebtStressTest {
+  id           String   @id @default(cuid())
+  debtId       String
+  debt         Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  
+  scenario     String   // "Base", "+1% Rate", "+2% Rate", "10% Revenue Drop"
+  
+  // Input assumptions
+  rateChange   Float?   // +1.0 = 1% increase
+  revenueChange Float?  // -0.1 = 10% decrease
+  
+  // Results
+  newMonthlyPayment Float?
+  newDscr           Float?
+  newLtv            Float?
+  
+  canServiceDebt    Boolean?
+  breaksCovenants   Boolean?
+  
+  runAt        DateTime @default(now())
+  runBy        String?
+  
+  @@map("debt_stress_tests")
+}
+
+// ============================================
 // BUSINESS MODULES
 // ============================================
 
-// Hotel Bookings
 model Booking {
   id           String        @id @default(cuid())
   unitId       String
@@ -435,15 +1147,17 @@ model Booking {
   channel      BookingChannel
   status       BookingStatus @default(CONFIRMED)
   
-  // Financials
-  roomRate     Float         // Per night
+  roomRate     Float
   totalPrice   Float
   deposit      Float         @default(0)
   balance      Float         @default(0)
   
-  // Additional
   specialRequests String?
   internalNotes   String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
@@ -451,7 +1165,6 @@ model Booking {
   @@map("bookings")
 }
 
-// Residential Leases
 model Lease {
   id              String        @id @default(cuid())
   unitId          String
@@ -464,25 +1177,25 @@ model Lease {
   startDate       DateTime
   endDate         DateTime
   
-  // Financials
-  rentAmount      Float         // Monthly rent
+  rentAmount      Float
   deposit         Float
   paymentStatus   PaymentStatus @default(PENDING)
   arrearsAmount   Float         @default(0)
   lastPaymentDate DateTime?
   
-  // Compliance
   rightToRentCheck Boolean      @default(false)
   gasCertExpiry    DateTime?
   epcRating        String?
   
-  // Additional
   notes           String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
   
-  // Relations
   payments        LeasePayment[]
   
   @@map("leases")
@@ -497,15 +1210,22 @@ model LeasePayment {
   dueDate     DateTime
   paidDate    DateTime?
   status      PaymentStatus @default(PENDING)
-  method      String?       // "Bank Transfer", "Cash", "Card"
+  method      String?
   reference   String?
+  
+  // Reconciliation
+  reconciliationStatus ReconciliationStatus @default(PENDING)
+  bankTxId             String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt   DateTime @default(now())
   
   @@map("lease_payments")
 }
 
-// Daily Operational Logs (Cafe & Hotel)
 model DailyLog {
   id           String   @id @default(cuid())
   propertyId   String
@@ -513,71 +1233,33 @@ model DailyLog {
   
   date         DateTime @db.Date
   
-  // Revenue
   salesTotal   Float    @default(0)
   roomRevenue  Float    @default(0)
   fbRevenue    Float    @default(0)
   otherRevenue Float    @default(0)
   
-  // Costs
   laborCost    Float    @default(0)
   foodCost     Float    @default(0)
   utilityCost  Float    @default(0)
   otherCost    Float    @default(0)
   
-  // Metrics
-  covers       Int      @default(0)    // Number of guests served (cafe)
-  occupancy    Float?                  // Percentage (hotel)
-  adr          Float?                  // Average Daily Rate (hotel)
-  revpar       Float?                  // Revenue Per Available Room
+  covers       Int      @default(0)
+  occupancy    Float?
+  adr          Float?
+  revpar       Float?
   
-  // Notes
   notes        String?
   weatherNote  String?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   
   @@unique([propertyId, date])
   @@map("daily_logs")
-}
-
-// Action Items - The Command Center Tasks
-model ActionItem {
-  id                String       @id @default(cuid())
-  
-  title             String
-  description       String?
-  
-  priority          Priority     @default(MEDIUM)
-  status            ActionStatus @default(PENDING)
-  
-  // Impact & Urgency
-  estimatedImpactGbp Float?      // Potential £ impact
-  urgencyScore       Int?        // 1-10 scale
-  
-  // Assignment
-  assignedTo        String?
-  
-  // Dates
-  dueDate           DateTime?
-  completedAt       DateTime?
-  
-  // Categorization
-  category          String?      // "Maintenance", "Finance", "Legal", etc.
-  relatedPropertyId String?
-  
-  // Auto-generation source
-  source            String?      // "SYSTEM", "USER", "AI"
-  sourceEntityType  String?      // "RENT_ROLL", "CAFE_SALES", etc.
-  sourceEntityId    String?
-  
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  
-  @@index([priority, status])
-  @@index([dueDate])
-  @@map("action_items")
 }
 
 // ============================================
@@ -601,40 +1283,20 @@ model Expense {
   paidDate     DateTime?
   
   isRecurring  Boolean        @default(false)
-  recurringDay Int?           // Day of month for recurring
+  recurringDay Int?
+  
+  // Approval workflow
+  approvedBy   String?
+  approvedAt   DateTime?
+  
+  // Data provenance
+  dataSource      DataSource  @default(MANUAL)
+  lastUpdatedAt   DateTime    @default(now())
   
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   
   @@map("expenses")
-}
-
-model Debt {
-  id            String   @id @default(cuid())
-  propertyId    String?
-  property      Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-  
-  lender        String
-  loanType      String   // "Commercial Mortgage", "BTL Mortgage", "Development Loan"
-  
-  principal     Float
-  currentBalance Float
-  interestRate  Float    // Annual percentage
-  
-  monthlyPayment Float
-  
-  startDate     DateTime
-  maturityDate  DateTime
-  
-  isFixed       Boolean  @default(true)
-  fixedUntil    DateTime?
-  
-  notes         String?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@map("debts")
 }
 
 // ============================================
@@ -655,12 +1317,13 @@ model Alert {
   isRead       Boolean       @default(false)
   isDismissed  Boolean       @default(false)
   
-  // Auto-generated or manual
-  source       String?       // "SYSTEM", "USER", "API"
+  source       String?
   
-  // Link to related item
-  relatedType  String?       // "LEASE", "BOOKING", "EXPENSE", etc.
+  relatedType  String?
   relatedId    String?
+  
+  // AI evidence
+  aiSourceRecords String[]
   
   createdAt    DateTime      @default(now())
   
@@ -677,16 +1340,16 @@ model Forecast {
   date         DateTime @db.Date
   propertyId   String?
   
-  // Predicted values
   predictedRevenue   Float?
   predictedOccupancy Float?
   predictedCovers    Float?
   
-  // Confidence
-  confidenceLevel    Float?   // 0-1
+  confidenceLevel    Float?
   
-  // Model info
   modelVersion       String?
+  
+  // AI evidence
+  aiSourceRecords    String[]
   
   createdAt    DateTime @default(now())
   
@@ -703,19 +1366,21 @@ model CashPosition {
   
   date         DateTime @db.Date @unique
   
-  // Bank balances
   operatingBalance   Float @default(0)
   reserveBalance     Float @default(0)
   
-  // Today's movements
   inflows      Float    @default(0)
   outflows     Float    @default(0)
   
-  // Projected
   projected30Day     Float?
   projected90Day     Float?
   
   notes        String?
+  
+  // Data provenance
+  dataSource      DataSource      @default(MANUAL)
+  confidence      DataConfidence  @default(MEDIUM)
+  lastUpdatedAt   DateTime        @default(now())
   
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
