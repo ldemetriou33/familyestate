@@ -16,7 +16,7 @@ export async function getPortfolioOverview() {
     prisma.unit.findMany({
       include: {
         property: true,
-        rentRoll: {
+        rentRolls: {
           orderBy: { createdAt: 'desc' },
           take: 1,
         },
@@ -40,8 +40,8 @@ export async function getPortfolioOverview() {
   
   // Calculate monthly income from rent rolls
   const monthlyIncome = units.reduce((sum, u) => {
-    if (u.status === 'OCCUPIED' && u.rentRoll[0]) {
-      return sum + (u.rentRoll[0].amount || 0)
+    if (u.status === 'OCCUPIED' && u.rentRolls[0]) {
+      return sum + (u.rentRolls[0].amount || 0)
     }
     return sum + (u.status === 'OCCUPIED' ? u.currentRate : 0)
   }, 0)
@@ -252,7 +252,7 @@ export async function getResidentialData() {
     include: {
       units: {
         include: {
-          rentRoll: {
+          rentRolls: {
             orderBy: { dueDate: 'desc' },
             take: 1,
           },
@@ -281,14 +281,14 @@ export async function getResidentialData() {
   )
   const monthlyRent = allUnits
     .filter(u => u.status === 'OCCUPIED')
-    .reduce((sum, u) => sum + (u.rentRoll[0]?.amount || u.currentRate || 0), 0)
+    .reduce((sum, u) => sum + (u.rentRolls[0]?.amount || u.currentRate || 0), 0)
 
   // Arrears
   const unitsInArrears = allUnits.filter(u => 
-    u.rentRoll[0]?.status === 'OVERDUE'
+    u.rentRolls[0]?.status === 'OVERDUE'
   )
   const totalArrears = unitsInArrears.reduce((sum, u) => 
-    sum + (u.rentRoll[0]?.amount || 0), 0
+    sum + (u.rentRolls[0]?.amount || 0), 0
   )
 
   // Leases expiring soon (within 90 days)
@@ -312,8 +312,8 @@ export async function getResidentialData() {
         unitNumber: u.unitNumber,
         status: u.status,
         currentRate: u.currentRate,
-        tenant: u.rentRoll[0]?.tenantName || null,
-        rentStatus: u.rentRoll[0]?.status || null,
+        tenant: u.rentRolls[0]?.tenantName || null,
+        rentStatus: u.rentRolls[0]?.status || null,
         leaseEnd: u.leases[0]?.endDate || null,
       })),
     })),

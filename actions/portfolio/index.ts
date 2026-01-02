@@ -49,7 +49,7 @@ export async function getProperties() {
     include: {
       units: {
         include: {
-          rentRoll: {
+          rentRolls: {
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
@@ -80,7 +80,7 @@ export async function getPropertyById(id: string) {
     include: {
       units: {
         include: {
-          rentRoll: {
+          rentRolls: {
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
@@ -118,7 +118,7 @@ export async function getUnits(propertyId?: string) {
     where: propertyId ? { propertyId } : undefined,
     include: {
       property: true,
-      rentRoll: {
+      rentRolls: {
         orderBy: { createdAt: 'desc' },
         take: 1,
       },
