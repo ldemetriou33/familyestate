@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // ============================================
@@ -50,6 +49,7 @@ enum PaymentStatus {
 }
 
 enum Priority {
+  CRITICAL
   HIGH
   MEDIUM
   LOW
@@ -95,6 +95,58 @@ enum AlertCategory {
   OPERATIONAL
 }
 
+enum UserRole {
+  OWNER
+  GM
+  STAFF
+}
+
+enum TransactionCategory {
+  RENT_INCOME
+  HOTEL_REVENUE
+  CAFE_REVENUE
+  MORTGAGE_PAYMENT
+  UTILITIES
+  MAINTENANCE
+  PAYROLL
+  SUPPLIES
+  INSURANCE
+  TAXES
+  OTHER_INCOME
+  OTHER_EXPENSE
+}
+
+enum DocumentType {
+  GAS_CERTIFICATE
+  ELECTRICAL_CERTIFICATE
+  EPC
+  INSURANCE
+  LEASE_AGREEMENT
+  LICENSE
+  OTHER
+}
+
+// ============================================
+// USER PROFILE (Connected to Clerk)
+// ============================================
+
+model UserProfile {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  role      UserRole @default(STAFF)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  auditLogs AuditLog[]
+  
+  @@map("user_profiles")
+}
+
 // ============================================
 // CORE ENTITIES
 // ============================================
@@ -119,11 +171,15 @@ model Property {
   updatedAt   DateTime     @updatedAt
   
   // Relations
-  units       Unit[]
-  dailyLogs   DailyLog[]
-  expenses    Expense[]
-  debts       Debt[]
-  alerts      Alert[]
+  units            Unit[]
+  dailyLogs        DailyLog[]
+  expenses         Expense[]
+  debts            Debt[]
+  alerts           Alert[]
+  hotelMetrics     HotelMetric[]
+  cafeSales        CafeSales[]
+  documents        Document[]
+  transactions     FinancialTransaction[]
   
   @@map("properties")
 }
@@ -151,9 +207,209 @@ model Unit {
   // Relations
   bookings     Booking[]
   leases       Lease[]
+  rentRolls    RentRoll[]
   
   @@unique([propertyId, unitNumber])
   @@map("units")
+}
+
+// ============================================
+// THE "TRUTH" LAYER - Data Ingestion Models
+// ============================================
+
+// Bank Statement Transactions
+model FinancialTransaction {
+  id            String              @id @default(cuid())
+  propertyId    String?
+  property      Property?           @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  date          DateTime            @db.Date
+  amount        Float               // Positive = income, Negative = expense
+  category      TransactionCategory
+  description   String
+  
+  // Bank account info
+  bankAccountId String?
+  bankAccountName String?
+  reference     String?
+  
+  // Deduplication
+  externalId    String?             @unique // External reference for avoiding duplicates
+  
+  // Reconciliation
+  isReconciled  Boolean             @default(false)
+  
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  
+  @@index([date])
+  @@index([category])
+  @@map("financial_transactions")
+}
+
+// Hotel PMS Import Data
+model HotelMetric {
+  id           String   @id @default(cuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  date         DateTime @db.Date
+  
+  // Occupancy metrics
+  roomsAvailable  Int
+  roomsOccupied   Int
+  occupancy       Float    // Percentage 0-100
+  
+  // Revenue metrics
+  adr             Float    // Average Daily Rate
+  revpar          Float    // Revenue Per Available Room
+  totalRevenue    Float
+  roomRevenue     Float
+  otherRevenue    Float    @default(0)
+  
+  // Booking stats
+  arrivals        Int      @default(0)
+  departures      Int      @default(0)
+  stayovers       Int      @default(0)
+  
+  // Source tracking
+  source          String?  // "PMS", "MANUAL", "API"
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([propertyId, date])
+  @@index([date])
+  @@map("hotel_metrics")
+}
+
+// Cafe Daily Sales Data
+model CafeSales {
+  id           String   @id @default(cuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  date         DateTime @db.Date
+  
+  // Revenue
+  grossSales   Float
+  netSales     Float?
+  vat          Float?
+  
+  // Covers & Performance
+  covers       Int
+  avgSpend     Float?
+  
+  // Costs
+  labourCost   Float    @default(0)
+  foodCost     Float    @default(0)
+  wastage      Float    @default(0)
+  
+  // Calculated metrics
+  grossMargin  Float?   // Percentage
+  labourPercentage Float?
+  
+  // Source tracking
+  source       String?  // "POS", "MANUAL", "EPOS"
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@unique([propertyId, date])
+  @@index([date])
+  @@map("cafe_sales")
+}
+
+// Rent Roll - Current State of Residential Units
+model RentRoll {
+  id              String        @id @default(cuid())
+  unitId          String
+  unit            Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  
+  // Tenant info
+  tenantName      String
+  tenantEmail     String?
+  tenantPhone     String?
+  
+  // Lease terms
+  leaseStart      DateTime
+  leaseEnd        DateTime
+  monthlyRent     Float
+  
+  // Payment status
+  paymentStatus   PaymentStatus @default(PENDING)
+  arrearsAmount   Float         @default(0)
+  arrearsDays     Int           @default(0)
+  lastPaymentDate DateTime?
+  nextDueDate     DateTime
+  
+  // Compliance
+  depositHeld     Float         @default(0)
+  depositScheme   String?       // "DPS", "TDS", "MyDeposits"
+  
+  isActive        Boolean       @default(true)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  @@index([paymentStatus])
+  @@index([arrearsDays])
+  @@map("rent_rolls")
+}
+
+// ============================================
+// THE "BRAIN" LAYER - Operations
+// ============================================
+
+// Audit Log - Track all user actions
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String
+  user        UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  action      String      // "CREATE", "UPDATE", "DELETE", "VIEW"
+  entityType  String      // "BOOKING", "LEASE", "EXPENSE", etc.
+  entityId    String
+  
+  // Change details
+  oldValue    Json?
+  newValue    Json?
+  
+  // Context
+  ipAddress   String?
+  userAgent   String?
+  
+  timestamp   DateTime    @default(now())
+  
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+// Documents - Compliance & Legal
+model Document {
+  id           String       @id @default(cuid())
+  propertyId   String?
+  property     Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  type         DocumentType
+  name         String
+  url          String       // S3 or storage URL
+  
+  expiryDate   DateTime?
+  
+  // Alerts
+  alertBefore  Int          @default(30) // Days before expiry to alert
+  
+  // Metadata
+  uploadedBy   String?
+  notes        String?
+  
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  
+  @@index([expiryDate])
+  @@map("documents")
 }
 
 // ============================================
@@ -311,9 +567,16 @@ model ActionItem {
   category          String?      // "Maintenance", "Finance", "Legal", etc.
   relatedPropertyId String?
   
+  // Auto-generation source
+  source            String?      // "SYSTEM", "USER", "AI"
+  sourceEntityType  String?      // "RENT_ROLL", "CAFE_SALES", etc.
+  sourceEntityId    String?
+  
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
   
+  @@index([priority, status])
+  @@index([dueDate])
   @@map("action_items")
 }
 
