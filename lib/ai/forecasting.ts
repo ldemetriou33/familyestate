@@ -321,3 +321,61 @@ function generateCafeFactors(sales: number, dayOfWeek: number, trend: string): s
   return factors
 }
 
+/**
+ * Generate mock historical data and return occupancy forecast
+ * Helper function for components that don't have historical data
+ */
+export function getOccupancyForecast(currentOccupancy: number, daysAhead: number = 30): OccupancyForecast[] {
+  // Generate mock historical data based on current occupancy
+  const historicalData: { date: Date; occupancy: number; adr: number }[] = []
+  const today = new Date()
+  
+  for (let i = 30; i >= 1; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    
+    // Add some realistic variation
+    const dayOfWeek = date.getDay()
+    const weekendBoost = (dayOfWeek === 5 || dayOfWeek === 6) ? 0.1 : 0
+    const variation = (Math.random() - 0.5) * 0.15
+    
+    historicalData.push({
+      date,
+      occupancy: Math.min(1, Math.max(0.3, currentOccupancy + weekendBoost + variation)),
+      adr: 95 + Math.random() * 30,
+    })
+  }
+  
+  return forecastOccupancy(historicalData, daysAhead)
+}
+
+/**
+ * Generate mock historical data and return cafe revenue forecast
+ * Helper function for components that don't have historical data
+ */
+export function getCafeRevenueForecast(currentDailySales: number, daysAhead: number = 30): ForecastResult[] {
+  // Generate mock historical data based on current sales
+  const historicalData: { date: Date; sales: number; covers: number }[] = []
+  const today = new Date()
+  
+  for (let i = 30; i >= 1; i--) {
+    const date = new Date(today)
+    date.setDate(today.getDate() - i)
+    
+    // Add some realistic variation
+    const dayOfWeek = date.getDay()
+    const weekendBoost = (dayOfWeek === 0 || dayOfWeek === 6) ? 1.3 : 1
+    const variation = 0.85 + Math.random() * 0.3
+    
+    const sales = currentDailySales * weekendBoost * variation
+    const avgSpend = 12 + Math.random() * 5
+    
+    historicalData.push({
+      date,
+      sales,
+      covers: Math.round(sales / avgSpend),
+    })
+  }
+  
+  return forecastCafeRevenue(historicalData, daysAhead)
+}
