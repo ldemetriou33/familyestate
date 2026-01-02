@@ -43,7 +43,7 @@ export async function runActionEngine(): Promise<{
         source: action.source,
         sourceEntityType: action.sourceEntityType,
         sourceEntityId: action.sourceEntityId,
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
       },
     })
 
@@ -53,7 +53,7 @@ export async function runActionEngine(): Promise<{
           title: action.title,
           description: action.description,
           priority: action.priority,
-          status: 'PENDING',
+          workflowStatus: 'DRAFT',
           category: action.category,
           estimatedImpactGbp: action.estimatedImpactGbp,
           dueDate: action.dueDate,
@@ -304,7 +304,7 @@ export async function getDailyActionSummary() {
     // Get pending actions sorted by priority and impact
     prisma.actionItem.findMany({
       where: {
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
       },
       orderBy: [
         { priority: 'asc' }, // CRITICAL first
@@ -316,23 +316,23 @@ export async function getDailyActionSummary() {
     // Count critical actions
     prisma.actionItem.count({
       where: {
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
         priority: 'CRITICAL',
       },
     }),
 
-    // Count completed today
+    // Count completed today (VERIFIED or EXECUTED)
     prisma.actionItem.count({
       where: {
-        status: 'COMPLETED',
-        completedAt: { gte: today },
+        workflowStatus: { in: ['EXECUTED', 'VERIFIED'] },
+        executedAt: { gte: today },
       },
     }),
 
     // Sum of pending impact
     prisma.actionItem.aggregate({
       where: {
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
+        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
       },
       _sum: {
         estimatedImpactGbp: true,

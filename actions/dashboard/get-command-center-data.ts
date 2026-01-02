@@ -172,7 +172,7 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
           title: a.title,
           description: a.description,
           priority: a.priority as 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW',
-          status: a.status,
+          status: a.workflowStatus,
           category: a.category,
           estimatedImpactGbp: a.estimatedImpactGbp,
           dueDate: a.dueDate,
@@ -231,8 +231,8 @@ export async function completeAction(actionId: string) {
   await prisma.actionItem.update({
     where: { id: actionId },
     data: {
-      status: 'COMPLETED',
-      completedAt: new Date(),
+      workflowStatus: 'EXECUTED',
+      executedAt: new Date(),
     },
   })
 }
