@@ -1,5 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 
 const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)'])
 
@@ -9,7 +9,7 @@ const isClerkConfigured = !!(
   process.env.CLERK_SECRET_KEY
 )
 
-export default async function middleware(req: Request) {
+export default function middleware(req: NextRequest) {
   // If Clerk is not configured, allow all routes
   if (!isClerkConfigured) {
     return NextResponse.next()
