@@ -10,6 +10,7 @@ import { QuickActionsPanel } from '@/components/command-center/QuickActionsPanel
 import { ForecastChart } from '@/components/ui/charts/ForecastChart'
 import { AnomalyDetailModal } from '@/components/modals/AnomalyDetailModal'
 import { DataHealthWrapper, DataHealthIndicator } from '@/components/ui/DataHealthIndicator'
+import { AgentDashboard } from '@/components/agents'
 import { 
   cashPosition, 
   alerts, 
@@ -314,6 +315,9 @@ export default function CommandCenterSection() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Multi-Agent System Dashboard */}
+      <AgentDashboard />
     </div>
   )
 }

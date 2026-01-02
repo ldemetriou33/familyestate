@@ -3,6 +3,24 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "regions": ["lhr1"]
+  "regions": ["lhr1"],
+  "crons": [
+    {
+      "path": "/api/cron/agents?schedule=early",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/agents?schedule=morning",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/agents?schedule=hourly",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/agents?schedule=evening",
+      "schedule": "0 18 * * *"
+    }
+  ]
 }
 
