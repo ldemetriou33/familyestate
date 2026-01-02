@@ -10,6 +10,7 @@ import PortfolioSection from './sections/PortfolioSection'
 import FinanceSection from './sections/FinanceSection'
 import { SettingsPage } from './settings/SettingsPage'
 import { IntegrationsPage } from './integrations/IntegrationsPage'
+import { AIAssistant, AIFloatingButton } from './ai/AIAssistant'
 import { alerts } from '@/lib/mock-data/seed'
 
 export default function Dashboard() {
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState('appearance')
   const [integrationsOpen, setIntegrationsOpen] = useState(false)
+  const [aiOpen, setAiOpen] = useState(false)
 
   // Count critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed).length
@@ -35,6 +37,20 @@ export default function Dashboard() {
     }
     if (tab) setSettingsTab(tab)
     setSettingsOpen(true)
+  }
+
+  const handleAIAction = (action: string) => {
+    // Handle AI-suggested actions
+    if (action.toLowerCase().includes('integrations')) {
+      setIntegrationsOpen(true)
+      setAiOpen(false)
+    } else if (action.toLowerCase().includes('rate')) {
+      setActiveSection('hotel')
+      setAiOpen(false)
+    } else if (action.toLowerCase().includes('arrears') || action.toLowerCase().includes('reminder')) {
+      setActiveSection('portfolio')
+      setAiOpen(false)
+    }
   }
 
   const renderSection = () => {
@@ -102,6 +118,16 @@ export default function Dashboard() {
         isOpen={integrationsOpen}
         onClose={() => setIntegrationsOpen(false)}
       />
+
+      {/* AI Assistant */}
+      <AIAssistant 
+        isOpen={aiOpen} 
+        onClose={() => setAiOpen(false)}
+        onAction={handleAIAction}
+      />
+
+      {/* AI Floating Button */}
+      {!aiOpen && <AIFloatingButton onClick={() => setAiOpen(true)} />}
     </div>
   )
 }

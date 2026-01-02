@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import { useTheme, Theme, Density } from '@/contexts/ThemeContext'
 import { useIntegrations, IntegrationProvider } from '@/contexts/IntegrationsContext'
+import { useApprovals } from '@/contexts/ApprovalsContext'
 import { formatGBP } from '@/lib/utils'
 
 interface SettingsPageProps {
@@ -99,12 +100,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
     notifications, setNotifications 
   } = useTheme()
   const { integrations, connectIntegration, disconnectIntegration, syncIntegration, isConnecting } = useIntegrations()
-
-  // Approval thresholds state
-  const [approvalThresholds, setApprovalThresholds] = useState({
-    staff: 500,
-    gm: 5000,
-  })
+  const { thresholds: approvalThresholds, setThresholds: setApprovalThresholds, pendingApprovals } = useApprovals()
 
   if (!isOpen) return null
 
@@ -551,7 +547,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
                       max="2000"
                       step="100"
                       value={approvalThresholds.staff}
-                      onChange={(e) => setApprovalThresholds({ ...approvalThresholds, staff: parseInt(e.target.value) })}
+                      onChange={(e) => setApprovalThresholds({ ...approvalThresholds, staff: parseInt(e.target.value), owner: Infinity })}
                       className="w-full accent-[var(--accent)]"
                     />
                     <div className="flex justify-between text-xs text-[var(--text-muted)] mt-1">
@@ -574,7 +570,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
                       max="20000"
                       step="500"
                       value={approvalThresholds.gm}
-                      onChange={(e) => setApprovalThresholds({ ...approvalThresholds, gm: parseInt(e.target.value) })}
+                      onChange={(e) => setApprovalThresholds({ ...approvalThresholds, gm: parseInt(e.target.value), owner: Infinity })}
                       className="w-full accent-[var(--accent)]"
                     />
                     <div className="flex justify-between text-xs text-[var(--text-muted)] mt-1">
@@ -593,6 +589,37 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
                     </div>
                   </div>
                 </div>
+
+                {/* Pending Approvals */}
+                {pendingApprovals.filter(a => a.status === 'pending').length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-[var(--warning)]" />
+                      Pending Approvals ({pendingApprovals.filter(a => a.status === 'pending').length})
+                    </h4>
+                    <div className="space-y-2">
+                      {pendingApprovals.filter(a => a.status === 'pending').slice(0, 3).map(approval => (
+                        <div key={approval.id} className="p-3 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-primary)]">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-[var(--text-primary)]">{approval.title}</p>
+                              <p className="text-xs text-[var(--text-muted)]">
+                                {formatGBP(approval.amount)} • Requires {approval.requiredRole.toUpperCase()} approval
+                              </p>
+                            </div>
+                            <span className={`text-xs px-2 py-1 rounded ${
+                              approval.requiredRole === 'owner' ? 'bg-red-500/10 text-red-500' :
+                              approval.requiredRole === 'gm' ? 'bg-amber-500/10 text-amber-500' :
+                              'bg-green-500/10 text-green-500'
+                            }`}>
+                              {approval.requiredRole}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

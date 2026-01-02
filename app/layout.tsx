@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { IntegrationsProvider } from '@/contexts/IntegrationsContext'
+import { ApprovalsProvider } from '@/contexts/ApprovalsContext'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -29,7 +30,9 @@ export default function RootLayout({
         <body className={`${inter.className} density-comfortable`}>
           <ThemeProvider>
             <IntegrationsProvider>
-              {children}
+              <ApprovalsProvider>
+                {children}
+              </ApprovalsProvider>
             </IntegrationsProvider>
           </ThemeProvider>
         </body>

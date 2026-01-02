@@ -20,6 +20,7 @@ export interface Integration {
   connectedAt: Date | null
   email?: string
   error?: string
+  oauthUrl?: string
 }
 
 interface IntegrationsContextType {
@@ -30,6 +31,48 @@ interface IntegrationsContextType {
   isConnecting: IntegrationProvider | null
 }
 
+// OAuth URLs for real integrations
+const getOAuthUrl = (provider: IntegrationProvider): string => {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  
+  switch (provider) {
+    case 'xero':
+      return `${baseUrl}/api/integrations/xero`
+    case 'cloudbeds':
+      return `${baseUrl}/api/integrations/cloudbeds`
+    case 'square':
+      return `${baseUrl}/api/integrations/square`
+    case 'stripe':
+      return 'https://connect.stripe.com/oauth/authorize'
+    case 'quickbooks':
+      return 'https://appcenter.intuit.com/connect/oauth2'
+    case 'gocardless':
+      return 'https://connect.gocardless.com/oauth/authorize'
+    default:
+      return '#'
+  }
+}
+
+// Developer portal URLs
+const getDeveloperUrl = (provider: IntegrationProvider): string => {
+  switch (provider) {
+    case 'xero':
+      return 'https://developer.xero.com/app/manage'
+    case 'cloudbeds':
+      return 'https://hotels.cloudbeds.com/api/docs/'
+    case 'square':
+      return 'https://developer.squareup.com/apps'
+    case 'stripe':
+      return 'https://dashboard.stripe.com/settings/connect'
+    case 'quickbooks':
+      return 'https://developer.intuit.com/app/developer/myapps'
+    case 'gocardless':
+      return 'https://manage.gocardless.com/developers'
+    default:
+      return '#'
+  }
+}
+
 const defaultIntegrations: Integration[] = [
   {
     id: 'xero-1',
@@ -38,6 +81,7 @@ const defaultIntegrations: Integration[] = [
     status: 'disconnected',
     lastSync: null,
     connectedAt: null,
+    oauthUrl: getOAuthUrl('xero'),
   },
   {
     id: 'cloudbeds-1',
@@ -46,6 +90,7 @@ const defaultIntegrations: Integration[] = [
     status: 'disconnected',
     lastSync: null,
     connectedAt: null,
+    oauthUrl: getOAuthUrl('cloudbeds'),
   },
   {
     id: 'square-1',
@@ -54,6 +99,7 @@ const defaultIntegrations: Integration[] = [
     status: 'disconnected',
     lastSync: null,
     connectedAt: null,
+    oauthUrl: getOAuthUrl('square'),
   },
   {
     id: 'stripe-1',
@@ -62,6 +108,7 @@ const defaultIntegrations: Integration[] = [
     status: 'disconnected',
     lastSync: null,
     connectedAt: null,
+    oauthUrl: getOAuthUrl('stripe'),
   },
   {
     id: 'gocardless-1',
@@ -70,6 +117,7 @@ const defaultIntegrations: Integration[] = [
     status: 'disconnected',
     lastSync: null,
     connectedAt: null,
+    oauthUrl: getOAuthUrl('gocardless'),
   },
 ]
 
@@ -92,6 +140,35 @@ export function IntegrationsProvider({ children }: { children: ReactNode }) {
       }))
       setIntegrations(withDates)
     }
+
+    // Check for OAuth callback success
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const success = params.get('integration_success')
+      const error = params.get('integration_error')
+      
+      if (success) {
+        // Mark integration as connected
+        setIntegrations(prev => prev.map(i => {
+          if (i.provider === success) {
+            return {
+              ...i,
+              status: 'connected' as const,
+              connectedAt: new Date(),
+              email: `connected@${success}.com`,
+            }
+          }
+          return i
+        }))
+        // Clean URL
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+      
+      if (error) {
+        console.error('Integration error:', error)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
   }, [])
 
   // Save to localStorage when integrations change
@@ -102,22 +179,22 @@ export function IntegrationsProvider({ children }: { children: ReactNode }) {
   const connectIntegration = async (provider: IntegrationProvider) => {
     setIsConnecting(provider)
     
-    // Simulate OAuth flow
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    const integration = integrations.find(i => i.provider === provider)
     
-    setIntegrations(prev => prev.map(i => {
-      if (i.provider === provider) {
-        return {
-          ...i,
-          status: 'connected' as const,
-          connectedAt: new Date(),
-          email: `account@${provider}.com`,
-        }
-      }
-      return i
-    }))
+    // Open OAuth flow in current window or popup
+    const oauthUrl = getOAuthUrl(provider)
+    const developerUrl = getDeveloperUrl(provider)
     
-    setIsConnecting(null)
+    // Check if API credentials are configured by trying the OAuth endpoint
+    try {
+      // For real OAuth, redirect to the auth endpoint
+      // The endpoint will either redirect to the provider's OAuth or to their developer portal
+      window.location.href = oauthUrl
+    } catch (error) {
+      // If OAuth not configured, open developer portal
+      window.open(developerUrl, '_blank')
+      setIsConnecting(null)
+    }
   }
 
   const disconnectIntegration = async (id: string) => {
@@ -180,4 +257,3 @@ export function useIntegrations() {
   }
   return context
 }
-
