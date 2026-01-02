@@ -1,7 +1,8 @@
 // Abbey OS - AI Recommendation Engine
 // Generates intelligent action recommendations based on data analysis
 
-import { ActionItem, Priority, Anomaly } from '../types/abbey-os'
+import { ActionItem, Priority } from '../types/abbey-os'
+import { Anomaly } from './anomaly-detection'
 
 export interface AIRecommendation {
   id: string
