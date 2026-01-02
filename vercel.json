@@ -6,6 +6,10 @@
   "regions": ["lhr1"],
   "crons": [
     {
+      "path": "/api/cron/sync",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/agents?schedule=morning",
       "schedule": "0 9 * * *"
     },

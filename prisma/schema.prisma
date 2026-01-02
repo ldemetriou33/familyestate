@@ -560,6 +560,7 @@ model Property {
   alerts           Alert[]
   hotelMetrics     HotelMetric[]
   cafeSales        CafeSales[]
+  cafeTransactions CafeTransaction[]
   documents        Document[]
   transactions     FinancialTransaction[]
   pricingRules     PricingRule[]
@@ -1197,6 +1198,10 @@ model Booking {
   unitId       String
   unit         Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
   
+  // External system IDs (for webhook sync)
+  cloudbedsReservationId  String?   @unique
+  cloudbedsPropertyId     String?
+  
   guestName    String
   guestEmail   String?
   guestPhone   String?
@@ -1225,6 +1230,7 @@ model Booking {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   
+  @@index([cloudbedsReservationId])
   @@map("bookings")
 }
 
@@ -1627,4 +1633,102 @@ model EnergySummary {
   updatedAt    DateTime @updatedAt
   
   @@map("energy_summaries")
+}
+
+// ============================================
+// WEBHOOK INTEGRATION ENGINE
+// Zero-Data-Entry Strategy
+// ============================================
+
+enum WebhookProvider {
+  CLOUDBEDS
+  SQUARE
+  XERO
+  STRIPE
+  BANK
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+// Log every incoming webhook for debugging
+model IntegrationLog {
+  id           String         @id @default(cuid())
+  
+  provider     WebhookProvider
+  eventType    String          // e.g., "reservation_created", "payment.updated"
+  
+  // Raw data
+  payload      Json            // The full JSON payload
+  headers      Json?           // Request headers for debugging
+  signature    String?         // The signature header for verification
+  
+  // Processing result
+  status       WebhookStatus   @default(RECEIVED)
+  errorMessage String?
+  processedAt  DateTime?
+  
+  // Linked records (optional, for tracing)
+  linkedRecordType String?     // "Booking", "CafeTransaction", etc.
+  linkedRecordId   String?
+  
+  // Request metadata
+  ipAddress    String?
+  userAgent    String?
+  
+  createdAt    DateTime @default(now())
+  
+  @@index([provider, eventType])
+  @@index([status])
+  @@index([createdAt])
+  @@map("integration_logs")
+}
+
+// Individual cafe transactions from Square POS
+model CafeTransaction {
+  id           String   @id @default(cuid())
+  propertyId   String
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Square identifiers
+  squareOrderId     String   @unique
+  squarePaymentId   String?
+  squareLocationId  String?
+  
+  // Transaction details
+  timestamp         DateTime
+  
+  // Money breakdown (in pence/cents)
+  grossAmount       Int      // Total before discounts
+  discountAmount    Int      @default(0)
+  tipAmount         Int      @default(0)
+  taxAmount         Int      @default(0)
+  netAmount         Int      // Final amount after discounts, before tips
+  
+  // Order details
+  itemCount         Int      @default(0)
+  orderItems        Json?    // Array of line items
+  
+  // Payment details
+  paymentMethod     String?  // "CARD", "CASH", "GIFT_CARD"
+  cardBrand         String?  // "VISA", "MASTERCARD", etc.
+  
+  // Staff
+  employeeId        String?
+  employeeName      String?
+  
+  // Status
+  isRefunded        Boolean  @default(false)
+  refundAmount      Int      @default(0)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([timestamp])
+  @@index([propertyId, timestamp])
+  @@map("cafe_transactions")
 }
