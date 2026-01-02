@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Building2, Users, AlertTriangle, FileCheck, TrendingUp, TrendingDown, Home } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
@@ -8,6 +9,7 @@ import { formatGBP, formatUKDate, formatPercentage } from '@/lib/utils'
 import { units, leases, properties, portfolioMetrics, alerts } from '@/lib/mock-data/seed'
 
 export default function PortfolioSection() {
+  const router = useRouter()
   const residentialProperty = properties.find(p => p.type === 'RESIDENTIAL')
   const residentialUnits = units.filter(u => u.propertyId === residentialProperty?.id)
   
@@ -135,7 +137,11 @@ export default function PortfolioSection() {
                 }
 
                 return (
-                  <TableRow key={lease.id} className={hasArrears ? 'bg-bloomberg-danger/5' : ''}>
+                  <TableRow 
+                    key={lease.id} 
+                    className={`cursor-pointer hover:bg-[var(--bg-secondary)] transition-colors ${hasArrears ? 'bg-bloomberg-danger/5' : ''}`}
+                    onClick={() => router.push(`/dashboard/portfolio/units/${lease.unitId}`)}
+                  >
                     <TableCell>
                       <div>
                         <p className="font-semibold text-bloomberg-text">{lease.unit?.unitNumber}</p>
@@ -206,7 +212,11 @@ export default function PortfolioSection() {
           </CardHeader>
           <CardContent className="space-y-2">
             {residentialUnits.filter(u => u.status === 'VACANT').map(unit => (
-              <div key={unit.id} className="p-3 bg-bloomberg-darker rounded-lg">
+              <div 
+                key={unit.id} 
+                className="p-3 bg-bloomberg-darker rounded-lg cursor-pointer hover:bg-bloomberg-panel transition-colors"
+                onClick={() => router.push(`/dashboard/portfolio/units/${unit.id}`)}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-bloomberg-text">{unit.unitNumber}</p>
@@ -234,7 +244,11 @@ export default function PortfolioSection() {
             {residentialUnits.filter(u => u.status === 'MAINTENANCE').map(unit => {
               const alert = alerts.find(a => a.relatedId === unit.id)
               return (
-                <div key={unit.id} className="p-3 bg-bloomberg-danger/10 rounded-lg border border-bloomberg-danger/20">
+                <div 
+                  key={unit.id} 
+                  className="p-3 bg-bloomberg-danger/10 rounded-lg border border-bloomberg-danger/20 cursor-pointer hover:bg-bloomberg-danger/20 transition-colors"
+                  onClick={() => router.push(`/dashboard/portfolio/units/${unit.id}`)}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-bloomberg-text">{unit.unitNumber}</p>
@@ -258,7 +272,11 @@ export default function PortfolioSection() {
           </CardHeader>
           <CardContent className="space-y-2">
             {leasesWithUnits.filter(l => l.arrearsAmount > 0).map(lease => (
-              <div key={lease.id} className="p-3 bg-bloomberg-danger/10 rounded-lg border border-bloomberg-danger/20">
+              <div 
+                key={lease.id} 
+                className="p-3 bg-bloomberg-danger/10 rounded-lg border border-bloomberg-danger/20 cursor-pointer hover:bg-bloomberg-danger/20 transition-colors"
+                onClick={() => router.push(`/dashboard/portfolio/units/${lease.unitId}`)}
+              >
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-bloomberg-text">{lease.unit?.unitNumber}</p>

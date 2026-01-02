@@ -329,7 +329,11 @@ export default function FBSection() {
             </thead>
             <tbody className="divide-y divide-bloomberg-border">
               {outlets.map((outlet, index) => (
-                <tr key={index} className="hover:bg-bloomberg-darker transition-colors">
+                <tr 
+                  key={index} 
+                  className="hover:bg-bloomberg-darker transition-colors cursor-pointer"
+                  onClick={() => alert(`Opening ${outlet.name} details...`)}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm font-semibold text-bloomberg-text">{outlet.name}</span>
                   </td>

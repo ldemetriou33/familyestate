@@ -1,14 +1,20 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Hotel, Users, TrendingUp, Calendar, Bed, DollarSign, Sparkles, ArrowRight } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { formatGBP, formatUKDate } from '@/lib/utils'
 import { hotelMetrics, units, bookings, properties } from '@/lib/mock-data/seed'
+import { BookingCalendarModal } from '@/components/modals/BookingCalendarModal'
+import { RateManagerModal } from '@/components/modals/RateManagerModal'
 
 export default function HotelSection() {
   const router = useRouter()
+  const [calendarOpen, setCalendarOpen] = useState(false)
+  const [rateManagerOpen, setRateManagerOpen] = useState(false)
+  
   const hotelProperty = properties.find(p => p.type === 'HOTEL')
   const hotelUnits = units.filter(u => u.propertyId === hotelProperty?.id)
   
@@ -52,13 +58,15 @@ export default function HotelSection() {
           <ArrowRight className="w-4 h-4" />
         </button>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+          onClick={() => setCalendarOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
         >
           <Calendar className="w-4 h-4" />
           Booking Calendar
         </button>
         <button
-          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors"
+          onClick={() => setRateManagerOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
         >
           <DollarSign className="w-4 h-4" />
           Rate Manager
@@ -254,6 +262,16 @@ export default function HotelSection() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modals */}
+      <BookingCalendarModal 
+        isOpen={calendarOpen} 
+        onClose={() => setCalendarOpen(false)} 
+      />
+      <RateManagerModal 
+        isOpen={rateManagerOpen} 
+        onClose={() => setRateManagerOpen(false)} 
+      />
     </div>
   )
 }

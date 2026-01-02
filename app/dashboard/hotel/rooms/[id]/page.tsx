@@ -1,30 +1,22 @@
 'use client'
 
-import { use } from 'react'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { 
   ArrowLeft, 
   Bed, 
   User, 
   Calendar, 
   Clock, 
-  DollarSign,
   Wrench,
   ClipboardList,
-  AlertTriangle,
   CheckCircle,
   Phone,
-  Mail,
-  CreditCard
+  Mail
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatGBP, formatUKDate } from '@/lib/utils'
 import { units, bookings, properties } from '@/lib/mock-data/seed'
-
-interface PageProps {
-  params: Promise<{ id: string }>
-}
 
 // Mock maintenance history
 const maintenanceHistory = [
@@ -33,10 +25,17 @@ const maintenanceHistory = [
   { id: '3', date: new Date('2024-03-10'), type: 'Maintenance', description: 'HVAC filter change', cost: 25, status: 'COMPLETED' },
 ]
 
-export default function RoomDetailPage({ params }: PageProps) {
-  const { id } = use(params)
+export default function RoomDetailPage() {
   const router = useRouter()
+  const params = useParams()
+  const id = params?.id as string
+  
   const [activeTab, setActiveTab] = useState<'overview' | 'maintenance' | 'history'>('overview')
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const unit = units.find(u => u.id === id)
   const property = properties.find(p => p.id === unit?.propertyId)
@@ -56,6 +55,14 @@ export default function RoomDetailPage({ params }: PageProps) {
     b.unitId === id && 
     b.status === 'CHECKED_OUT'
   ).slice(0, 5)
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   if (!unit) {
     return (
@@ -89,7 +96,7 @@ export default function RoomDetailPage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => router.back()}
@@ -109,11 +116,11 @@ export default function RoomDetailPage({ params }: PageProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors">
+          <button className="px-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors text-sm">
             Edit Room
           </button>
           {unit.status === 'OCCUPIED' && (
-            <button className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">
+            <button className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm">
               Check Out
             </button>
           )}
@@ -150,7 +157,7 @@ export default function RoomDetailPage({ params }: PageProps) {
             <CardContent>
               {currentBooking ? (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg gap-4">
                     <div>
                       <p className="text-lg font-semibold text-[var(--text-primary)]">{currentBooking.guestName}</p>
                       <p className="text-sm text-[var(--text-muted)]">{currentBooking.guestEmail}</p>
@@ -247,14 +254,14 @@ export default function RoomDetailPage({ params }: PageProps) {
               {upcomingBookings.length > 0 ? (
                 <div className="space-y-3">
                   {upcomingBookings.map(booking => (
-                    <div key={booking.id} className="flex items-center justify-between p-3 bg-[var(--bg-secondary)] rounded-lg">
+                    <div key={booking.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-[var(--bg-secondary)] rounded-lg gap-2">
                       <div>
                         <p className="font-medium text-[var(--text-primary)]">{booking.guestName}</p>
                         <p className="text-xs text-[var(--text-muted)]">
                           {formatUKDate(new Date(booking.checkIn))} - {formatUKDate(new Date(booking.checkOut))}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-left sm:text-right">
                         <p className="font-medium text-[var(--success)]">{formatGBP(booking.totalPrice)}</p>
                         <p className="text-xs text-[var(--text-muted)]">{booking.channel}</p>
                       </div>
@@ -280,7 +287,7 @@ export default function RoomDetailPage({ params }: PageProps) {
           <CardContent>
             <div className="space-y-3">
               {maintenanceHistory.map(item => (
-                <div key={item.id} className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg gap-3">
                   <div className="flex items-center gap-4">
                     <div className={`p-2 rounded-lg ${
                       item.type === 'Repair' ? 'bg-amber-500/10' : 'bg-blue-500/10'
@@ -296,7 +303,7 @@ export default function RoomDetailPage({ params }: PageProps) {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-left sm:text-right">
                     <p className="font-medium text-[var(--text-primary)]">{formatGBP(item.cost)}</p>
                     <span className="text-xs px-2 py-0.5 bg-green-500/10 text-green-500 rounded">
                       {item.status}
@@ -327,14 +334,14 @@ export default function RoomDetailPage({ params }: PageProps) {
             {pastBookings.length > 0 ? (
               <div className="space-y-3">
                 {pastBookings.map(booking => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg">
+                  <div key={booking.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[var(--bg-secondary)] rounded-lg gap-2">
                     <div>
                       <p className="font-medium text-[var(--text-primary)]">{booking.guestName}</p>
                       <p className="text-xs text-[var(--text-muted)]">
                         {formatUKDate(new Date(booking.checkIn))} - {formatUKDate(new Date(booking.checkOut))}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="font-medium text-[var(--success)]">{formatGBP(booking.totalPrice)}</p>
                       <span className="text-xs text-[var(--text-muted)]">{booking.channel}</span>
                     </div>
@@ -350,4 +357,3 @@ export default function RoomDetailPage({ params }: PageProps) {
     </div>
   )
 }
-

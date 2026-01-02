@@ -476,15 +476,14 @@ export function DataHealthWrapper({
   className = '',
 }: DataHealthWrapperProps) {
   const positionClasses = {
-    'top-right': 'top-2 right-2',
-    'top-left': 'top-2 left-2',
-    'bottom-right': 'bottom-2 right-2',
-    'bottom-left': 'bottom-2 left-2',
+    'top-right': '-top-3 right-0',
+    'top-left': '-top-3 left-0',
+    'bottom-right': '-bottom-3 right-0',
+    'bottom-left': '-bottom-3 left-0',
   }
 
   return (
-    <div className={`relative ${className}`}>
-      {children}
+    <div className={`relative pt-4 ${className}`}>
       <div className={`absolute ${positionClasses[position]} z-10`}>
         <DataHealthIndicator
           lastUpdated={lastUpdated}
@@ -496,6 +495,7 @@ export function DataHealthWrapper({
           isRefreshing={isRefreshing}
         />
       </div>
+      {children}
     </div>
   )
 }
