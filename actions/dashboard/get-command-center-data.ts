@@ -69,65 +69,48 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Fetch all data in parallel
-  const [
-    cashPosition,
-    alerts,
-    actionSummary,
-    todayHotelMetric,
-    todayCafeSales,
-    rentRollStats,
-    unitStats,
-  ] = await Promise.all([
-    // Cash position
-    prisma.cashPosition.findFirst({
-      orderBy: { date: 'desc' },
-    }),
+  // Fetch data (separate queries for proper type inference)
+  const cashPosition = await prisma.cashPosition.findFirst({
+    orderBy: { date: 'desc' },
+  })
 
-    // Active alerts (not dismissed)
-    prisma.alert.findMany({
-      where: { isDismissed: false },
-      include: { property: { select: { name: true } } },
-      orderBy: [
-        { severity: 'asc' }, // CRITICAL first
-        { createdAt: 'desc' },
-      ],
-      take: 10,
-    }),
+  const alerts = await prisma.alert.findMany({
+    where: { isDismissed: false },
+    include: { property: { select: { name: true } } },
+    orderBy: [
+      { severity: 'asc' }, // CRITICAL first
+      { createdAt: 'desc' },
+    ],
+    take: 10,
+  })
 
-    // Action summary
-    getDailyActionSummary(),
+  const actionSummary = await getDailyActionSummary()
 
-    // Today's hotel metrics (get most recent)
-    prisma.hotelMetric.findFirst({
-      where: { date: { gte: today } },
-      orderBy: { date: 'desc' },
-    }),
+  const todayHotelMetric = await prisma.hotelMetric.findFirst({
+    where: { date: { gte: today } },
+    orderBy: { date: 'desc' },
+  })
 
-    // Today's cafe sales
-    prisma.cafeSales.findFirst({
-      where: { date: { gte: today } },
-      orderBy: { date: 'desc' },
-    }),
+  const todayCafeSales = await prisma.cafeSales.findFirst({
+    where: { date: { gte: today } },
+    orderBy: { date: 'desc' },
+  })
 
-    // Rent roll aggregates
-    prisma.rentRoll.aggregate({
-      where: { isActive: true },
-      _sum: {
-        monthlyRent: true,
-        arrearsAmount: true,
-      },
-      _count: {
-        _all: true,
-      },
-    }),
+  const rentRollStats = await prisma.rentRoll.aggregate({
+    where: { isActive: true },
+    _sum: {
+      monthlyRent: true,
+      arrearsAmount: true,
+    },
+    _count: {
+      _all: true,
+    },
+  })
 
-    // Unit stats
-    prisma.unit.groupBy({
-      by: ['status'],
-      _count: { _all: true },
-    }),
-  ])
+  const unitStats = await prisma.unit.groupBy({
+    by: ['status'],
+    _count: { _all: true },
+  })
 
   // Count arrears
   const arrearsCount = await prisma.rentRoll.count({
@@ -138,10 +121,9 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
   })
 
   // Calculate unit stats
-  type UnitStatGroup = { status: string; _count: { _all: number } }
-  const totalUnits = (unitStats as UnitStatGroup[]).reduce((sum, s) => sum + s._count._all, 0)
-  const occupiedUnits = (unitStats as UnitStatGroup[]).find(s => s.status === 'OCCUPIED')?._count._all || 0
-  const vacantUnits = (unitStats as UnitStatGroup[]).find(s => s.status === 'VACANT')?._count._all || 0
+  const totalUnits = unitStats.reduce((sum, s) => sum + s._count._all, 0)
+  const occupiedUnits = unitStats.find(s => s.status === 'OCCUPIED')?._count._all || 0
+  const vacantUnits = unitStats.find(s => s.status === 'VACANT')?._count._all || 0
 
   // Count critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL').length

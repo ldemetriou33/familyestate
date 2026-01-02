@@ -96,11 +96,10 @@ export async function getPortfolioData(): Promise<PortfolioData> {
   })
 
   // Calculate summaries
-  type UnitStatGroup = { status: string; _count: { _all: number } }
-  const totalUnits = (unitStats as UnitStatGroup[]).reduce((sum, s) => sum + s._count._all, 0)
-  const occupiedUnits = (unitStats as UnitStatGroup[]).find(s => s.status === 'OCCUPIED')?._count._all || 0
-  const vacantUnits = (unitStats as UnitStatGroup[]).find(s => s.status === 'VACANT')?._count._all || 0
-  const maintenanceUnits = (unitStats as UnitStatGroup[]).find(s => s.status === 'MAINTENANCE')?._count._all || 0
+  const totalUnits = unitStats.reduce((sum, s) => sum + s._count._all, 0)
+  const occupiedUnits = unitStats.find(s => s.status === 'OCCUPIED')?._count._all || 0
+  const vacantUnits = unitStats.find(s => s.status === 'VACANT')?._count._all || 0
+  const maintenanceUnits = unitStats.find(s => s.status === 'MAINTENANCE')?._count._all || 0
 
   const totalRentRoll = rentRolls.reduce((sum, r) => sum + r.monthlyRent, 0)
   const totalArrears = rentRolls.reduce((sum, r) => sum + r.arrearsAmount, 0)
