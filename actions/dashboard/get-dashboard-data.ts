@@ -352,9 +352,9 @@ export async function getFinanceData() {
     }),
     prisma.expense.findMany({
       where: {
-        date: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
+        createdAt: { gte: new Date(new Date().setDate(new Date().getDate() - 30)) },
       },
-      orderBy: { date: 'desc' },
+      orderBy: { createdAt: 'desc' },
     }),
     prisma.financialTransaction.findMany({
       orderBy: { date: 'desc' },
