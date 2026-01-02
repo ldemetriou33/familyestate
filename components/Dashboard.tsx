@@ -8,6 +8,7 @@ import HotelSection from './sections/HotelSection'
 import FBSection from './sections/FBSection'
 import PortfolioSection from './sections/PortfolioSection'
 import FinanceSection from './sections/FinanceSection'
+import LegalBrainSection from './sections/LegalBrainSection'
 import { SettingsPage } from './settings/SettingsPage'
 import { IntegrationsPage } from './integrations/IntegrationsPage'
 import { AIAssistant, AIFloatingButton } from './ai/AIAssistant'
@@ -65,6 +66,8 @@ export default function Dashboard() {
         return <PortfolioSection />
       case 'finance':
         return <FinanceSection />
+      case 'legal-brain':
+        return <LegalBrainSection />
       default:
         return <CommandCenterSection />
     }

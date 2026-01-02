@@ -35,11 +35,13 @@ const sectionTitles: Record<Section, string> = {
   'f&b': 'Food & Beverage',
   portfolio: 'Portfolio Management',
   finance: 'Finance & Debt',
+  'legal-brain': 'Legal Brain',
 }
 
 const sectionDescriptions: Record<Section, string> = {
   home: 'Overview of critical alerts, actions, and forecasts',
   hotel: 'Occupancy, bookings, and room management',
+  'legal-brain': 'AI-powered document analysis and legal reasoning',
   'f&b': 'Cafe sales, margins, and performance tracking',
   portfolio: 'Rent roll, arrears, and compliance',
   finance: 'Cashflow, debt schedule, and projections',

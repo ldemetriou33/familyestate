@@ -124,6 +124,15 @@ enum DocumentType {
   BOARD_PACK
   PERIOD_CLOSE
   OTHER
+  // Legal Brain Document Types
+  MORTGAGE
+  PLANNING_PERMISSION
+  RESTRICTIVE_COVENANT
+  CONTRACT
+  COMMERCIAL_LEASE
+  TITLE_DEED
+  SURVEY
+  VALUATION
 }
 
 // ============================================
@@ -860,6 +869,14 @@ model Document {
   uploadedBy   String?
   notes        String?
   
+  // ===== LEGAL BRAIN FIELDS (NEW) =====
+  summary      String?                 // AI-generated summary
+  isIndexed    Boolean      @default(false)  // Has been processed for RAG
+  indexedAt    DateTime?
+  pageCount    Int?
+  fileSize     Int?                    // In bytes
+  mimeType     String?
+  
   // Data provenance
   dataSource      DataSource  @default(MANUAL)
   lastUpdatedAt   DateTime    @default(now())
@@ -867,8 +884,45 @@ model Document {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   
+  // Relations
+  chunks       DocumentChunk[]
+  
   @@index([expiryDate])
+  @@index([type])
+  @@index([isIndexed])
   @@map("documents")
+}
+
+// ============================================
+// LEGAL BRAIN - VECTOR STORE (NEW)
+// ============================================
+
+model DocumentChunk {
+  id           String    @id @default(cuid())
+  documentId   String
+  document     Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  
+  // Content
+  content      String    // The actual text content of this chunk
+  
+  // Metadata
+  pageNumber   Int?
+  chunkIndex   Int       // Order within document
+  charStart    Int?      // Starting character position in original doc
+  charEnd      Int?      // Ending character position
+  
+  // Tokens (for context window management)
+  tokenCount   Int?
+  
+  // The embedding vector is stored in a separate table via raw SQL
+  // We'll use Supabase's pgvector extension
+  hasEmbedding Boolean   @default(false)
+  
+  createdAt    DateTime  @default(now())
+  
+  @@index([documentId])
+  @@index([hasEmbedding])
+  @@map("document_chunks")
 }
 
 // ============================================
