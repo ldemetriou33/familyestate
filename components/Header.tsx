@@ -15,17 +15,9 @@ import {
   Info,
   Check,
   ChevronRight,
-  Hotel,
   Building2,
-  UtensilsCrossed,
   Wallet,
-  FileText,
-  Download,
-  Link2,
-  Shield,
-  BellRing,
-  Monitor,
-  Database
+  FileText
 } from 'lucide-react'
 import { Section } from './Sidebar'
 import { alerts } from '@/lib/mock-data/seed'
@@ -34,6 +26,7 @@ interface HeaderProps {
   activeSection: Section
   onMenuClick?: () => void
   onNavigate?: (section: Section) => void
+  onOpenSettings?: (tab?: string) => void
 }
 
 const sectionTitles: Record<Section, string> = {
@@ -52,23 +45,20 @@ const sectionDescriptions: Record<Section, string> = {
   finance: 'Cashflow, debt schedule, and projections',
 }
 
-export default function Header({ activeSection, onMenuClick, onNavigate }: HeaderProps) {
+export default function Header({ activeSection, onMenuClick, onNavigate, onOpenSettings }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState<string>('--:--:--')
   const [currentDate, setCurrentDate] = useState<string>('')
   const [showNotifications, setShowNotifications] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
-  const [showSettings, setShowSettings] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
   const [selectedAlert, setSelectedAlert] = useState<typeof alerts[0] | null>(null)
   const [showAlertDetail, setShowAlertDetail] = useState(false)
   const [showAllNotifications, setShowAllNotifications] = useState(false)
-  const [showSettingsModal, setShowSettingsModal] = useState<string | null>(null)
   
   const notificationRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
-  const settingsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const updateTime = () => {
@@ -105,9 +95,6 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearch(false)
       }
-      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
-        setShowSettings(false)
-      }
     }
 
     document.addEventListener('mousedown', handleClickOutside)
@@ -129,35 +116,6 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
     setSelectedAlert(alert)
     setShowAlertDetail(true)
     setShowNotifications(false)
-  }
-
-  const handleSearchSelect = (type: string, item: string) => {
-    setShowSearch(false)
-    setSearchQuery('')
-    
-    // Navigate to appropriate section based on type
-    if (onNavigate) {
-      if (type === 'Property') {
-        if (item.toLowerCase().includes('hotel')) {
-          onNavigate('hotel')
-        } else if (item.toLowerCase().includes('cafe')) {
-          onNavigate('f&b')
-        } else {
-          onNavigate('portfolio')
-        }
-      } else if (type === 'Tenant') {
-        onNavigate('portfolio')
-      } else if (type === 'Action') {
-        onNavigate('home')
-      } else if (type === 'Finance') {
-        onNavigate('finance')
-      }
-    }
-  }
-
-  const handleSettingsClick = (setting: string) => {
-    setShowSettings(false)
-    setShowSettingsModal(setting)
   }
 
   const activeAlerts = alerts.filter(a => !a.isDismissed && !dismissedAlerts.has(a.id))
@@ -222,21 +180,21 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
 
   return (
     <>
-      <header className="h-14 md:h-16 border-b border-bloomberg-border bg-bloomberg-panel flex items-center justify-between px-3 md:px-6">
+      <header className="h-14 md:h-16 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)] flex items-center justify-between px-3 md:px-6">
         <div className="flex items-center gap-3 md:gap-6">
           {/* Mobile Menu Button */}
           <button 
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-bloomberg-darker rounded-lg transition-colors"
+            className="lg:hidden p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
           >
-            <Menu className="w-5 h-5 text-bloomberg-textMuted" />
+            <Menu className="w-5 h-5 text-[var(--text-muted)]" />
           </button>
           
           <div className="min-w-0">
-            <h2 className="text-base md:text-xl font-semibold text-bloomberg-text truncate">
+            <h2 className="text-base md:text-xl font-semibold text-[var(--text-primary)] truncate">
               {sectionTitles[activeSection]}
             </h2>
-            <p className="text-xs text-bloomberg-textMuted hidden sm:block truncate">
+            <p className="text-xs text-[var(--text-muted)] hidden sm:block truncate">
               {sectionDescriptions[activeSection]}
             </p>
           </div>
@@ -244,11 +202,11 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
         
         <div className="flex items-center gap-2 md:gap-4">
           {/* Date & Time */}
-          <div className="hidden sm:flex items-center gap-2 md:gap-3 px-2 md:px-4 py-1.5 md:py-2 bg-bloomberg-darker rounded-lg border border-bloomberg-border">
-            <Clock className="w-4 h-4 text-bloomberg-textMuted hidden md:block" />
+          <div className="hidden sm:flex items-center gap-2 md:gap-3 px-2 md:px-4 py-1.5 md:py-2 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-primary)]">
+            <Clock className="w-4 h-4 text-[var(--text-muted)] hidden md:block" />
             <div className="text-right">
-              <span className="text-xs md:text-sm font-mono text-bloomberg-text block">{currentTime}</span>
-              <span className="text-xs text-bloomberg-textMuted hidden md:block">{currentDate}</span>
+              <span className="text-xs md:text-sm font-mono text-[var(--text-primary)] block">{currentTime}</span>
+              <span className="text-xs text-[var(--text-muted)] hidden md:block">{currentDate}</span>
             </div>
           </div>
           
@@ -256,32 +214,32 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
           <button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="hidden md:block p-2 hover:bg-bloomberg-darker rounded-lg transition-colors disabled:opacity-50" 
+            className="hidden md:block p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors disabled:opacity-50" 
             title="Refresh Data"
           >
-            <RefreshCw className={`w-5 h-5 text-bloomberg-textMuted hover:text-bloomberg-accent transition-colors ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-5 h-5 text-[var(--text-muted)] hover:text-[var(--accent)] transition-colors ${isRefreshing ? 'animate-spin' : ''}`} />
           </button>
 
           {/* Search */}
           <div className="relative hidden md:block" ref={searchRef}>
             <button 
               onClick={() => setShowSearch(!showSearch)}
-              className="p-2 hover:bg-bloomberg-darker rounded-lg transition-colors"
+              className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
             >
-              <Search className="w-5 h-5 text-bloomberg-textMuted" />
+              <Search className="w-5 h-5 text-[var(--text-muted)]" />
             </button>
 
             {showSearch && (
-              <div className="absolute right-0 top-full mt-2 w-80 bg-bloomberg-darker border border-bloomberg-border rounded-lg shadow-xl z-50">
-                <div className="p-3 border-b border-bloomberg-border">
+              <div className="absolute right-0 top-full mt-2 w-80 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg shadow-xl z-50">
+                <div className="p-3 border-b border-[var(--border-primary)]">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bloomberg-textMuted" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                     <input
                       type="text"
                       placeholder="Search properties, tenants, actions..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-sm text-bloomberg-text placeholder:text-bloomberg-textMuted focus:outline-none focus:border-bloomberg-accent"
+                      className="w-full pl-10 pr-4 py-2 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
                       autoFocus
                     />
                   </div>
@@ -290,26 +248,26 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                 <div className="max-h-64 overflow-y-auto">
                   {searchQuery === '' ? (
                     <div className="p-2">
-                      <p className="text-xs font-semibold text-bloomberg-textMuted px-2 mb-2">Quick Navigation</p>
+                      <p className="text-xs font-semibold text-[var(--text-muted)] px-2 mb-2">Quick Navigation</p>
                       {searchItems.map(category => {
                         const Icon = category.icon
                         return (
                           <div key={category.type} className="mb-2">
-                            <p className="text-xs text-bloomberg-textMuted px-2 py-1 flex items-center gap-2">
+                            <p className="text-xs text-[var(--text-muted)] px-2 py-1 flex items-center gap-2">
                               <Icon className="w-3 h-3" />
                               {category.type}
                             </p>
                             {category.items.slice(0, 2).map(item => (
                               <button
                                 key={item.name}
-                                className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center justify-between"
+                                className="w-full px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded-lg flex items-center justify-between"
                                 onClick={() => {
                                   if (onNavigate) onNavigate(item.section)
                                   setShowSearch(false)
                                 }}
                               >
                                 <span>{item.name}</span>
-                                <ChevronRight className="w-4 h-4 text-bloomberg-textMuted" />
+                                <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                               </button>
                             ))}
                           </div>
@@ -317,7 +275,7 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                       })}
                     </div>
                   ) : filteredSearchItems.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-bloomberg-textMuted">
+                    <div className="p-4 text-center text-sm text-[var(--text-muted)]">
                       No results found for &quot;{searchQuery}&quot;
                     </div>
                   ) : (
@@ -325,14 +283,14 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                       const Icon = category.icon
                       return (
                         <div key={category.type} className="p-2">
-                          <p className="text-xs font-semibold text-bloomberg-textMuted px-2 mb-1 flex items-center gap-2">
+                          <p className="text-xs font-semibold text-[var(--text-muted)] px-2 mb-1 flex items-center gap-2">
                             <Icon className="w-3 h-3" />
                             {category.type}
                           </p>
                           {category.items.map(item => (
                             <button
                               key={item.name}
-                              className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center justify-between"
+                              className="w-full px-3 py-2 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] rounded-lg flex items-center justify-between"
                               onClick={() => {
                                 if (onNavigate) onNavigate(item.section)
                                 setShowSearch(false)
@@ -340,7 +298,7 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                               }}
                             >
                               <span>{item.name}</span>
-                              <ChevronRight className="w-4 h-4 text-bloomberg-textMuted" />
+                              <ChevronRight className="w-4 h-4 text-[var(--text-muted)]" />
                             </button>
                           ))}
                         </div>
@@ -356,9 +314,9 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
           <div className="relative" ref={notificationRef}>
             <button 
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 hover:bg-bloomberg-darker rounded-lg transition-colors relative"
+              className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors relative"
             >
-              <Bell className="w-5 h-5 text-bloomberg-textMuted" />
+              <Bell className="w-5 h-5 text-[var(--text-muted)]" />
               {activeAlerts.length > 0 && (
                 <span className={`absolute top-1 right-1 min-w-[18px] h-[18px] flex items-center justify-center text-xs font-bold rounded-full ${
                   criticalCount > 0 ? 'bg-red-500' : 'bg-amber-500'
@@ -369,25 +327,25 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-bloomberg-darker border border-bloomberg-border rounded-lg shadow-xl z-50">
-                <div className="p-3 border-b border-bloomberg-border flex items-center justify-between">
-                  <h3 className="font-semibold text-bloomberg-text">Notifications</h3>
+              <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-lg shadow-xl z-50">
+                <div className="p-3 border-b border-[var(--border-primary)] flex items-center justify-between">
+                  <h3 className="font-semibold text-[var(--text-primary)]">Notifications</h3>
                   {activeAlerts.length > 0 && (
-                    <span className="text-xs text-bloomberg-textMuted">{activeAlerts.length} unread</span>
+                    <span className="text-xs text-[var(--text-muted)]">{activeAlerts.length} unread</span>
                   )}
                 </div>
 
                 <div className="max-h-80 overflow-y-auto">
                   {activeAlerts.length === 0 ? (
                     <div className="p-8 text-center">
-                      <Check className="w-8 h-8 text-bloomberg-success mx-auto mb-2" />
-                      <p className="text-sm text-bloomberg-textMuted">All caught up!</p>
+                      <Check className="w-8 h-8 text-[var(--success)] mx-auto mb-2" />
+                      <p className="text-sm text-[var(--text-muted)]">All caught up!</p>
                     </div>
                   ) : (
                     activeAlerts.slice(0, 8).map(alert => (
                       <div 
                         key={alert.id}
-                        className={`p-3 border-b border-bloomberg-border hover:bg-bloomberg-panel transition-colors cursor-pointer ${
+                        className={`p-3 border-b border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer ${
                           alert.severity === 'CRITICAL' ? 'bg-red-500/5' : ''
                         }`}
                         onClick={() => handleViewAlertDetails(alert)}
@@ -395,9 +353,9 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                         <div className="flex items-start gap-3">
                           {getSeverityIcon(alert.severity)}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-bloomberg-text truncate">{alert.title}</p>
-                            <p className="text-xs text-bloomberg-textMuted mt-0.5 line-clamp-2">{alert.message}</p>
-                            <p className="text-xs text-bloomberg-textMuted mt-1">
+                            <p className="text-sm font-medium text-[var(--text-primary)] truncate">{alert.title}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-0.5 line-clamp-2">{alert.message}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-1">
                               {new Date(alert.createdAt).toLocaleString('en-GB', { 
                                 day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
                               })}
@@ -408,9 +366,9 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                               e.stopPropagation()
                               handleDismissAlert(alert.id)
                             }}
-                            className="p-1 hover:bg-bloomberg-darker rounded"
+                            className="p-1 hover:bg-[var(--bg-tertiary)] rounded"
                           >
-                            <X className="w-3 h-3 text-bloomberg-textMuted" />
+                            <X className="w-3 h-3 text-[var(--text-muted)]" />
                           </button>
                         </div>
                       </div>
@@ -419,9 +377,9 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                 </div>
 
                 {activeAlerts.length > 0 && (
-                  <div className="p-2 border-t border-bloomberg-border">
+                  <div className="p-2 border-t border-[var(--border-primary)]">
                     <button 
-                      className="w-full py-2 text-sm text-bloomberg-accent hover:underline"
+                      className="w-full py-2 text-sm text-[var(--accent)] hover:underline"
                       onClick={() => {
                         setShowAllNotifications(true)
                         setShowNotifications(false)
@@ -436,76 +394,21 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
           </div>
           
           {/* Settings */}
-          <div className="relative hidden md:block" ref={settingsRef}>
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 hover:bg-bloomberg-darker rounded-lg transition-colors"
-            >
-              <Settings className="w-5 h-5 text-bloomberg-textMuted" />
-            </button>
-
-            {showSettings && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-bloomberg-darker border border-bloomberg-border rounded-lg shadow-xl z-50">
-                <div className="p-3 border-b border-bloomberg-border">
-                  <h3 className="font-semibold text-bloomberg-text">Settings</h3>
-                </div>
-                <div className="p-2">
-                  <button 
-                    onClick={() => handleSettingsClick('notifications')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <BellRing className="w-4 h-4 text-bloomberg-textMuted" />
-                    Notification Preferences
-                  </button>
-                  <button 
-                    onClick={() => handleSettingsClick('display')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <Monitor className="w-4 h-4 text-bloomberg-textMuted" />
-                    Display Settings
-                  </button>
-                  <button 
-                    onClick={() => handleSettingsClick('data')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <Database className="w-4 h-4 text-bloomberg-textMuted" />
-                    Data Refresh Rate
-                  </button>
-                  <button 
-                    onClick={() => handleSettingsClick('export')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <Download className="w-4 h-4 text-bloomberg-textMuted" />
-                    Export Data
-                  </button>
-                  <div className="border-t border-bloomberg-border my-2"></div>
-                  <button 
-                    onClick={() => handleSettingsClick('integrations')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <Link2 className="w-4 h-4 text-bloomberg-textMuted" />
-                    Integrations
-                  </button>
-                  <button 
-                    onClick={() => handleSettingsClick('approvals')}
-                    className="w-full px-3 py-2 text-left text-sm text-bloomberg-text hover:bg-bloomberg-panel rounded-lg flex items-center gap-3"
-                  >
-                    <Shield className="w-4 h-4 text-bloomberg-textMuted" />
-                    Approval Thresholds
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          <button 
+            onClick={() => onOpenSettings?.('appearance')}
+            className="hidden md:block p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+          >
+            <Settings className="w-5 h-5 text-[var(--text-muted)]" />
+          </button>
 
           {/* User Avatar */}
-          <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-bloomberg-border">
-            <div className="w-8 h-8 rounded-full bg-bloomberg-accent/20 flex items-center justify-center">
-              <User className="w-4 h-4 text-bloomberg-accent" />
+          <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-[var(--border-primary)]">
+            <div className="w-8 h-8 rounded-full bg-[var(--accent)]/20 flex items-center justify-center">
+              <User className="w-4 h-4 text-[var(--accent)]" />
             </div>
             <div>
-              <p className="text-sm font-medium text-bloomberg-text">Admin</p>
-              <p className="text-xs text-bloomberg-textMuted">Estate Manager</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">Admin</p>
+              <p className="text-xs text-[var(--text-muted)]">Estate Manager</p>
             </div>
           </div>
         </div>
@@ -514,31 +417,31 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
       {/* Alert Detail Modal */}
       {showAlertDetail && selectedAlert && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-bloomberg-darker border border-bloomberg-border rounded-xl shadow-2xl w-full max-w-lg">
-            <div className="p-4 border-b border-bloomberg-border flex items-center justify-between">
+          <div className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl shadow-2xl w-full max-w-lg">
+            <div className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {getSeverityIcon(selectedAlert.severity)}
-                <h3 className="font-semibold text-bloomberg-text">Alert Details</h3>
+                <h3 className="font-semibold text-[var(--text-primary)]">Alert Details</h3>
               </div>
               <button 
                 onClick={() => setShowAlertDetail(false)}
-                className="p-1 hover:bg-bloomberg-panel rounded"
+                className="p-1 hover:bg-[var(--bg-secondary)] rounded"
               >
-                <X className="w-5 h-5 text-bloomberg-textMuted" />
+                <X className="w-5 h-5 text-[var(--text-muted)]" />
               </button>
             </div>
             <div className="p-4 space-y-4">
               <div>
-                <p className="text-sm text-bloomberg-textMuted">Title</p>
-                <p className="text-lg font-semibold text-bloomberg-text">{selectedAlert.title}</p>
+                <p className="text-sm text-[var(--text-muted)]">Title</p>
+                <p className="text-lg font-semibold text-[var(--text-primary)]">{selectedAlert.title}</p>
               </div>
               <div>
-                <p className="text-sm text-bloomberg-textMuted">Message</p>
-                <p className="text-bloomberg-text">{selectedAlert.message}</p>
+                <p className="text-sm text-[var(--text-muted)]">Message</p>
+                <p className="text-[var(--text-primary)]">{selectedAlert.message}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-bloomberg-textMuted">Severity</p>
+                  <p className="text-sm text-[var(--text-muted)]">Severity</p>
                   <span className={`inline-block px-2 py-1 text-sm rounded ${
                     selectedAlert.severity === 'CRITICAL' ? 'bg-red-500/10 text-red-500' :
                     selectedAlert.severity === 'WARNING' ? 'bg-amber-500/10 text-amber-500' :
@@ -548,13 +451,13 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-bloomberg-textMuted">Category</p>
-                  <p className="text-bloomberg-text">{selectedAlert.category}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Category</p>
+                  <p className="text-[var(--text-primary)]">{selectedAlert.category}</p>
                 </div>
               </div>
               <div>
-                <p className="text-sm text-bloomberg-textMuted">Created</p>
-                <p className="text-bloomberg-text">
+                <p className="text-sm text-[var(--text-muted)]">Created</p>
+                <p className="text-[var(--text-primary)]">
                   {new Date(selectedAlert.createdAt).toLocaleString('en-GB', {
                     weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
                     hour: '2-digit', minute: '2-digit'
@@ -562,13 +465,13 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                 </p>
               </div>
             </div>
-            <div className="p-4 border-t border-bloomberg-border flex gap-3">
+            <div className="p-4 border-t border-[var(--border-primary)] flex gap-3">
               <button
                 onClick={() => {
                   handleDismissAlert(selectedAlert.id)
                   setShowAlertDetail(false)
                 }}
-                className="flex-1 py-2 px-4 bg-bloomberg-panel text-bloomberg-text rounded-lg hover:bg-bloomberg-border transition-colors"
+                className="flex-1 py-2 px-4 bg-[var(--bg-secondary)] text-[var(--text-primary)] rounded-lg hover:bg-[var(--bg-hover)] transition-colors"
               >
                 Dismiss
               </button>
@@ -582,7 +485,7 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                   }
                   setShowAlertDetail(false)
                 }}
-                className="flex-1 py-2 px-4 bg-bloomberg-accent text-white rounded-lg hover:bg-bloomberg-accent/80 transition-colors"
+                className="flex-1 py-2 px-4 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
               >
                 Take Action
               </button>
@@ -594,21 +497,21 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
       {/* All Notifications Modal */}
       {showAllNotifications && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-bloomberg-darker border border-bloomberg-border rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
-            <div className="p-4 border-b border-bloomberg-border flex items-center justify-between">
-              <h3 className="font-semibold text-bloomberg-text">All Notifications</h3>
+          <div className="bg-[var(--bg-tertiary)] border border-[var(--border-primary)] rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-[var(--border-primary)] flex items-center justify-between">
+              <h3 className="font-semibold text-[var(--text-primary)]">All Notifications</h3>
               <button 
                 onClick={() => setShowAllNotifications(false)}
-                className="p-1 hover:bg-bloomberg-panel rounded"
+                className="p-1 hover:bg-[var(--bg-secondary)] rounded"
               >
-                <X className="w-5 h-5 text-bloomberg-textMuted" />
+                <X className="w-5 h-5 text-[var(--text-muted)]" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
               {alerts.map(alert => (
                 <div 
                   key={alert.id}
-                  className={`p-4 border-b border-bloomberg-border hover:bg-bloomberg-panel transition-colors cursor-pointer ${
+                  className={`p-4 border-b border-[var(--border-primary)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer ${
                     dismissedAlerts.has(alert.id) ? 'opacity-50' : ''
                   } ${alert.severity === 'CRITICAL' && !dismissedAlerts.has(alert.id) ? 'bg-red-500/5' : ''}`}
                   onClick={() => {
@@ -620,213 +523,18 @@ export default function Header({ activeSection, onMenuClick, onNavigate }: Heade
                   <div className="flex items-start gap-3">
                     {getSeverityIcon(alert.severity)}
                     <div className="flex-1">
-                      <p className="font-medium text-bloomberg-text">{alert.title}</p>
-                      <p className="text-sm text-bloomberg-textMuted mt-1">{alert.message}</p>
-                      <p className="text-xs text-bloomberg-textMuted mt-2">
+                      <p className="font-medium text-[var(--text-primary)]">{alert.title}</p>
+                      <p className="text-sm text-[var(--text-muted)] mt-1">{alert.message}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-2">
                         {new Date(alert.createdAt).toLocaleString('en-GB')}
                       </p>
                     </div>
                     {dismissedAlerts.has(alert.id) && (
-                      <span className="text-xs text-bloomberg-textMuted">Dismissed</span>
+                      <span className="text-xs text-[var(--text-muted)]">Dismissed</span>
                     )}
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-bloomberg-darker border border-bloomberg-border rounded-xl shadow-2xl w-full max-w-lg">
-            <div className="p-4 border-b border-bloomberg-border flex items-center justify-between">
-              <h3 className="font-semibold text-bloomberg-text">
-                {showSettingsModal === 'notifications' && 'Notification Preferences'}
-                {showSettingsModal === 'display' && 'Display Settings'}
-                {showSettingsModal === 'data' && 'Data Refresh Rate'}
-                {showSettingsModal === 'export' && 'Export Data'}
-                {showSettingsModal === 'integrations' && 'Integrations'}
-                {showSettingsModal === 'approvals' && 'Approval Thresholds'}
-              </h3>
-              <button 
-                onClick={() => setShowSettingsModal(null)}
-                className="p-1 hover:bg-bloomberg-panel rounded"
-              >
-                <X className="w-5 h-5 text-bloomberg-textMuted" />
-              </button>
-            </div>
-            <div className="p-4">
-              {showSettingsModal === 'notifications' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div>
-                      <p className="font-medium text-bloomberg-text">Critical Alerts</p>
-                      <p className="text-xs text-bloomberg-textMuted">Receive immediate notifications</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 accent-bloomberg-accent" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div>
-                      <p className="font-medium text-bloomberg-text">Warning Alerts</p>
-                      <p className="text-xs text-bloomberg-textMuted">Receive daily digest</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 accent-bloomberg-accent" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div>
-                      <p className="font-medium text-bloomberg-text">Email Notifications</p>
-                      <p className="text-xs text-bloomberg-textMuted">Send to admin@abbey-os.com</p>
-                    </div>
-                    <input type="checkbox" className="w-5 h-5 accent-bloomberg-accent" />
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div>
-                      <p className="font-medium text-bloomberg-text">Quiet Hours</p>
-                      <p className="text-xs text-bloomberg-textMuted">22:00 - 07:00</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="w-5 h-5 accent-bloomberg-accent" />
-                  </div>
-                </div>
-              )}
-
-              {showSettingsModal === 'display' && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-bloomberg-text mb-2">Theme</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button className="p-3 bg-bloomberg-accent/20 border-2 border-bloomberg-accent rounded-lg text-sm text-bloomberg-text">
-                        Dark (Bloomberg)
-                      </button>
-                      <button className="p-3 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-sm text-bloomberg-textMuted">
-                        Light
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium text-bloomberg-text mb-2">Density</p>
-                    <select className="w-full p-2 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-bloomberg-text">
-                      <option>Comfortable</option>
-                      <option>Compact</option>
-                      <option>Dense</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              {showSettingsModal === 'data' && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="font-medium text-bloomberg-text mb-2">Auto-refresh Interval</p>
-                    <select className="w-full p-2 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-bloomberg-text">
-                      <option>Every 5 minutes</option>
-                      <option>Every 15 minutes</option>
-                      <option>Every 30 minutes</option>
-                      <option>Every hour</option>
-                      <option>Manual only</option>
-                    </select>
-                  </div>
-                  <div className="p-3 bg-bloomberg-panel rounded-lg">
-                    <p className="text-sm text-bloomberg-textMuted">Last data refresh</p>
-                    <p className="text-bloomberg-text">{new Date().toLocaleString('en-GB')}</p>
-                  </div>
-                </div>
-              )}
-
-              {showSettingsModal === 'export' && (
-                <div className="space-y-4">
-                  <button className="w-full p-3 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-left hover:border-bloomberg-accent transition-colors">
-                    <p className="font-medium text-bloomberg-text">Export Cash Position</p>
-                    <p className="text-xs text-bloomberg-textMuted">Download as CSV</p>
-                  </button>
-                  <button className="w-full p-3 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-left hover:border-bloomberg-accent transition-colors">
-                    <p className="font-medium text-bloomberg-text">Export Rent Roll</p>
-                    <p className="text-xs text-bloomberg-textMuted">Download as CSV</p>
-                  </button>
-                  <button className="w-full p-3 bg-bloomberg-panel border border-bloomberg-border rounded-lg text-left hover:border-bloomberg-accent transition-colors">
-                    <p className="font-medium text-bloomberg-text">Export Full Report</p>
-                    <p className="text-xs text-bloomberg-textMuted">Download as PDF</p>
-                  </button>
-                </div>
-              )}
-
-              {showSettingsModal === 'integrations' && (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                        <span className="text-blue-500 font-bold">X</span>
-                      </div>
-                      <div>
-                        <p className="font-medium text-bloomberg-text">Xero</p>
-                        <p className="text-xs text-bloomberg-textMuted">Accounting</p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">Not Connected</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center">
-                        <Hotel className="w-5 h-5 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-bloomberg-text">Cloudbeds</p>
-                        <p className="text-xs text-bloomberg-textMuted">Hotel PMS</p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">Not Connected</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-orange-500/10 rounded-lg flex items-center justify-center">
-                        <UtensilsCrossed className="w-5 h-5 text-orange-500" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-bloomberg-text">Square</p>
-                        <p className="text-xs text-bloomberg-textMuted">Cafe POS</p>
-                      </div>
-                    </div>
-                    <span className="text-xs px-2 py-1 bg-amber-500/10 text-amber-500 rounded">Not Connected</span>
-                  </div>
-                  <button className="w-full py-2 text-sm text-bloomberg-accent hover:underline">
-                    + Add Integration
-                  </button>
-                </div>
-              )}
-
-              {showSettingsModal === 'approvals' && (
-                <div className="space-y-4">
-                  <div className="p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-bloomberg-text">Staff</p>
-                      <span className="text-sm text-bloomberg-textMuted">Up to £500</span>
-                    </div>
-                    <input type="range" min="0" max="1000" defaultValue="500" className="w-full accent-bloomberg-accent" />
-                  </div>
-                  <div className="p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-bloomberg-text">General Manager</p>
-                      <span className="text-sm text-bloomberg-textMuted">Up to £5,000</span>
-                    </div>
-                    <input type="range" min="0" max="10000" defaultValue="5000" className="w-full accent-bloomberg-accent" />
-                  </div>
-                  <div className="p-3 bg-bloomberg-panel rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <p className="font-medium text-bloomberg-text">Owner</p>
-                      <span className="text-sm text-bloomberg-success">Unlimited</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="p-4 border-t border-bloomberg-border">
-              <button
-                onClick={() => setShowSettingsModal(null)}
-                className="w-full py-2 px-4 bg-bloomberg-accent text-white rounded-lg hover:bg-bloomberg-accent/80 transition-colors"
-              >
-                Save Changes
-              </button>
             </div>
           </div>
         </div>

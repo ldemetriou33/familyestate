@@ -4,11 +4,153 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-:root {
+/* ========================================
+   THEME SYSTEM - CSS Variables
+   ======================================== */
+
+/* Dark Theme (Default) */
+:root,
+[data-theme="dark"] {
+  /* Background Colors */
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-panel: #21262d;
+  --bg-hover: #30363d;
+  
+  /* Text Colors */
+  --text-primary: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --text-inverse: #0d1117;
+  
+  /* Border Colors */
+  --border-primary: #30363d;
+  --border-secondary: #21262d;
+  --border-focus: #58a6ff;
+  
+  /* Accent Colors */
+  --accent: #58a6ff;
+  --accent-hover: #79b8ff;
+  --accent-muted: #1f6feb;
+  
+  /* Status Colors */
+  --success: #3fb950;
+  --success-bg: rgba(63, 185, 80, 0.1);
+  --warning: #d29922;
+  --warning-bg: rgba(210, 153, 34, 0.1);
+  --danger: #f85149;
+  --danger-bg: rgba(248, 81, 73, 0.1);
+  --info: #58a6ff;
+  --info-bg: rgba(88, 166, 255, 0.1);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  
+  /* Scrollbar */
+  --scrollbar-track: #161b22;
+  --scrollbar-thumb: #30363d;
+  --scrollbar-thumb-hover: #484f58;
+
+  /* Legacy vars for backwards compat */
   --foreground-rgb: 201, 209, 217;
   --background-start-rgb: 13, 17, 23;
   --background-end-rgb: 1, 4, 9;
 }
+
+/* Light Theme */
+[data-theme="light"] {
+  /* Background Colors */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f6f8fa;
+  --bg-tertiary: #eaeef2;
+  --bg-panel: #ffffff;
+  --bg-hover: #eaeef2;
+  
+  /* Text Colors */
+  --text-primary: #1f2328;
+  --text-secondary: #57606a;
+  --text-muted: #8c959f;
+  --text-inverse: #ffffff;
+  
+  /* Border Colors */
+  --border-primary: #d0d7de;
+  --border-secondary: #e6eaef;
+  --border-focus: #0969da;
+  
+  /* Accent Colors */
+  --accent: #0969da;
+  --accent-hover: #0550ae;
+  --accent-muted: #0969da;
+  
+  /* Status Colors */
+  --success: #1a7f37;
+  --success-bg: rgba(26, 127, 55, 0.1);
+  --warning: #9a6700;
+  --warning-bg: rgba(154, 103, 0, 0.1);
+  --danger: #cf222e;
+  --danger-bg: rgba(207, 34, 46, 0.1);
+  --info: #0969da;
+  --info-bg: rgba(9, 105, 218, 0.1);
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  
+  /* Scrollbar */
+  --scrollbar-track: #f6f8fa;
+  --scrollbar-thumb: #d0d7de;
+  --scrollbar-thumb-hover: #8c959f;
+
+  /* Legacy vars for backwards compat */
+  --foreground-rgb: 31, 35, 40;
+  --background-start-rgb: 255, 255, 255;
+  --background-end-rgb: 246, 248, 250;
+}
+
+/* ========================================
+   DENSITY SYSTEM
+   ======================================== */
+
+/* Comfortable (Default) */
+.density-comfortable {
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+}
+
+/* Compact */
+.density-compact {
+  --spacing-xs: 0.125rem;
+  --spacing-sm: 0.375rem;
+  --spacing-md: 0.75rem;
+  --spacing-lg: 1rem;
+  --spacing-xl: 1.5rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.875rem;
+}
+
+/* Dense */
+.density-dense {
+  --spacing-xs: 0.125rem;
+  --spacing-sm: 0.25rem;
+  --spacing-md: 0.5rem;
+  --spacing-lg: 0.75rem;
+  --spacing-xl: 1rem;
+  --font-size-sm: 0.75rem;
+  --font-size-base: 0.8125rem;
+}
+
+/* ========================================
+   BASE STYLES
+   ======================================== */
 
 * {
   box-sizing: border-box;
@@ -24,14 +166,62 @@ body {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
+
+/* ========================================
+   COMPONENT THEME OVERRIDES
+   ======================================== */
+
+/* Cards */
+.theme-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.5rem;
+}
+
+/* Inputs */
+input, select, textarea {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--border-focus);
+  outline: none;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--accent);
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--border-focus);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
 
 @layer utilities {
   .text-balance {
@@ -40,7 +230,7 @@ body {
   
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #30363d #161b22;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
   
   .scrollbar-thin::-webkit-scrollbar {
@@ -49,16 +239,49 @@ body {
   }
   
   .scrollbar-thin::-webkit-scrollbar-track {
-    background: #161b22;
+    background: var(--scrollbar-track);
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #30363d;
+    background-color: var(--scrollbar-thumb);
     border-radius: 4px;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: #484f58;
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  /* Status badge utilities */
+  .status-success {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .status-warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+
+  .status-danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+
+  .status-info {
+    background: var(--info-bg);
+    color: var(--info);
   }
 }
 
+/* ========================================
+   TRANSITIONS
+   ======================================== */
+
+/* Smooth theme transitions */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.2s ease, 
+              border-color 0.2s ease, 
+              color 0.2s ease,
+              box-shadow 0.2s ease !important;
+}

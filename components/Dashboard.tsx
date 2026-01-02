@@ -8,15 +8,16 @@ import HotelSection from './sections/HotelSection'
 import FBSection from './sections/FBSection'
 import PortfolioSection from './sections/PortfolioSection'
 import FinanceSection from './sections/FinanceSection'
+import { SettingsPage } from './settings/SettingsPage'
+import { IntegrationsPage } from './integrations/IntegrationsPage'
 import { alerts } from '@/lib/mock-data/seed'
-
-// Check if Clerk is configured at runtime
-const isClerkConfigured = typeof window !== 'undefined' && 
-  !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 export default function Dashboard() {
   const [activeSection, setActiveSection] = useState<Section>('home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsTab, setSettingsTab] = useState('appearance')
+  const [integrationsOpen, setIntegrationsOpen] = useState(false)
 
   // Count critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed).length
@@ -24,6 +25,16 @@ export default function Dashboard() {
   const handleSectionChange = (section: Section) => {
     setActiveSection(section)
     setSidebarOpen(false) // Close sidebar on mobile after selection
+  }
+
+  const handleOpenSettings = (tab?: string) => {
+    // Special case: open dedicated integrations page
+    if (tab === 'integrations') {
+      setIntegrationsOpen(true)
+      return
+    }
+    if (tab) setSettingsTab(tab)
+    setSettingsOpen(true)
   }
 
   const renderSection = () => {
@@ -44,7 +55,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-bloomberg-dark">
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-primary)]">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div 
@@ -63,6 +74,7 @@ export default function Dashboard() {
           setActiveSection={handleSectionChange}
           criticalAlerts={criticalAlerts}
           onClose={() => setSidebarOpen(false)}
+          onOpenSettings={handleOpenSettings}
         />
       </div>
       
@@ -71,11 +83,25 @@ export default function Dashboard() {
           activeSection={activeSection} 
           onMenuClick={() => setSidebarOpen(true)}
           onNavigate={handleSectionChange}
+          onOpenSettings={handleOpenSettings}
         />
-        <main className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-6">
+        <main className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-6 bg-[var(--bg-primary)]">
           {renderSection()}
         </main>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsPage 
+        isOpen={settingsOpen} 
+        onClose={() => setSettingsOpen(false)}
+        initialTab={settingsTab}
+      />
+
+      {/* Integrations Modal */}
+      <IntegrationsPage
+        isOpen={integrationsOpen}
+        onClose={() => setIntegrationsOpen(false)}
+      />
     </div>
   )
 }
