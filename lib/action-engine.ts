@@ -2,7 +2,9 @@
 // Background logic that runs after data ingestion to generate automated actions
 
 import { prisma } from './db'
-import { Priority, ActionStatus } from '@prisma/client'
+
+// Priority type (matches Prisma enum)
+type Priority = 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW'
 
 interface GeneratedAction {
   title: string

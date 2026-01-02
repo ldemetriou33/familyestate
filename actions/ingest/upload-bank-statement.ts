@@ -1,8 +1,22 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { TransactionCategory } from '@prisma/client'
 import Papa from 'papaparse'
+
+// Transaction category type (matches Prisma enum)
+type TransactionCategory = 
+  | 'RENT_INCOME'
+  | 'HOTEL_REVENUE'
+  | 'CAFE_REVENUE'
+  | 'MORTGAGE_PAYMENT'
+  | 'UTILITIES'
+  | 'MAINTENANCE'
+  | 'PAYROLL'
+  | 'SUPPLIES'
+  | 'INSURANCE'
+  | 'TAXES'
+  | 'OTHER_INCOME'
+  | 'OTHER_EXPENSE'
 
 interface BankStatementRow {
   Date: string

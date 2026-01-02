@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "next lint",
     "deploy": "git add -A && git commit -m \"Auto-deploy: $(date '+%Y-%m-%d %H:%M:%S')\" && git push origin main",

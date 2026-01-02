@@ -1,8 +1,10 @@
 'use server'
 
 import { prisma } from '@/lib/db'
-import { PaymentStatus } from '@prisma/client'
 import Papa from 'papaparse'
+
+// Payment status type (matches Prisma enum)
+type PaymentStatus = 'PAID' | 'PARTIAL' | 'OVERDUE' | 'PENDING'
 
 interface RentRollRow {
   UnitNumber: string
