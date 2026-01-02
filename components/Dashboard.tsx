@@ -70,6 +70,7 @@ export default function Dashboard() {
         <Header 
           activeSection={activeSection} 
           onMenuClick={() => setSidebarOpen(true)}
+          onNavigate={handleSectionChange}
         />
         <main className="flex-1 overflow-y-auto scrollbar-thin p-3 md:p-6">
           {renderSection()}
