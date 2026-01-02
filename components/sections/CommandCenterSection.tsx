@@ -1,10 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { CashPositionWidget } from '@/components/command-center/CashPositionWidget'
 import { CriticalAlertsWidget } from '@/components/command-center/CriticalAlertsWidget'
 import { ActionEngineWidget } from '@/components/command-center/ActionEngineWidget'
 import { ForecastWidget } from '@/components/command-center/ForecastWidget'
 import { AIInsightsWidget } from '@/components/command-center/AIInsightsWidget'
+import { QuickActionsPanel } from '@/components/command-center/QuickActionsPanel'
+import { ForecastChart } from '@/components/ui/charts/ForecastChart'
+import { AnomalyDetailModal } from '@/components/modals/AnomalyDetailModal'
 import { 
   cashPosition, 
   alerts, 
@@ -15,13 +19,21 @@ import {
   portfolioMetrics 
 } from '@/lib/mock-data/seed'
 import { formatGBP } from '@/lib/utils'
-import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Brain } from 'lucide-react'
+import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Settings } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { BusinessContext } from '@/lib/ai'
+import { getOccupancyForecast, getCafeRevenueForecast } from '@/lib/ai/forecasting'
+import { Anomaly } from '@/lib/ai/anomaly-detection'
 
 export default function CommandCenterSection() {
+  const [selectedAnomaly, setSelectedAnomaly] = useState<Anomaly | null>(null)
+  
   // Filter for critical alerts count
   const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed)
+
+  // Generate AI forecasts
+  const occupancyForecast = getOccupancyForecast(hotelMetrics.occupancyRate / 100)
+  const cafeForecast = getCafeRevenueForecast(cafeMetrics.salesToday)
 
   // Build AI context from current data
   const aiContext: BusinessContext = {
@@ -135,6 +147,35 @@ export default function CommandCenterSection() {
         {/* 30-Day Forecast */}
         <ForecastWidget forecasts={forecast30Day} />
       </div>
+
+      {/* Quick Actions Panel */}
+      <QuickActionsPanel />
+
+      {/* Interactive Forecast Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ForecastChart 
+          title="Hotel Occupancy Forecast"
+          data={occupancyForecast}
+          type="occupancy"
+        />
+        <ForecastChart 
+          title="Cafe Revenue Forecast"
+          data={cafeForecast}
+          type="revenue"
+        />
+      </div>
+
+      {/* Anomaly Detail Modal */}
+      {selectedAnomaly && (
+        <AnomalyDetailModal
+          anomaly={selectedAnomaly}
+          onClose={() => setSelectedAnomaly(null)}
+          onCreateAction={() => {
+            console.log('Create action for anomaly:', selectedAnomaly.id)
+            setSelectedAnomaly(null)
+          }}
+        />
+      )}
 
       {/* Portfolio Overview Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
