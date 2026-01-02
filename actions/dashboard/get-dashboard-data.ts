@@ -285,7 +285,7 @@ export async function getResidentialData() {
 
   // Arrears
   const unitsInArrears = allUnits.filter(u => 
-    u.rentRolls[0]?.status === 'OVERDUE'
+    u.rentRolls[0]?.paymentStatus === 'OVERDUE'
   )
   const totalArrears = unitsInArrears.reduce((sum, u) => 
     sum + (u.rentRolls[0]?.monthlyRent || 0), 0
@@ -313,7 +313,7 @@ export async function getResidentialData() {
         status: u.status,
         currentRate: u.currentRate,
         tenant: u.rentRolls[0]?.tenantName || null,
-        rentStatus: u.rentRolls[0]?.status || null,
+        rentStatus: u.rentRolls[0]?.paymentStatus || null,
         leaseEnd: u.leases[0]?.endDate || null,
       })),
     })),
