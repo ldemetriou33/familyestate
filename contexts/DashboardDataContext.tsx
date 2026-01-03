@@ -33,14 +33,32 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true)
       setError(null)
-      const dashboardData = await getDashboardData()
+      
+      // Add timeout to prevent infinite loading
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out after 15 seconds. Please check your database connection.')), 15000)
+      })
+      
+      const dashboardData = await Promise.race([
+        getDashboardData(),
+        timeoutPromise,
+      ]) as Awaited<ReturnType<typeof getDashboardData>>
+      
       setData(dashboardData)
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err)
       const error = err instanceof Error ? err : new Error('Failed to fetch data')
       setError(error)
-      // Don't set loading to false on error - let components handle empty state
-      // This allows the UI to show error messages instead of infinite loading
+      // Set empty data structure so components can still render
+      setData({
+        portfolio: { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, totalEquity: 0, monthlyIncome: 0, ltv: 0, byType: { residential: [], hotel: [], cafe: [] }, properties: [], recentTransactions: [] },
+        hotel: null,
+        cafe: null,
+        residential: { properties: [], summary: { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, equity: 0, monthlyRent: 0, annualYield: 0 }, alerts: { unitsInArrears: 0, totalArrears: 0, expiringLeases: 0 } },
+        finance: { cashPosition: 0, cashHistory: [], totalDebt: 0, monthlyDebtService: 0, debts: [], monthlyExpenses: 0, recentExpenses: [], recentTransactions: [], upcomingPayments: [] },
+        alerts: { alerts: [], counts: { critical: 0, warning: 0, info: 0 } },
+        lastUpdated: new Date(),
+      })
     } finally {
       setLoading(false)
     }

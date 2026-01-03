@@ -276,13 +276,22 @@ export default function CommandCenterSection() {
     complianceIssues: portfolioMetrics.complianceIssues || 0,
   }
 
-  if (loading || loadingCommandCenter) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
-        <p className="text-sm text-[var(--text-muted)]">Loading dashboard data...</p>
-      </div>
-    )
+  // Show loading only if we're waiting for command center data AND have no data
+  // Allow rendering with partial data from context if available
+  if (loadingCommandCenter && !commandCenterData && !errorCommandCenter) {
+    // If we have dashboard data from context, show a minimal loading state
+    // Otherwise show full loading
+    if (dashboardData) {
+      // Continue rendering with context data while command center loads
+    } else {
+      return (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+          <p className="text-sm text-[var(--text-muted)]">Loading command center data...</p>
+          <p className="text-xs text-[var(--text-muted)]">This may take a few seconds</p>
+        </div>
+      )
+    }
   }
 
   if (errorCommandCenter) {
