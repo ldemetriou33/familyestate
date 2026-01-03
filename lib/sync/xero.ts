@@ -4,8 +4,13 @@
  * Runs daily via Vercel Cron
  */
 
-import { prisma } from '@/lib/prisma'
 import { DataSource, DataConfidence } from '@prisma/client'
+
+// Lazy import Prisma to avoid build-time initialization
+async function getPrisma() {
+  const { prisma } = await import('@/lib/prisma')
+  return prisma
+}
 
 // Xero API Configuration
 const XERO_CLIENT_ID = process.env.XERO_CLIENT_ID || ''
@@ -81,6 +86,7 @@ interface XeroBankStatement {
 // ============================================
 
 async function getStoredTokens(): Promise<XeroTokens | null> {
+  const prisma = await getPrisma()
   const integration = await prisma.integrationConnection.findFirst({
     where: { provider: 'XERO', isActive: true },
   })
@@ -123,6 +129,7 @@ async function refreshTokens(refreshToken: string): Promise<XeroTokens | null> {
     }
     
     // Store the new tokens
+    const prisma = await getPrisma()
     await prisma.integrationConnection.updateMany({
       where: { provider: 'XERO', isActive: true },
       data: {
@@ -281,6 +288,7 @@ export async function syncXeroCashAtBank(): Promise<{
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   
+  const prisma = await getPrisma()
   await prisma.cashPosition.upsert({
     where: {
       date: today,
@@ -338,6 +346,7 @@ export async function syncXeroTransactions(): Promise<{
   
   let processed = 0
   
+  const prisma = await getPrisma()
   for (const tx of transactions.BankTransactions) {
     // Create or update financial transaction
     const isIncome = tx.Type.includes('RECEIVE')
@@ -413,6 +422,7 @@ export async function runXeroSync(): Promise<{
   ])
   
   // Update integration connection status
+  const prisma = await getPrisma()
   await prisma.integrationConnection.updateMany({
     where: { provider: 'XERO', isActive: true },
     data: {
