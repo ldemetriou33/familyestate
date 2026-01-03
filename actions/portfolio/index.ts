@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
-import { PropertyType, UnitStatus, DataSource } from '@prisma/client'
+import { PropertyType, UnitStatus, DataSource, DataConfidence } from '@prisma/client'
 
 // ============================================
 // PROPERTY TYPES
@@ -419,20 +419,20 @@ export async function seedPortfolioData() {
     },
   })
 
-  // Create 12 Residential Properties (from lib/constants.ts rentalProperties)
+  // Create 12 Residential Properties (exact data from lib/constants.ts)
   const residentialData = [
-    { name: 'Kensington Flat', city: 'London', postcode: 'SW7 2AA', price: 850000, rent: 3200 },
-    { name: 'Islington Flat', city: 'London', postcode: 'N1 8JA', price: 625000, rent: 2450 },
-    { name: 'Manchester House', city: 'Manchester', postcode: 'M1 1AA', price: 285000, rent: 1250 },
-    { name: 'Birmingham Apartment', city: 'Birmingham', postcode: 'B1 1AA', price: 195000, rent: 850 },
-    { name: 'Leeds Terraced', city: 'Leeds', postcode: 'LS1 1AA', price: 165000, rent: 750 },
-    { name: 'Bristol Flat', city: 'Bristol', postcode: 'BS1 1AA', price: 275000, rent: 1100 },
-    { name: 'Edinburgh Apartment', city: 'Edinburgh', postcode: 'EH1 1AA', price: 320000, rent: 1350 },
-    { name: 'Glasgow House', city: 'Glasgow', postcode: 'G1 1AA', price: 185000, rent: 800 },
-    { name: 'Liverpool Terraced', city: 'Liverpool', postcode: 'L1 1AA', price: 145000, rent: 650 },
-    { name: 'Newcastle Flat', city: 'Newcastle', postcode: 'NE1 1AA', price: 125000, rent: 550 },
-    { name: 'Sheffield House', city: 'Sheffield', postcode: 'S1 1AA', price: 155000, rent: 700 },
-    { name: 'Nottingham Apartment', city: 'Nottingham', postcode: 'NG1 1AA', price: 175000, rent: 750 },
+    { name: 'London Flat - Kensington', address: 'Kensington High Street', city: 'London', postcode: 'SW7 1AA', purchasePrice: 850000, currentValue: 950000, mortgageBalance: 595000, interestRate: 5.25, mortgageType: 'FIXED' as const, monthlyRent: 3200 },
+    { name: 'London Flat - Islington', address: 'Upper Street', city: 'London', postcode: 'N1 1AA', purchasePrice: 625000, currentValue: 700000, mortgageBalance: 437500, interestRate: 5.45, mortgageType: 'VARIABLE' as const, monthlyRent: 2450 },
+    { name: 'Manchester House', address: 'Deansgate', city: 'Manchester', postcode: 'M1 1AA', purchasePrice: 285000, currentValue: 320000, mortgageBalance: 199500, interestRate: 5.15, mortgageType: 'FIXED' as const, monthlyRent: 1250 },
+    { name: 'Birmingham Apartment', address: 'Broad Street', city: 'Birmingham', postcode: 'B1 1AA', purchasePrice: 195000, currentValue: 220000, mortgageBalance: 136500, interestRate: 5.35, mortgageType: 'VARIABLE' as const, monthlyRent: 850 },
+    { name: 'Leeds Terraced House', address: 'Briggate', city: 'Leeds', postcode: 'LS1 1AA', purchasePrice: 165000, currentValue: 185000, mortgageBalance: 115500, interestRate: 5.20, mortgageType: 'FIXED' as const, monthlyRent: 750 },
+    { name: 'Bristol Flat', address: 'Park Street', city: 'Bristol', postcode: 'BS1 1AA', purchasePrice: 275000, currentValue: 310000, mortgageBalance: 192500, interestRate: 5.30, mortgageType: 'VARIABLE' as const, monthlyRent: 1100 },
+    { name: 'Edinburgh Apartment', address: 'Princes Street', city: 'Edinburgh', postcode: 'EH1 1AA', purchasePrice: 320000, currentValue: 360000, mortgageBalance: 224000, interestRate: 5.10, mortgageType: 'FIXED' as const, monthlyRent: 1350 },
+    { name: 'Glasgow House', address: 'Sauchiehall Street', city: 'Glasgow', postcode: 'G1 1AA', purchasePrice: 185000, currentValue: 210000, mortgageBalance: 129500, interestRate: 5.40, mortgageType: 'VARIABLE' as const, monthlyRent: 800 },
+    { name: 'Liverpool Terraced', address: 'Bold Street', city: 'Liverpool', postcode: 'L1 1AA', purchasePrice: 145000, currentValue: 165000, mortgageBalance: 101500, interestRate: 5.25, mortgageType: 'FIXED' as const, monthlyRent: 650 },
+    { name: 'Newcastle Flat', address: 'Grey Street', city: 'Newcastle', postcode: 'NE1 1AA', purchasePrice: 125000, currentValue: 145000, mortgageBalance: 87500, interestRate: 5.15, mortgageType: 'VARIABLE' as const, monthlyRent: 550 },
+    { name: 'Sheffield House', address: 'Fargate', city: 'Sheffield', postcode: 'S1 1AA', purchasePrice: 155000, currentValue: 175000, mortgageBalance: 108500, interestRate: 5.30, mortgageType: 'FIXED' as const, monthlyRent: 700 },
+    { name: 'Nottingham Apartment', address: 'Market Square', city: 'Nottingham', postcode: 'NG1 1AA', purchasePrice: 175000, currentValue: 200000, mortgageBalance: 122500, interestRate: 5.20, mortgageType: 'VARIABLE' as const, monthlyRent: 750 },
   ]
 
   for (const prop of residentialData) {
@@ -440,29 +440,105 @@ export async function seedPortfolioData() {
       data: {
         name: prop.name,
         type: 'RESIDENTIAL',
-        address: `${Math.floor(Math.random() * 100) + 1} ${prop.city} Street`,
+        address: prop.address,
         city: prop.city,
         postcode: prop.postcode,
-        purchasePrice: prop.price,
-        currentValue: prop.price * 1.1,
-        mortgageBalance: prop.price * 0.7,
-        interestRate: 5.2 + Math.random() * 0.5,
+        purchasePrice: prop.purchasePrice,
+        currentValue: prop.currentValue,
+        mortgageBalance: prop.mortgageBalance,
+        interestRate: prop.interestRate,
+        mortgageLender: 'Nationwide',
+        mortgageType: prop.mortgageType,
         dataSource: DataSource.MANUAL,
       },
     })
 
     // Create single unit for residential
-    await prisma.unit.create({
+    const unit = await prisma.unit.create({
       data: {
         propertyId: property.id,
-        unitNumber: 'Main',
-        status: Math.random() > 0.15 ? 'OCCUPIED' : 'VACANT',
-        currentRate: prop.rent,
-        bedrooms: Math.floor(Math.random() * 3) + 1,
+        unitNumber: '1',
+        floor: 1,
+        type: 'Flat',
+        status: 'OCCUPIED',
+        currentRate: prop.monthlyRent,
+        squareMeters: 60,
+        bedrooms: 2,
         bathrooms: 1,
       },
     })
+
+    // Create active rent roll for the unit
+    const leaseStart = new Date()
+    leaseStart.setMonth(leaseStart.getMonth() - 6) // Started 6 months ago
+    const leaseEnd = new Date()
+    leaseEnd.setFullYear(leaseEnd.getFullYear() + 1) // Ends in 1 year
+    const nextDueDate = new Date()
+    nextDueDate.setDate(1) // First of next month
+    if (nextDueDate < new Date()) {
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1)
+    }
+
+    await prisma.rentRoll.create({
+      data: {
+        unitId: unit.id,
+        tenantName: `Tenant - ${prop.name}`,
+        monthlyRent: prop.monthlyRent,
+        leaseStart,
+        leaseEnd,
+        nextDueDate,
+        isActive: true,
+        dataSource: DataSource.MANUAL,
+      },
+    })
   }
+
+  // Create sample cash position and metrics for Command Center
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  await prisma.cashPosition.create({
+    data: {
+      date: today,
+      operatingBalance: 125000,
+      reserveBalance: 50000,
+      inflows: 45000,
+      outflows: 32000,
+      dataSource: DataSource.MANUAL,
+      confidence: DataConfidence.HIGH,
+    },
+  })
+
+  await prisma.hotelMetric.create({
+    data: {
+      propertyId: hotel.id,
+      date: today,
+      roomsAvailable: 24,
+      roomsOccupied: 18,
+      occupancy: 75,
+      adr: 165,
+      revpar: 123.75, // ADR * occupancy / 100
+      totalRevenue: 2970,
+      roomRevenue: 2970,
+      arrivals: 3,
+      departures: 2,
+      dataSource: DataSource.MANUAL,
+      confidence: DataConfidence.HIGH,
+    },
+  })
+
+  await prisma.cafeSales.create({
+    data: {
+      propertyId: cafe.id,
+      date: today,
+      grossSales: 2850,
+      covers: 142,
+      grossMargin: 65,
+      labourPercentage: 28,
+      dataSource: DataSource.MANUAL,
+      confidence: DataConfidence.HIGH,
+    },
+  })
 
   revalidatePath('/dashboard')
   revalidatePath('/dashboard/admin/portfolio')
