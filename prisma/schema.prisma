@@ -5,7 +5,6 @@
 // This is the Standard, Safe Configuration
 generator client {
   provider = "prisma-client-js"
-  engineType = "library"  // Force the standard engine (not WASM/adapter)
 }
 
 datasource db {
