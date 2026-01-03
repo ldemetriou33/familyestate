@@ -58,15 +58,54 @@ export async function createServerClient() {
 
 // Mock client that has all the methods to prevent crashes
 function createMockClient() {
+  const createQueryBuilder = () => {
+    const builder = {
+      select: () => builder,
+      insert: () => builder,
+      update: () => builder,
+      delete: () => builder,
+      eq: () => builder,
+      neq: () => builder,
+      gt: () => builder,
+      gte: () => builder,
+      lt: () => builder,
+      lte: () => builder,
+      like: () => builder,
+      ilike: () => builder,
+      is: () => builder,
+      in: () => builder,
+      contains: () => builder,
+      containedBy: () => builder,
+      rangeGt: () => builder,
+      rangeGte: () => builder,
+      rangeLt: () => builder,
+      rangeLte: () => builder,
+      rangeAdjacent: () => builder,
+      overlaps: () => builder,
+      textSearch: () => builder,
+      match: () => builder,
+      not: () => builder,
+      or: () => builder,
+      filter: () => builder,
+      order: () => builder,
+      limit: () => builder,
+      range: () => builder,
+      abortSignal: () => builder,
+      single: () => builder,
+      maybeSingle: () => builder,
+      csv: () => builder,
+      geojson: () => builder,
+      explain: () => builder,
+      rollback: () => builder,
+      returns: () => builder,
+      then: (resolve: any) => Promise.resolve({ data: [], error: null }).then(resolve),
+      catch: (reject: any) => Promise.resolve({ data: [], error: null }).catch(reject),
+    }
+    return builder
+  }
+
   return {
-    from: (table: string) => ({
-      select: () => ({ data: [], error: null }),
-      insert: () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      update: () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      delete: () => ({ data: null, error: { message: 'Supabase not configured' } }),
-      eq: function() { return this },
-      limit: function() { return this },
-    }),
+    from: () => createQueryBuilder(),
     auth: {
       getUser: async () => ({ data: { user: null }, error: null }),
       getSession: async () => ({ data: { session: null }, error: null }),

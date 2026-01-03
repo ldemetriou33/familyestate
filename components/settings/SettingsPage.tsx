@@ -465,7 +465,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
                     className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
                   >
                     <div className="flex items-center gap-3 mb-2">
-                      <Image className="w-5 h-5 text-[var(--accent)]" />
+                      <Image className="w-5 h-5 text-[var(--accent)]" aria-label="Media Library" />
                       <h4 className="font-semibold text-[var(--text-primary)]">Media Library</h4>
                     </div>
                     <p className="text-sm text-[var(--text-muted)] mb-3">
