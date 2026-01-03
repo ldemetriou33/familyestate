@@ -100,7 +100,7 @@ export async function getPropertyById(id: string) {
         take: 30,
       },
       expenses: {
-        orderBy: { date: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 10,
       },
     },
