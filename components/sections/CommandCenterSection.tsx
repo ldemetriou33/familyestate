@@ -287,15 +287,37 @@ export default function CommandCenterSection() {
 
   if (errorCommandCenter) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-4">
-        <AlertTriangle className="w-8 h-8 text-red-500" />
-        <p className="text-sm text-red-500">Failed to load data. Please refresh the page.</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
-        >
-          Refresh
-        </button>
+      <div className="flex flex-col items-center justify-center h-64 gap-4 p-6">
+        <AlertTriangle className="w-12 h-12 text-red-500" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Failed to Load Command Center Data</h3>
+          <p className="text-sm text-[var(--text-muted)] mb-4">{errorCommandCenter.message}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Show empty state if no data
+  if (!commandCenterData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4 p-6">
+        <AlertTriangle className="w-12 h-12 text-amber-500" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No Data Available</h3>
+          <p className="text-sm text-[var(--text-muted)] mb-4">No command center data found. Add data via Portfolio Admin or integrations.</p>
+          <a
+            href="/dashboard/admin/portfolio"
+            className="inline-block px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
+          >
+            Go to Portfolio Admin
+          </a>
+        </div>
       </div>
     )
   }

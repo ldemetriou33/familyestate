@@ -8,16 +8,20 @@ import { fetchSONIARate } from '@/lib/services/sonia'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
+import { AlertTriangle, Loader2 } from 'lucide-react'
+
 export default function PortfolioSection() {
   const [soniaRate, setSoniaRate] = useState<{ rate: number; date: string; source: string } | null>(null)
   const [portfolioMetrics, setPortfolioMetrics] = useState<Awaited<ReturnType<typeof calculatePortfolioMetrics>> | null>(null)
   const [properties, setProperties] = useState<Awaited<ReturnType<typeof getRentalPropertiesWithPayments>>>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     // Fetch all data on component mount
     const loadData = async () => {
       setLoading(true)
+      setError(null)
       try {
         const [metricsData, propertiesData, soniaData] = await Promise.all([
           calculatePortfolioMetrics(),
@@ -29,8 +33,9 @@ export default function PortfolioSection() {
         if (soniaData) {
           setSoniaRate(soniaData)
         }
-      } catch (error) {
-        console.error('Failed to load portfolio data:', error)
+      } catch (err) {
+        console.error('Failed to load portfolio data:', err)
+        setError(err instanceof Error ? err : new Error('Failed to load portfolio data'))
       } finally {
         setLoading(false)
       }
@@ -38,12 +43,48 @@ export default function PortfolioSection() {
     loadData()
   }, [])
 
-  if (loading || !portfolioMetrics) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+          <Loader2 className="w-12 h-12 animate-spin text-[var(--accent)] mx-auto mb-4" />
           <p className="text-[var(--text-muted)]">Loading portfolio data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertTriangle className="w-12 h-12 text-red-500" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Failed to Load Portfolio Data</h3>
+          <p className="text-sm text-[var(--text-muted)] mb-4">{error.message}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!portfolioMetrics) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertTriangle className="w-12 h-12 text-amber-500" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">No Portfolio Data</h3>
+          <p className="text-sm text-[var(--text-muted)] mb-4">No properties found. Add properties in Portfolio Admin.</p>
+          <a
+            href="/dashboard/admin/portfolio"
+            className="inline-block px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
+          >
+            Go to Portfolio Admin
+          </a>
         </div>
       </div>
     )

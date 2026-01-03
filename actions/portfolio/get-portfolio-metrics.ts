@@ -36,24 +36,25 @@ export interface PropertyWithPayments {
  * Uses SONIA rate for variable loans
  */
 export async function calculatePortfolioMetrics(): Promise<PortfolioMetrics> {
-  const soniaRate = await getSONIAServerRate()
-  
-  // Fetch residential properties with their debts and units
-  const properties = await prisma.property.findMany({
-    where: { type: 'RESIDENTIAL' },
-    include: {
-      debts: true,
-      units: {
-        include: {
-          rentRolls: {
-            where: { isActive: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1,
+  try {
+    const soniaRate = await getSONIAServerRate()
+    
+    // Fetch residential properties with their debts and units
+    const properties = await prisma.property.findMany({
+      where: { type: 'RESIDENTIAL' },
+      include: {
+        debts: true,
+        units: {
+          include: {
+            rentRolls: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
           },
         },
       },
-    },
-  })
+    })
 
   let totalPropertyValue = 0
   let totalMortgageBalance = 0
@@ -113,17 +114,30 @@ export async function calculatePortfolioMetrics(): Promise<PortfolioMetrics> {
       ? totalInterestWeighted / totalMortgageBalance
       : 0
 
-  // Calculate monthly cashflow
-  const monthlyCashflow = totalMonthlyRentalIncome - totalMonthlyMortgagePayments
+    // Calculate monthly cashflow
+    const monthlyCashflow = totalMonthlyRentalIncome - totalMonthlyMortgagePayments
 
-  return {
-    totalLTV,
-    weightedAverageInterestRate,
-    monthlyCashflow,
-    totalPropertyValue,
-    totalMortgageBalance,
-    totalMonthlyRentalIncome,
-    totalMonthlyMortgagePayments,
+    return {
+      totalLTV,
+      weightedAverageInterestRate,
+      monthlyCashflow,
+      totalPropertyValue,
+      totalMortgageBalance,
+      totalMonthlyRentalIncome,
+      totalMonthlyMortgagePayments,
+    }
+  } catch (error) {
+    console.error('Failed to calculate portfolio metrics:', error)
+    // Return empty metrics on error
+    return {
+      totalLTV: 0,
+      weightedAverageInterestRate: 0,
+      monthlyCashflow: 0,
+      totalPropertyValue: 0,
+      totalMortgageBalance: 0,
+      totalMonthlyRentalIncome: 0,
+      totalMonthlyMortgagePayments: 0,
+    }
   }
 }
 
@@ -132,24 +146,25 @@ export async function calculatePortfolioMetrics(): Promise<PortfolioMetrics> {
  * Uses SONIA rate for variable loans
  */
 export async function getRentalPropertiesWithPayments(): Promise<PropertyWithPayments[]> {
-  const soniaRate = await getSONIAServerRate()
-  
-  // Fetch residential properties with their debts and units
-  const properties = await prisma.property.findMany({
-    where: { type: 'RESIDENTIAL' },
-    include: {
-      debts: true,
-      units: {
-        include: {
-          rentRolls: {
-            where: { isActive: true },
-            orderBy: { createdAt: 'desc' },
-            take: 1,
+  try {
+    const soniaRate = await getSONIAServerRate()
+    
+    // Fetch residential properties with their debts and units
+    const properties = await prisma.property.findMany({
+      where: { type: 'RESIDENTIAL' },
+      include: {
+        debts: true,
+        units: {
+          include: {
+            rentRolls: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
           },
         },
       },
-    },
-  })
+    })
 
   return properties.map((property) => {
     // Get mortgage from debts or property fields
@@ -198,5 +213,10 @@ export async function getRentalPropertiesWithPayments(): Promise<PropertyWithPay
       netProfit: monthlyCashflow, // Simplified
     }
   })
+  } catch (error) {
+    console.error('Failed to get rental properties with payments:', error)
+    // Return empty array on error
+    return []
+  }
 }
 
