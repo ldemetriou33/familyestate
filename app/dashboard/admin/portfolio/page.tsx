@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   Building2, 
   Plus, 
@@ -50,11 +50,12 @@ export default function PortfolioAdminPage() {
   const [seeding, setSeeding] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
-  useEffect(() => {
-    loadData()
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message })
+    setTimeout(() => setNotification(null), 3000)
   }, [])
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [propertiesData, summaryData] = await Promise.all([
@@ -68,12 +69,11 @@ export default function PortfolioAdminPage() {
       showNotification('error', 'Failed to load portfolio data')
     }
     setLoading(false)
-  }
+  }, [showNotification])
 
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message })
-    setTimeout(() => setNotification(null), 3000)
-  }
+  useEffect(() => {
+    loadData()
+  }, [loadData])
 
   const handleSeedData = async () => {
     setSeeding(true)

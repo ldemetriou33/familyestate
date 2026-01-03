@@ -203,7 +203,7 @@ export async function createProperty(data: PropertyFormData) {
         currentBalance: data.mortgageBalance,
         interestRate: data.interestRate || 0,
         monthlyPayment: calculateMortgagePayment(data.mortgageBalance, data.interestRate || 5, 25),
-        lender: data.mortgageLender,
+        lender: data.mortgageLender || '',
         startDate: new Date(),
         maturityDate: data.mortgageTermEndDate || new Date(Date.now() + 25 * 365 * 24 * 60 * 60 * 1000),
       },
