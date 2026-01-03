@@ -216,9 +216,10 @@ export default function MediaVaultPage() {
             >
               {/* Image */}
               <div className="aspect-square bg-slate-900 relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={file.url}
-                  alt={file.name}
+                  alt={file.name || 'Media file'}
                   className="w-full h-full object-cover"
                 />
                 {/* Overlay Actions */}

@@ -153,7 +153,7 @@ export default function AdminLayout({
           </Link>
           <div className="flex items-center gap-3 px-3 py-2.5 mt-2">
             {user.imageUrl ? (
-              <img src={user.imageUrl} alt="" className="w-8 h-8 rounded-full" />
+              <img src={user.imageUrl} alt={user.name || 'User'} className="w-8 h-8 rounded-full" />
             ) : (
               <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center">
                 <span className="text-amber-400 text-sm font-medium">

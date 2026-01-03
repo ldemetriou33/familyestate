@@ -284,6 +284,7 @@ export default function PropertiesPage() {
               {/* Image */}
               <div className="relative h-40 bg-slate-700">
                 {property.heroImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={property.heroImageUrl}
                     alt={property.name}

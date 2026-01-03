@@ -8,14 +8,21 @@ async function getHomepageData() {
   try {
     const supabase = await createServerClient()
     
+    // Check if Supabase is configured
+    if (!supabase.from || typeof supabase.from !== 'function') {
+      throw new Error('Supabase not configured')
+    }
+    
     // Fetch content blocks
-    const { data: contentBlocks } = await supabase
+    const { data: contentBlocks, error: contentError } = await supabase
       .from('content_blocks')
       .select('section_key, content')
       .eq('is_active', true)
 
+    if (contentError) throw contentError
+
     // Fetch published properties
-    const { data: properties } = await supabase
+    const { data: properties, error: propertiesError } = await supabase
       .from('properties')
       .select(`
         id,
@@ -38,6 +45,8 @@ async function getHomepageData() {
       .eq('is_published', true)
       .eq('status', 'Active')
       .limit(1) // Just get the hotel for now
+
+    if (propertiesError) throw propertiesError
 
     // Transform content blocks to object
     const content: Record<string, any> = {}

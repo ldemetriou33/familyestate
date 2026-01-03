@@ -6,6 +6,12 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    // Check if Supabase is configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      console.warn('Supabase environment variables not set')
+      return NextResponse.json({ isAdmin: false, error: 'Supabase not configured' }, { status: 503 })
+    }
+
     const user = await getAdminUser()
     
     if (!user) {
@@ -15,7 +21,11 @@ export async function GET() {
     return NextResponse.json(user)
   } catch (error) {
     console.error('Admin auth error:', error)
-    return NextResponse.json({ isAdmin: false, error: 'Authentication failed' }, { status: 500 })
+    // Don't throw - return a safe response
+    return NextResponse.json({ 
+      isAdmin: false, 
+      error: error instanceof Error ? error.message : 'Authentication failed' 
+    }, { status: 500 })
   }
 }
 

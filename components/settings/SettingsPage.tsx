@@ -575,7 +575,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 ${info.color} rounded-xl flex items-center justify-center text-white`}>
+                            <div className={`w-12 h-12 ${info.color} rounded-xl flex items-center justify-center text-white`} aria-label={info.name}>
                               {info.icon}
                             </div>
                             <div>

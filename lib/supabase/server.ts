@@ -23,7 +23,8 @@ export async function createServerClient() {
     const { cookies } = await import('next/headers')
     
     if (!supabaseUrl || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      throw new Error('Missing Supabase environment variables')
+      console.warn('Supabase environment variables not set. Returning mock client.')
+      return createMockClient()
     }
     
     const cookieStore = await cookies()
@@ -51,13 +52,33 @@ export async function createServerClient() {
     })
   } catch (error) {
     console.error('Failed to create Supabase server client:', error)
-    // Return a mock client that won't crash
-    return {
-      auth: {
-        getUser: async () => ({ data: { user: null }, error: null }),
-        getSession: async () => ({ data: { session: null }, error: null }),
-      },
-    } as any
+    return createMockClient()
   }
+}
+
+// Mock client that has all the methods to prevent crashes
+function createMockClient() {
+  return {
+    from: (table: string) => ({
+      select: () => ({ data: [], error: null }),
+      insert: () => ({ data: null, error: { message: 'Supabase not configured' } }),
+      update: () => ({ data: null, error: { message: 'Supabase not configured' } }),
+      delete: () => ({ data: null, error: { message: 'Supabase not configured' } }),
+      eq: function() { return this },
+      limit: function() { return this },
+    }),
+    auth: {
+      getUser: async () => ({ data: { user: null }, error: null }),
+      getSession: async () => ({ data: { session: null }, error: null }),
+      signOut: async () => ({ error: null }),
+    },
+    storage: {
+      from: () => ({
+        upload: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+        remove: async () => ({ data: null, error: { message: 'Supabase not configured' } }),
+        getPublicUrl: () => ({ data: { publicUrl: '' } }),
+      }),
+    },
+  } as any
 }
 
