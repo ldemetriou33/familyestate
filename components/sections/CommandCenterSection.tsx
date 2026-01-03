@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { CashPositionWidget } from '@/components/command-center/CashPositionWidget'
 import { CriticalAlertsWidget } from '@/components/command-center/CriticalAlertsWidget'
 import { ActionEngineWidget } from '@/components/command-center/ActionEngineWidget'
@@ -11,44 +11,184 @@ import { ForecastChart } from '@/components/ui/charts/ForecastChart'
 import { AnomalyDetailModal } from '@/components/modals/AnomalyDetailModal'
 import { DataHealthWrapper, DataHealthIndicator } from '@/components/ui/DataHealthIndicator'
 import { AgentDashboard } from '@/components/agents'
-import { 
-  cashPosition, 
-  alerts, 
-  actionItems, 
-  forecast30Day,
-  hotelMetrics,
-  cafeMetrics,
-  portfolioMetrics 
-} from '@/lib/mock-data/seed'
+import { useDashboardData, useHotelData, useCafeData, usePortfolioData, useFinanceData, useAlertsData } from '@/contexts/DashboardDataContext'
 import { formatGBP } from '@/lib/utils'
-import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Database, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Database, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BusinessContext } from '@/lib/ai'
 import { getOccupancyForecast, getCafeRevenueForecast } from '@/lib/ai/forecasting'
 import { Anomaly } from '@/lib/ai/anomaly-detection'
+import { getCommandCenterData } from '@/actions/dashboard/get-command-center-data'
 
 export default function CommandCenterSection() {
   const [selectedAnomaly, setSelectedAnomaly] = useState<Anomaly | null>(null)
+  const { data: dashboardData, loading } = useDashboardData()
+  const { data: hotelData } = useHotelData()
+  const { data: cafeData } = useCafeData()
+  const { data: portfolioData } = usePortfolioData()
+  const { data: financeData } = useFinanceData()
+  const { data: alertsData } = useAlertsData()
   
-  // Filter for critical alerts count
-  const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL' && !a.isDismissed)
+  // Fetch command center specific data
+  const [commandCenterData, setCommandCenterData] = useState<Awaited<ReturnType<typeof getCommandCenterData>> | null>(null)
+  const [loadingCommandCenter, setLoadingCommandCenter] = useState(true)
+
+  useEffect(() => {
+    getCommandCenterData().then(data => {
+      setCommandCenterData(data)
+      setLoadingCommandCenter(false)
+    })
+  }, [])
+
+  // Extract data with fallbacks - use commandCenterData as primary source
+  const cashPosition = commandCenterData?.cashPosition || {
+    operatingBalance: 0,
+    reserveBalance: 0,
+    totalBalance: 0,
+    inflows: 0,
+    outflows: 0,
+    netMovement: 0,
+    projected30Day: null,
+    projected90Day: null,
+  }
+
+  const alerts = commandCenterData?.alerts || alertsData?.alerts || []
+  const actionItems = commandCenterData?.actionItems || []
+
+  // Generate forecast from current data
+  const forecast30Day = useMemo(() => {
+    if (!commandCenterData) return []
+    const forecasts = []
+    const today = new Date()
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(today)
+      date.setDate(date.getDate() + i)
+      forecasts.push({
+        date: date.toISOString().split('T')[0],
+        cashflow: commandCenterData.cashPosition.projected30Day ? 
+          commandCenterData.cashPosition.projected30Day / 30 : 
+          commandCenterData.cashPosition.netMovement,
+        occupancy: commandCenterData.hotelMetrics?.occupancyRate || 0,
+        revenue: commandCenterData.cafeMetrics?.salesToday || 0,
+      })
+    }
+    return forecasts
+  }, [commandCenterData])
+
+  const hotelMetrics = useMemo(() => {
+    if (commandCenterData?.hotelMetrics) {
+      return {
+        occupancyRate: commandCenterData.hotelMetrics.occupancyRate,
+        adr: commandCenterData.hotelMetrics.adr,
+        revenueToday: commandCenterData.hotelMetrics.revenueToday,
+      }
+    }
+    if (!hotelData) return { occupancyRate: 0, adr: 0, revenueToday: 0 }
+    return {
+      occupancyRate: hotelData.summary?.occupancyRate || hotelData.todayMetrics?.occupancy || 0,
+      adr: hotelData.todayMetrics?.adr || hotelData.weekSummary?.avgAdr || 0,
+      revenueToday: hotelData.todayMetrics?.totalRevenue || 0,
+    }
+  }, [commandCenterData, hotelData])
+
+  const cafeMetrics = useMemo(() => {
+    if (commandCenterData?.cafeMetrics) {
+      return {
+        grossMargin: commandCenterData.cafeMetrics.grossMargin,
+        salesToday: commandCenterData.cafeMetrics.salesToday,
+        coversToday: commandCenterData.cafeMetrics.coversToday,
+        laborPercentage: commandCenterData.cafeMetrics.labourPercentage,
+      }
+    }
+    if (!cafeData) return { grossMargin: 0, salesToday: 0, coversToday: 0, laborPercentage: 0 }
+    const todaySales = cafeData.todaySales
+    // Calculate gross margin if we have cost data, otherwise use 0
+    const grossMargin = todaySales && 'grossMargin' in todaySales ? todaySales.grossMargin : 0
+    return {
+      grossMargin,
+      salesToday: todaySales?.grossSales || 0,
+      coversToday: todaySales?.covers || 0,
+      laborPercentage: todaySales && 'labourPercentage' in todaySales ? todaySales.labourPercentage : 0,
+    }
+  }, [commandCenterData, cafeData])
+
+  const portfolioMetrics = useMemo(() => {
+    if (commandCenterData?.portfolioMetrics) {
+      return {
+        totalUnits: commandCenterData.portfolioMetrics.totalUnits,
+        occupiedUnits: commandCenterData.portfolioMetrics.occupiedUnits,
+        vacantUnits: commandCenterData.portfolioMetrics.vacantUnits,
+        maintenanceUnits: 0, // TODO: calculate from units
+        totalRentRoll: commandCenterData.portfolioMetrics.totalRentRoll,
+        totalArrears: commandCenterData.portfolioMetrics.totalArrears,
+        complianceIssues: 0, // TODO: calculate from alerts
+      }
+    }
+    if (!portfolioData) return {
+      totalUnits: 0,
+      occupiedUnits: 0,
+      vacantUnits: 0,
+      maintenanceUnits: 0,
+      totalRentRoll: 0,
+      totalArrears: 0,
+      complianceIssues: 0,
+    }
+    return {
+      totalUnits: portfolioData.totalUnits,
+      occupiedUnits: portfolioData.occupiedUnits,
+      vacantUnits: portfolioData.vacantUnits,
+      maintenanceUnits: 0,
+      totalRentRoll: portfolioData.monthlyIncome,
+      totalArrears: 0,
+      complianceIssues: 0,
+    }
+  }, [commandCenterData, portfolioData])
+
+  // Filter for critical alerts (commandCenterData already filters dismissed alerts)
+  const criticalAlerts = alerts.filter(a => a.severity === 'CRITICAL')
 
   // Generate AI forecasts
   const occupancyForecast = getOccupancyForecast(hotelMetrics.occupancyRate / 100)
   const cafeForecast = getCafeRevenueForecast(cafeMetrics.salesToday)
 
-  // Mock data health info (in production, this would come from the database)
-  const dataHealth = {
-    cashPosition: { lastUpdated: new Date(), source: 'BANK_FEED' as const, confidence: 'HIGH' as const },
-    hotelMetrics: { lastUpdated: new Date(Date.now() - 2 * 60 * 60 * 1000), source: 'PMS_CLOUDBEDS' as const, confidence: 'VERIFIED' as const },
-    cafeMetrics: { lastUpdated: new Date(Date.now() - 4 * 60 * 60 * 1000), source: 'POS_SQUARE' as const, confidence: 'HIGH' as const },
-    portfolioMetrics: { lastUpdated: new Date(Date.now() - 24 * 60 * 60 * 1000), source: 'MANUAL' as const, confidence: 'MEDIUM' as const },
-    alerts: { lastUpdated: new Date(), source: 'SYSTEM_GENERATED' as const, confidence: 'HIGH' as const },
-  }
+  // Data health info from database
+  const dataHealth = useMemo(() => {
+    const hotel = hotelData?.property?.hotelMetrics?.[0]
+    const cafe = cafeData?.property?.cafeSales?.[0]
+    const portfolio = portfolioData?.properties?.[0]
+
+    return {
+      cashPosition: {
+        lastUpdated: new Date(),
+        source: 'BANK_FEED',
+        confidence: 'HIGH',
+      },
+      hotelMetrics: {
+        lastUpdated: hotel?.lastUpdatedAt || new Date(),
+        source: hotel?.dataSource || 'MANUAL',
+        confidence: hotel?.confidence || 'MEDIUM',
+      },
+      cafeMetrics: {
+        lastUpdated: cafe?.lastUpdatedAt || new Date(),
+        source: cafe?.dataSource || 'MANUAL',
+        confidence: cafe?.confidence || 'MEDIUM',
+      },
+      portfolioMetrics: {
+        lastUpdated: portfolio?.lastUpdatedAt || new Date(),
+        source: portfolio?.dataSource || 'MANUAL',
+        confidence: 'MEDIUM',
+      },
+      alerts: {
+        lastUpdated: new Date(),
+        source: 'SYSTEM_GENERATED',
+        confidence: 'HIGH',
+      },
+    }
+  }, [hotelData, cafeData, portfolioData])
 
   // Build AI context from current data
   const aiContext: BusinessContext = {
-    hotelOccupancy: hotelMetrics.occupancyRate / 100,
+    hotelOccupancy: (hotelMetrics.occupancyRate || 0) / 100,
     hotelADR: hotelMetrics.adr,
     cafeMargin: cafeMetrics.grossMargin,
     cafeSales: cafeMetrics.salesToday,
@@ -58,6 +198,14 @@ export default function CommandCenterSection() {
     vacantUnits: portfolioMetrics.vacantUnits,
     maintenanceIssues: portfolioMetrics.maintenanceUnits,
     complianceIssues: portfolioMetrics.complianceIssues,
+  }
+
+  if (loading || loadingCommandCenter) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+      </div>
+    )
   }
 
   return (
