@@ -287,14 +287,14 @@ export async function syncXeroCashAtBank(): Promise<{
     },
     create: {
       date: today,
-      openingBalance: totalCash,
-      closingBalance: totalCash,
+      operatingBalance: totalCash,
+      reserveBalance: 0,
       dataSource: DataSource.BANK_FEED,
       confidence: DataConfidence.HIGH,
       lastUpdatedAt: new Date(),
     },
     update: {
-      closingBalance: totalCash,
+      operatingBalance: totalCash,
       dataSource: DataSource.BANK_FEED,
       confidence: DataConfidence.HIGH,
       lastUpdatedAt: new Date(),
