@@ -142,9 +142,9 @@ export async function getPortfolioSummary() {
     }),
     prisma.rentRoll.aggregate({
       where: {
-        status: { in: ['PAID', 'PARTIAL'] },
+        paymentStatus: { in: ['PAID', 'PARTIAL'] },
       },
-      _sum: { amount: true },
+      _sum: { monthlyRent: true },
     }),
   ])
 
