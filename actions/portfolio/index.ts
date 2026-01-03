@@ -329,9 +329,8 @@ export async function createDailyLog(data: {
     data: {
       propertyId: data.propertyId || undefined,
       date: data.date,
-      notes: data.notes,
-      weather: data.weather,
-      // Store mood in notes as we may not have a mood field
+      notes: data.mood ? `${data.notes}\nMood: ${data.mood}` : data.notes,
+      weatherNote: data.weather,
     },
   })
 

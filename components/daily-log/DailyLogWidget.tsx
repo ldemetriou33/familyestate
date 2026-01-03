@@ -240,7 +240,7 @@ export function DailyLogWidget() {
         {/* Today's Log (Compact View) */}
         {!loading && !expanded && todayLog && (
           <div className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
-            {todayLog.weather && getWeatherIcon(todayLog.weather)}
+            {todayLog.weatherNote && getWeatherIcon(todayLog.weatherNote)}
             <div className="flex-1 min-w-0">
               <p className="text-sm text-[var(--text-primary)]">{todayLog.notes}</p>
               <p className="text-xs text-[var(--text-muted)] mt-1">Today</p>
@@ -271,8 +271,8 @@ export function DailyLogWidget() {
                 key={log.id}
                 className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg"
               >
-                {log.weather && getWeatherIcon(log.weather)}
-                {!log.weather && (
+                {log.weatherNote && getWeatherIcon(log.weatherNote)}
+                {!log.weatherNote && (
                   <div className="w-4 h-4" /> 
                 )}
                 <div className="flex-1 min-w-0">
