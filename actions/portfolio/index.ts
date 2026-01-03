@@ -88,10 +88,6 @@ export async function getPropertyById(id: string) {
             orderBy: { checkIn: 'desc' },
             take: 5,
           },
-          maintenanceTickets: {
-            orderBy: { createdAt: 'desc' },
-            take: 5,
-          },
         },
       },
       debts: true,
