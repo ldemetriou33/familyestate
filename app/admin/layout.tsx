@@ -15,7 +15,9 @@ import {
   X,
   LogOut,
   Megaphone,
-  Home
+  Home,
+  UtensilsCrossed,
+  Database
 } from 'lucide-react'
 
 interface AdminUser {
@@ -30,10 +32,10 @@ const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/properties', label: 'Properties', icon: Building2 },
   { href: '/admin/rooms', label: 'Room Inventory', icon: BedDouble },
+  { href: '/admin/cafe', label: 'Cafe Menu', icon: UtensilsCrossed },
   { href: '/admin/content', label: 'Site Content', icon: FileText },
-  { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/admin/media', label: 'Media Library', icon: Image },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
+  { href: '/admin/operational', label: 'Operational Data', icon: Database },
 ]
 
 export default function AdminLayout({
