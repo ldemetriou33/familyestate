@@ -350,7 +350,6 @@ export async function syncXeroTransactions(): Promise<{
         date: new Date(tx.Date),
         description: tx.LineItems?.[0]?.Description || tx.Type,
         amount: tx.Total,
-        type: isIncome ? 'INCOME' : 'EXPENSE',
         category: isIncome ? 'OTHER_INCOME' : 'OTHER_EXPENSE',
         vendor: tx.Contact?.Name,
         dataSource: DataSource.BANK_FEED,
