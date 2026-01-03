@@ -160,7 +160,7 @@ export async function getPortfolioSummary() {
     vacantUnits: totalUnits - occupiedUnits,
     occupancyRate: totalUnits > 0 ? (occupiedUnits / totalUnits) * 100 : 0,
     totalDebt: totalDebt._sum.currentBalance || 0,
-    monthlyIncome: monthlyIncome._sum.amount || 0,
+    monthlyIncome: monthlyIncome._sum.monthlyRent || 0,
     totalValue: propertyValues._sum.currentValue || propertyValues._sum.purchasePrice || 0,
     totalEquity: (propertyValues._sum.currentValue || 0) - (propertyValues._sum.mortgageBalance || 0),
   }
