@@ -413,7 +413,7 @@ export async function getFinanceData() {
 export async function getAlertsData() {
   const alerts = await prisma.alert.findMany({
     where: {
-      acknowledged: false,
+      isDismissed: false,
     },
     include: {
       property: true,
