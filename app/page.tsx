@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Building2, Shield, TrendingUp, Zap, ArrowRight, Hotel, UtensilsCrossed, Home } from 'lucide-react'
 import { createServerClient } from '@/lib/supabase/server'
+import { FloatingAdminButton } from '@/components/admin/FloatingAdminButton'
 
 // Fetch data from Supabase (with fallback to seed data)
 async function getHomepageData() {

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { 
   Clock, 
   Bell, 
@@ -17,7 +18,8 @@ import {
   ChevronRight,
   Building2,
   Wallet,
-  FileText
+  FileText,
+  Shield
 } from 'lucide-react'
 import { Section } from './Sidebar'
 import { alerts } from '@/lib/mock-data/seed'
@@ -395,6 +397,15 @@ export default function Header({ activeSection, onMenuClick, onNavigate, onOpenS
             )}
           </div>
           
+          {/* Admin Link (if admin) */}
+          <Link
+            href="/admin"
+            className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 rounded-lg transition-colors text-sm font-medium"
+          >
+            <Shield className="w-4 h-4" />
+            <span>Admin</span>
+          </Link>
+
           {/* Settings */}
           <button 
             onClick={() => onOpenSettings?.('appearance')}

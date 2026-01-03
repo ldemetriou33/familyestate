@@ -27,7 +27,11 @@ import {
   Wallet,
   Settings,
   User,
-  LogOut
+  LogOut,
+  Building2,
+  BedDouble,
+  Image,
+  Edit
 } from 'lucide-react'
 import { useTheme, Theme, Density } from '@/contexts/ThemeContext'
 import { useIntegrations, IntegrationProvider } from '@/contexts/IntegrationsContext'
@@ -107,6 +111,7 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
   const tabs = [
     { id: 'appearance', label: 'Appearance', icon: Monitor },
     { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'content', label: 'Content Management', icon: Edit },
     { id: 'data', label: 'Data & Sync', icon: Database },
     { id: 'integrations', label: 'Integrations', icon: Link2 },
     { id: 'approvals', label: 'Approvals', icon: Shield },
