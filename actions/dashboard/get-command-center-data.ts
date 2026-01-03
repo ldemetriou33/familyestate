@@ -67,6 +67,12 @@ export interface CommandCenterData {
  * Fetch all data needed for the Command Center
  */
 export async function getCommandCenterData(): Promise<CommandCenterData> {
+  // If DATABASE_URL is not set, return mock data immediately
+  if (!process.env.DATABASE_URL) {
+    console.log('DATABASE_URL not set, returning mock data')
+    return getMockCommandCenterData()
+  }
+
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)

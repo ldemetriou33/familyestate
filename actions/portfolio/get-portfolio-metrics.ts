@@ -37,6 +37,12 @@ export interface PropertyWithPayments {
  * Uses SONIA rate for variable loans
  */
 export async function calculatePortfolioMetrics(): Promise<PortfolioMetrics> {
+  // If DATABASE_URL is not set, return mock data immediately
+  if (!process.env.DATABASE_URL) {
+    console.log('DATABASE_URL not set, returning mock portfolio metrics')
+    return getMockPortfolioMetrics()
+  }
+
   try {
     const soniaRate = await getSONIAServerRate()
     
@@ -187,6 +193,12 @@ function getMockPortfolioMetrics(): PortfolioMetrics {
  * Uses SONIA rate for variable loans
  */
 export async function getRentalPropertiesWithPayments(): Promise<PropertyWithPayments[]> {
+  // If DATABASE_URL is not set, return mock data immediately
+  if (!process.env.DATABASE_URL) {
+    console.log('DATABASE_URL not set, returning mock rental properties')
+    return getMockRentalPropertiesWithPayments()
+  }
+
   try {
     const soniaRate = await getSONIAServerRate()
     
