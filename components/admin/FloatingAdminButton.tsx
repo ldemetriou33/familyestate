@@ -11,12 +11,20 @@ export function FloatingAdminButton() {
   const supabase = createClient()
 
   useEffect(() => {
-    // Check if user is admin
+    // Check if user is admin via API
     const checkAdmin = async () => {
       try {
+        const res = await fetch('/api/admin/auth')
+        if (res.ok) {
+          const data = await res.json()
+          if (data.isAdmin) {
+            setIsAdmin(true)
+            return
+          }
+        }
+        // Fallback: check client-side if API fails
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
-          // Check if user email matches admin email
           const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || ''
           if (user.email?.toLowerCase() === adminEmail.toLowerCase()) {
             setIsAdmin(true)

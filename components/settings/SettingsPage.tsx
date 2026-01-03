@@ -381,6 +381,128 @@ export function SettingsPage({ isOpen, onClose, initialTab = 'appearance' }: Set
               </div>
             )}
 
+            {/* Content Management Tab */}
+            {activeTab === 'content' && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">Content Management</h3>
+                  <p className="text-sm text-[var(--text-muted)] mb-6">
+                    Edit website content, properties, rooms, and menu items directly from the dashboard.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <a
+                    href="/admin/properties"
+                    className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <Building2 className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Properties</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Manage hotels, land, and villas. Edit names, types, descriptions, and images.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Properties Manager</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+
+                  <a
+                    href="/admin/rooms"
+                    className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <BedDouble className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Room Inventory</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Edit rooms, enable Event Mode, set pricing, and manage availability.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Room Manager</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+
+                  <a
+                    href="/admin/cafe"
+                    className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <UtensilsCrossed className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Cafe Menu</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Manage menu items, prices, categories, and mark items as sold out.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Menu Manager</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+
+                  <a
+                    href="/admin/content"
+                    className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <FileText className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Site Content</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Edit homepage text, hero sections, FAQs, and all site copy.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Content Editor</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+
+                  <a
+                    href="/admin/media"
+                    className="p-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg hover:border-[var(--accent)] transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <Image className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Media Library</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Upload images, organize by bucket, and copy URLs for use in content.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Media Vault</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+
+                  <a
+                    href="/admin"
+                    className="p-4 bg-gradient-to-br from-[var(--accent)]/20 to-[var(--accent)]/10 border-2 border-[var(--accent)]/30 rounded-lg hover:border-[var(--accent)]/50 transition-all group"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <Settings className="w-5 h-5 text-[var(--accent)]" />
+                      <h4 className="font-semibold text-[var(--text-primary)]">Full Admin Dashboard</h4>
+                    </div>
+                    <p className="text-sm text-[var(--text-muted)] mb-3">
+                      Access the complete admin interface with all management tools.
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-[var(--accent)] group-hover:underline">
+                      <span>Open Admin Dashboard</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </a>
+                </div>
+
+                <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                  <p className="text-sm text-amber-400">
+                    <strong>✨ Everything is editable through the admin dashboard.</strong> You can change property types, names, cafe names, and all content without touching code or databases.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Data & Sync Tab */}
             {activeTab === 'data' && (
               <div className="space-y-6">
