@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/prisma'
 import { calculateMonthlyMortgagePayment } from '@/lib/utils'
 import { getSONIAServerRate } from '@/lib/services/sonia-server'
+import { rentalProperties } from '@/lib/constants'
 
 export interface PortfolioMetrics {
   totalLTV: number
@@ -128,16 +129,56 @@ export async function calculatePortfolioMetrics(): Promise<PortfolioMetrics> {
     }
   } catch (error) {
     console.error('Failed to calculate portfolio metrics:', error)
-    // Return empty metrics on error
-    return {
-      totalLTV: 0,
-      weightedAverageInterestRate: 0,
-      monthlyCashflow: 0,
-      totalPropertyValue: 0,
-      totalMortgageBalance: 0,
-      totalMonthlyRentalIncome: 0,
-      totalMonthlyMortgagePayments: 0,
+    // Return mock metrics from constants.ts as fallback
+    console.log('Returning mock portfolio metrics as fallback')
+    return getMockPortfolioMetrics()
+  }
+}
+
+/**
+ * Calculate mock portfolio metrics from constants.ts
+ */
+function getMockPortfolioMetrics(): PortfolioMetrics {
+  const soniaRate = 5.25 // Approximate SONIA rate
+  
+  let totalPropertyValue = 0
+  let totalMortgageBalance = 0
+  let totalMonthlyRentalIncome = 0
+  let totalMonthlyMortgagePayments = 0
+  let totalInterestWeighted = 0
+
+  for (const property of rentalProperties) {
+    totalPropertyValue += property.purchasePrice
+    totalMortgageBalance += property.currentMortgageBalance
+    totalMonthlyRentalIncome += property.monthlyRentalIncome
+
+    // Use SONIA rate for variable loans, otherwise use fixed rate
+    const effectiveRate = property.loanType === 'variable' ? soniaRate : property.currentInterestRate
+
+    // Calculate monthly mortgage payment
+    if (property.currentMortgageBalance > 0) {
+      const monthlyPayment = calculateMonthlyMortgagePayment(
+        property.currentMortgageBalance,
+        effectiveRate,
+        25 // Assuming 25-year mortgage term
+      )
+      totalMonthlyMortgagePayments += monthlyPayment
+      totalInterestWeighted += property.currentMortgageBalance * effectiveRate
     }
+  }
+
+  const totalLTV = totalPropertyValue > 0 ? (totalMortgageBalance / totalPropertyValue) * 100 : 0
+  const weightedAverageInterestRate = totalMortgageBalance > 0 ? totalInterestWeighted / totalMortgageBalance : 0
+  const monthlyCashflow = totalMonthlyRentalIncome - totalMonthlyMortgagePayments
+
+  return {
+    totalLTV,
+    weightedAverageInterestRate,
+    monthlyCashflow,
+    totalPropertyValue,
+    totalMortgageBalance,
+    totalMonthlyRentalIncome,
+    totalMonthlyMortgagePayments,
   }
 }
 
@@ -215,8 +256,44 @@ export async function getRentalPropertiesWithPayments(): Promise<PropertyWithPay
   })
   } catch (error) {
     console.error('Failed to get rental properties with payments:', error)
-    // Return empty array on error
-    return []
+    // Return mock properties from constants.ts as fallback
+    console.log('Returning mock rental properties as fallback')
+    return getMockRentalPropertiesWithPayments()
   }
+}
+
+/**
+ * Get mock rental properties from constants.ts
+ */
+function getMockRentalPropertiesWithPayments(): PropertyWithPayments[] {
+  const soniaRate = 5.25 // Approximate SONIA rate
+
+  return rentalProperties.map((property) => {
+    const effectiveRate = property.loanType === 'variable' ? soniaRate : property.currentInterestRate
+    const monthlyMortgagePayment = calculateMonthlyMortgagePayment(
+      property.currentMortgageBalance,
+      effectiveRate,
+      25
+    )
+    const ltv = property.purchasePrice > 0 ? (property.currentMortgageBalance / property.purchasePrice) * 100 : 0
+    const monthlyCashflow = property.monthlyRentalIncome - monthlyMortgagePayment
+
+    return {
+      id: property.id,
+      name: property.name,
+      location: property.location,
+      purchasePrice: property.purchasePrice,
+      currentMortgageBalance: property.currentMortgageBalance,
+      currentInterestRate: property.currentInterestRate,
+      loanType: property.loanType,
+      monthlyRentalIncome: property.monthlyRentalIncome,
+      monthlyMortgagePayment,
+      monthlyCashflow,
+      ltv,
+      effectiveInterestRate: effectiveRate,
+      totalMonthlyCosts: monthlyMortgagePayment,
+      netProfit: monthlyCashflow,
+    }
+  })
 }
 
