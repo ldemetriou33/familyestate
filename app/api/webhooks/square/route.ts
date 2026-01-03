@@ -8,9 +8,14 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { validateSquareSignature } from '@/lib/webhooks'
 import { WebhookProvider, WebhookStatus, DataSource } from '@prisma/client'
+
+// Lazy import Prisma to avoid build-time initialization
+async function getPrisma() {
+  const { prisma } = await import('@/lib/prisma')
+  return prisma
+}
 
 // Square webhook signature key (set in environment)
 const SQUARE_WEBHOOK_SIGNATURE_KEY = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY || ''
@@ -88,6 +93,9 @@ interface SquareOrder {
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   let logId: string | null = null
+  
+  // Get Prisma client lazily
+  const prisma = await getPrisma()
   
   try {
     // Get raw body for signature validation

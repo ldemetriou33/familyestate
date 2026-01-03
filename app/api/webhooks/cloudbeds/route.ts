@@ -8,9 +8,14 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { validateCloudbedsSignature } from '@/lib/webhooks'
 import { BookingStatus, BookingChannel, DataSource, WebhookProvider, WebhookStatus } from '@prisma/client'
+
+// Lazy import Prisma to avoid build-time initialization
+async function getPrisma() {
+  const { prisma } = await import('@/lib/prisma')
+  return prisma
+}
 
 // Cloudbeds webhook secret (set in environment)
 const CLOUDBEDS_WEBHOOK_SECRET = process.env.CLOUDBEDS_WEBHOOK_SECRET || ''
@@ -62,6 +67,9 @@ interface CloudbedsReservationPayload {
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   let logId: string | null = null
+  
+  // Get Prisma client lazily
+  const prisma = await getPrisma()
   
   try {
     // Get raw body for signature validation
@@ -201,6 +209,7 @@ export async function POST(request: NextRequest) {
 // ============================================
 
 async function handleReservationUpsert(data: CloudbedsReservationPayload['data']): Promise<string | null> {
+  const prisma = await getPrisma()
   // Find unit by room name or use default hotel unit
   const unit = await prisma.unit.findFirst({
     where: {
@@ -272,6 +281,7 @@ async function handleReservationUpsert(data: CloudbedsReservationPayload['data']
 }
 
 async function handleCheckIn(data: CloudbedsReservationPayload['data']): Promise<string | null> {
+  const prisma = await getPrisma()
   const booking = await prisma.booking.update({
     where: {
       cloudbedsReservationId: data.reservationId,
@@ -294,6 +304,7 @@ async function handleCheckIn(data: CloudbedsReservationPayload['data']): Promise
 }
 
 async function handleCheckOut(data: CloudbedsReservationPayload['data']): Promise<string | null> {
+  const prisma = await getPrisma()
   const booking = await prisma.booking.update({
     where: {
       cloudbedsReservationId: data.reservationId,
@@ -317,6 +328,7 @@ async function handleCheckOut(data: CloudbedsReservationPayload['data']): Promis
 }
 
 async function updateHotelMetrics(propertyId: string, date: Date): Promise<void> {
+  const prisma = await getPrisma()
   const startOfDay = new Date(date)
   startOfDay.setHours(0, 0, 0, 0)
   
