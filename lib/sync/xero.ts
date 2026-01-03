@@ -348,18 +348,20 @@ export async function syncXeroTransactions(): Promise<{
       create: {
         id: tx.BankTransactionID,
         date: new Date(tx.Date),
-        description: tx.LineItems?.[0]?.Description || tx.Type,
+        description: tx.Contact?.Name 
+          ? `${tx.Contact.Name} - ${tx.LineItems?.[0]?.Description || tx.Type}`
+          : (tx.LineItems?.[0]?.Description || tx.Type),
         amount: tx.Total,
         category: isIncome ? 'OTHER_INCOME' : 'OTHER_EXPENSE',
-        vendor: tx.Contact?.Name,
         dataSource: DataSource.BANK_FEED,
         confidence: DataConfidence.HIGH,
         lastUpdatedAt: new Date(),
       },
       update: {
         amount: tx.Total,
-        description: tx.LineItems?.[0]?.Description || tx.Type,
-        vendor: tx.Contact?.Name,
+        description: tx.Contact?.Name 
+          ? `${tx.Contact.Name} - ${tx.LineItems?.[0]?.Description || tx.Type}`
+          : (tx.LineItems?.[0]?.Description || tx.Type),
         lastUpdatedAt: new Date(),
       },
     })
@@ -419,22 +421,22 @@ export async function runXeroSync(): Promise<{
   })
   
   // Log sync
-  await prisma.integrationSyncLog.create({
-    data: {
-      connectionId: (await prisma.integrationConnection.findFirst({
-        where: { provider: 'XERO' },
-      }))?.id || 'unknown',
-      syncType: 'FULL_SYNC',
-      status: 'SUCCESS',
-      recordsProcessed: transactions.transactionsProcessed,
-      details: {
-        profitAndLoss,
-        cashAtBank,
-        transactions,
-        durationMs: Date.now() - startTime,
-      },
-    },
+  const connection = await prisma.integrationConnection.findFirst({
+    where: { provider: 'XERO', isActive: true },
   })
+  
+  if (connection) {
+    await prisma.integrationSyncLog.create({
+      data: {
+        connectionId: connection.id,
+        startedAt: new Date(startTime),
+        completedAt: new Date(),
+        recordsProcessed: transactions.transactionsProcessed,
+        recordsCreated: transactions.transactionsProcessed,
+        status: 'ACTIVE',
+      },
+    })
+  }
   
   console.log(`=== Xero Sync Complete (${Date.now() - startTime}ms) ===`)
   
