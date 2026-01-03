@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, PieChart, Percent, Activity } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, PieChart, Percent, Activity, AlertTriangle, Loader2 } from 'lucide-react'
 import { calculatePortfolioMetrics, getRentalPropertiesWithPayments } from '@/actions/portfolio/get-portfolio-metrics'
 import { formatGBP, formatPercentage } from '@/lib/utils'
 import { fetchSONIARate } from '@/lib/services/sonia'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-
-import { AlertTriangle, Loader2 } from 'lucide-react'
 
 export default function PortfolioSection() {
   const [soniaRate, setSoniaRate] = useState<{ rate: number; date: string; source: string } | null>(null)
