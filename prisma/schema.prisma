@@ -1733,3 +1733,262 @@ model CafeTransaction {
   @@index([propertyId, timestamp])
   @@map("cafe_transactions")
 }
+
+// ============================================
+// CMS - DYNAMIC SITE CONTENT
+// Abbey OS Content Management System
+// ============================================
+
+enum PropertyStatus {
+  ACTIVE
+  SOLD
+  MAINTENANCE
+  DEVELOPMENT
+  ARCHIVED
+}
+
+enum AssetType {
+  HOTEL
+  LAND
+  RESIDENTIAL
+  COMMERCIAL
+  MIXED_USE
+}
+
+enum ViewType {
+  WEMBLEY_ARCH
+  CITY_SKYLINE
+  GARDEN
+  COURTYARD
+  STREET
+  STANDARD
+}
+
+// CMS Properties - Distinct from operational properties
+model CMSProperty {
+  id             String         @id @default(cuid())
+  
+  // Basic Info
+  name           String
+  slug           String         @unique // URL-friendly name
+  location       String
+  country        String         @default("UK")
+  
+  // Type & Status
+  assetType      AssetType      @default(HOTEL)
+  status         PropertyStatus @default(ACTIVE)
+  
+  // Financials
+  purchaseDate   DateTime?
+  purchasePrice  Float?
+  currentValue   Float?
+  
+  // Display
+  description    String?
+  shortDescription String?      // For cards/listings
+  heroImageUrl   String?
+  galleryImages  String[]       // Array of image URLs
+  
+  // Features
+  amenities      String[]
+  highlights     String[]       // Key selling points
+  
+  // Location details
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  
+  // SEO
+  metaTitle      String?
+  metaDescription String?
+  
+  // Display order
+  sortOrder      Int            @default(0)
+  isFeatured     Boolean        @default(false)
+  
+  // Publishing
+  isPublished    Boolean        @default(false)
+  publishedAt    DateTime?
+  
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  
+  // Relations
+  rooms          CMSRoom[]
+  
+  @@index([status])
+  @@index([assetType])
+  @@index([isPublished])
+  @@map("cms_properties")
+}
+
+// CMS Rooms - Hotel rooms with dynamic pricing
+model CMSRoom {
+  id             String      @id @default(cuid())
+  propertyId     String
+  property       CMSProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  
+  // Basic Info
+  name           String      // "Wembley View Suite"
+  roomNumber     String?
+  floor          Int?
+  
+  // Room Details
+  roomType       String      // "Standard", "Deluxe", "Suite"
+  viewType       ViewType    @default(STANDARD)
+  bedType        String?     // "King", "Twin", "Double"
+  maxOccupancy   Int         @default(2)
+  squareMeters   Float?
+  
+  // Pricing
+  basePrice      Float       // Standard nightly rate
+  weekendPrice   Float?      // Weekend premium
+  
+  // Event Pricing (Wembley Stadium)
+  isEventPremiumActive Boolean @default(false)
+  eventPremiumMultiplier Float @default(1.5) // 1.5x = 50% surge
+  eventPrice     Float?      // Calculated: basePrice * multiplier
+  
+  // Display
+  description    String?
+  images         String[]    // Gallery of room images
+  heroImageUrl   String?
+  
+  // Features
+  amenities      String[]    // ["WiFi", "TV", "Air Con", "Mini Bar"]
+  features       String[]    // ["Wembley View", "Balcony", "Jacuzzi"]
+  
+  // Availability
+  isAvailable    Boolean     @default(true)
+  isPublished    Boolean     @default(true)
+  
+  // Display order
+  sortOrder      Int         @default(0)
+  
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  
+  @@unique([propertyId, roomNumber])
+  @@index([propertyId])
+  @@index([viewType])
+  @@index([isEventPremiumActive])
+  @@map("cms_rooms")
+}
+
+// CMS Site Content - Dynamic text & settings
+model SiteContent {
+  id             String   @id @default(cuid())
+  
+  // Key-value system
+  key            String   @unique // e.g., "homepage.hero.title"
+  value          String   // The actual content
+  
+  // Metadata
+  section        String?  // "homepage", "about", "contact"
+  contentType    String   @default("text") // "text", "html", "json", "image"
+  
+  // Labels for admin
+  label          String?  // Human-readable: "Hero Title"
+  description    String?  // Help text for editors
+  
+  // Versioning
+  version        Int      @default(1)
+  previousValue  String?
+  
+  // Audit
+  lastEditedBy   String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([section])
+  @@index([key])
+  @@map("site_content")
+}
+
+// CMS Announcements - For banners/alerts
+model Announcement {
+  id             String   @id @default(cuid())
+  
+  title          String
+  message        String
+  
+  // Display
+  type           String   @default("info") // "info", "warning", "success", "promo"
+  ctaText        String?  // "Learn More"
+  ctaUrl         String?
+  
+  // Visibility
+  isActive       Boolean  @default(true)
+  showOnHomepage Boolean  @default(true)
+  showOnAllPages Boolean  @default(false)
+  
+  // Scheduling
+  startDate      DateTime?
+  endDate        DateTime?
+  
+  // Display order
+  sortOrder      Int      @default(0)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([isActive])
+  @@map("announcements")
+}
+
+// CMS Media Library
+model MediaAsset {
+  id             String   @id @default(cuid())
+  
+  // File info
+  filename       String
+  originalName   String
+  mimeType       String
+  size           Int      // In bytes
+  
+  // Storage
+  url            String   // Supabase Storage URL
+  bucket         String   @default("property-images")
+  path           String   // Path within bucket
+  
+  // Metadata
+  alt            String?  // Alt text for accessibility
+  caption        String?
+  tags           String[]
+  
+  // Dimensions (for images)
+  width          Int?
+  height         Int?
+  
+  // Organization
+  folderId       String?
+  folder         MediaFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  
+  // Audit
+  uploadedBy     String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([mimeType])
+  @@index([folderId])
+  @@map("media_assets")
+}
+
+model MediaFolder {
+  id             String   @id @default(cuid())
+  
+  name           String
+  slug           String
+  parentId       String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  assets         MediaAsset[]
+  
+  @@unique([parentId, slug])
+  @@map("media_folders")
+}
