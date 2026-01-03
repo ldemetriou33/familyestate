@@ -10,17 +10,44 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 
 export default function PortfolioSection() {
   const [soniaRate, setSoniaRate] = useState<{ rate: number; date: string; source: string } | null>(null)
-  const portfolioMetrics = calculatePortfolioMetrics()
-  const properties = getRentalPropertiesWithPayments()
+  const [portfolioMetrics, setPortfolioMetrics] = useState<Awaited<ReturnType<typeof calculatePortfolioMetrics>> | null>(null)
+  const [properties, setProperties] = useState<Awaited<ReturnType<typeof getRentalPropertiesWithPayments>>>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Fetch SONIA rate on component mount
-    fetchSONIARate().then((data) => {
-      if (data) {
-        setSoniaRate(data)
+    // Fetch all data on component mount
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        const [metricsData, propertiesData, soniaData] = await Promise.all([
+          calculatePortfolioMetrics(),
+          getRentalPropertiesWithPayments(),
+          fetchSONIARate(),
+        ])
+        setPortfolioMetrics(metricsData)
+        setProperties(propertiesData)
+        if (soniaData) {
+          setSoniaRate(soniaData)
+        }
+      } catch (error) {
+        console.error('Failed to load portfolio data:', error)
+      } finally {
+        setLoading(false)
       }
-    })
+    }
+    loadData()
   }, [])
+
+  if (loading || !portfolioMetrics) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--accent)] mx-auto mb-4"></div>
+          <p className="text-[var(--text-muted)]">Loading portfolio data...</p>
+        </div>
+      </div>
+    )
+  }
 
   const metrics = [
     {
