@@ -385,7 +385,7 @@ async function updateCafeDailySales(propertyId: string, date: Date): Promise<voi
       vat,
       covers: totalCovers,
       avgSpend,
-      dataSource: DataSource.POS,
+      dataSource: DataSource.POS_SQUARE,
       lastUpdatedAt: new Date(),
     },
     update: {
@@ -394,7 +394,7 @@ async function updateCafeDailySales(propertyId: string, date: Date): Promise<voi
       vat,
       covers: totalCovers,
       avgSpend,
-      dataSource: DataSource.POS,
+      dataSource: DataSource.POS_SQUARE,
       lastUpdatedAt: new Date(),
     },
   })
