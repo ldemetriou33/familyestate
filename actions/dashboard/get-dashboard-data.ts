@@ -500,23 +500,55 @@ export async function getAlertsData() {
 // ============================================
 
 export async function getDashboardData() {
-  const [portfolio, hotel, cafe, residential, finance, alerts] = await Promise.all([
-    getPortfolioOverview(),
-    getHotelData(),
-    getCafeData(),
-    getResidentialData(),
-    getFinanceData(),
-    getAlertsData(),
-  ])
+  try {
+    const [portfolio, hotel, cafe, residential, finance, alerts] = await Promise.all([
+      getPortfolioOverview().catch(err => {
+        console.error('Failed to get portfolio overview:', err)
+        return { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, totalEquity: 0, monthlyIncome: 0, ltv: 0, byType: { residential: [], hotel: [], cafe: [] }, properties: [], recentTransactions: [] }
+      }),
+      getHotelData().catch(err => {
+        console.error('Failed to get hotel data:', err)
+        return null
+      }),
+      getCafeData().catch(err => {
+        console.error('Failed to get cafe data:', err)
+        return null
+      }),
+      getResidentialData().catch(err => {
+        console.error('Failed to get residential data:', err)
+        return { properties: [], summary: { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, equity: 0, monthlyRent: 0, annualYield: 0 }, alerts: { unitsInArrears: 0, totalArrears: 0, expiringLeases: 0 } }
+      }),
+      getFinanceData().catch(err => {
+        console.error('Failed to get finance data:', err)
+        return { cashPosition: 0, cashHistory: [], totalDebt: 0, monthlyDebtService: 0, debts: [], monthlyExpenses: 0, recentExpenses: [], recentTransactions: [], upcomingPayments: [] }
+      }),
+      getAlertsData().catch(err => {
+        console.error('Failed to get alerts data:', err)
+        return { alerts: [], counts: { critical: 0, warning: 0, info: 0 } }
+      }),
+    ])
 
-  return {
-    portfolio,
-    hotel,
-    cafe,
-    residential,
-    finance,
-    alerts,
-    lastUpdated: new Date(),
+    return {
+      portfolio,
+      hotel,
+      cafe,
+      residential,
+      finance,
+      alerts,
+      lastUpdated: new Date(),
+    }
+  } catch (error) {
+    console.error('Failed to get dashboard data:', error)
+    // Return empty data structure to prevent complete failure
+    return {
+      portfolio: { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, totalEquity: 0, monthlyIncome: 0, ltv: 0, byType: { residential: [], hotel: [], cafe: [] }, properties: [], recentTransactions: [] },
+      hotel: null,
+      cafe: null,
+      residential: { properties: [], summary: { totalProperties: 0, totalUnits: 0, occupiedUnits: 0, vacantUnits: 0, occupancyRate: 0, totalValue: 0, totalDebt: 0, equity: 0, monthlyRent: 0, annualYield: 0 }, alerts: { unitsInArrears: 0, totalArrears: 0, expiringLeases: 0 } },
+      finance: { cashPosition: 0, cashHistory: [], totalDebt: 0, monthlyDebtService: 0, debts: [], monthlyExpenses: 0, recentExpenses: [], recentTransactions: [], upcomingPayments: [] },
+      alerts: { alerts: [], counts: { critical: 0, warning: 0, info: 0 } },
+      lastUpdated: new Date(),
+    }
   }
 }
 

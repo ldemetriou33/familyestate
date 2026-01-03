@@ -13,6 +13,7 @@ import { SettingsPage } from './settings/SettingsPage'
 import { IntegrationsPage } from './integrations/IntegrationsPage'
 import { AIAssistant, AIFloatingButton } from './ai/AIAssistant'
 import { DashboardDataProvider, useAlertsData } from '@/contexts/DashboardDataContext'
+import { ErrorBoundary } from './ErrorBoundary'
 
 // Inner component that uses the data context
 function DashboardContent() {
@@ -137,11 +138,13 @@ function DashboardContent() {
   )
 }
 
-// Main export wraps with data provider
+// Main export wraps with data provider and error boundary
 export default function Dashboard() {
   return (
-    <DashboardDataProvider>
-      <DashboardContent />
-    </DashboardDataProvider>
+    <ErrorBoundary>
+      <DashboardDataProvider>
+        <DashboardContent />
+      </DashboardDataProvider>
+    </ErrorBoundary>
   )
 }

@@ -66,89 +66,90 @@ export interface CommandCenterData {
  * Fetch all data needed for the Command Center
  */
 export async function getCommandCenterData(): Promise<CommandCenterData> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  // Fetch data (separate queries for proper type inference)
-  const cashPosition = await prisma.cashPosition.findFirst({
-    orderBy: { date: 'desc' },
-  })
-
-  const alerts = await prisma.alert.findMany({
-    where: { isDismissed: false },
-    include: { property: { select: { name: true } } },
-    orderBy: [
-      { severity: 'asc' }, // CRITICAL first
-      { createdAt: 'desc' },
-    ],
-    take: 10,
-  })
-
-  // Get action summary with error handling
-  let actionSummary
   try {
-    actionSummary = await getDailyActionSummary()
-  } catch (error) {
-    console.error('Failed to get action summary:', error)
-    // Return empty action summary on error
-    actionSummary = {
-      pendingActions: [],
-      totalImpact: 0,
-      completedToday: 0,
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // Fetch data with individual error handling for each query
+    const cashPosition = await prisma.cashPosition.findFirst({
+      orderBy: { date: 'desc' },
+    }).catch(() => null)
+
+    const alerts = await prisma.alert.findMany({
+      where: { isDismissed: false },
+      include: { property: { select: { name: true } } },
+      orderBy: [
+        { severity: 'asc' }, // CRITICAL first
+        { createdAt: 'desc' },
+      ],
+      take: 10,
+    }).catch(() => [])
+
+    // Get action summary with error handling
+    let actionSummary
+    try {
+      actionSummary = await getDailyActionSummary()
+    } catch (error) {
+      console.error('Failed to get action summary:', error)
+      // Return empty action summary on error
+      actionSummary = {
+        pendingActions: [],
+        totalImpact: 0,
+        completedToday: 0,
+      }
     }
-  }
 
-  const todayHotelMetric = await prisma.hotelMetric.findFirst({
-    where: { date: { gte: today } },
-    orderBy: { date: 'desc' },
-  })
+    const todayHotelMetric = await prisma.hotelMetric.findFirst({
+      where: { date: { gte: today } },
+      orderBy: { date: 'desc' },
+    }).catch(() => null)
 
-  const todayCafeSales = await prisma.cafeSales.findFirst({
-    where: { date: { gte: today } },
-    orderBy: { date: 'desc' },
-  })
+    const todayCafeSales = await prisma.cafeSales.findFirst({
+      where: { date: { gte: today } },
+      orderBy: { date: 'desc' },
+    }).catch(() => null)
 
-  const rentRollStats = await prisma.rentRoll.aggregate({
-    where: { isActive: true },
-    _sum: {
-      monthlyRent: true,
-      arrearsAmount: true,
-    },
-    _count: {
-      _all: true,
-    },
-  })
+    const rentRollStats = await prisma.rentRoll.aggregate({
+      where: { isActive: true },
+      _sum: {
+        monthlyRent: true,
+        arrearsAmount: true,
+      },
+      _count: {
+        _all: true,
+      },
+    }).catch(() => ({ _sum: { monthlyRent: 0, arrearsAmount: 0 }, _count: { _all: 0 } }))
 
-  const unitStats = await prisma.unit.groupBy({
-    by: ['status'],
-    _count: { _all: true },
-  })
+    const unitStats = await prisma.unit.groupBy({
+      by: ['status'],
+      _count: { _all: true },
+    }).catch(() => [])
 
-  // Count arrears
-  const arrearsCount = await prisma.rentRoll.count({
-    where: {
-      isActive: true,
-      arrearsAmount: { gt: 0 },
-    },
-  })
+    // Count arrears
+    const arrearsCount = await prisma.rentRoll.count({
+      where: {
+        isActive: true,
+        arrearsAmount: { gt: 0 },
+      },
+    }).catch(() => 0)
 
-  // Calculate unit stats
-  let totalUnits = 0
-  let occupiedUnits = 0
-  let vacantUnits = 0
-  for (const stat of unitStats) {
-    totalUnits += stat._count._all
-    if (stat.status === 'OCCUPIED') occupiedUnits = stat._count._all
-    if (stat.status === 'VACANT') vacantUnits = stat._count._all
-  }
+    // Calculate unit stats
+    let totalUnits = 0
+    let occupiedUnits = 0
+    let vacantUnits = 0
+    for (const stat of unitStats) {
+      totalUnits += stat._count._all
+      if (stat.status === 'OCCUPIED') occupiedUnits = stat._count._all
+      if (stat.status === 'VACANT') vacantUnits = stat._count._all
+    }
 
-  // Count critical alerts
-  let criticalAlerts = 0
-  for (const alert of alerts) {
-    if (alert.severity === 'CRITICAL') criticalAlerts++
-  }
+    // Count critical alerts
+    let criticalAlerts = 0
+    for (const alert of alerts) {
+      if (alert.severity === 'CRITICAL') criticalAlerts++
+    }
 
-  return {
+    return {
     cashPosition: {
       operatingBalance: cashPosition?.operatingBalance || 0,
       reserveBalance: cashPosition?.reserveBalance || 0,
@@ -223,6 +224,40 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
       totalArrears: rentRollStats._sum.arrearsAmount || 0,
       arrearsCount,
     },
+    }
+  } catch (error) {
+    console.error('Failed to get command center data:', error)
+    // Return empty data structure to prevent complete failure
+    return {
+      cashPosition: {
+        operatingBalance: 0,
+        reserveBalance: 0,
+        totalBalance: 0,
+        inflows: 0,
+        outflows: 0,
+        netMovement: 0,
+        projected30Day: null,
+        projected90Day: null,
+      },
+      alerts: [],
+      actionItems: [],
+      metrics: {
+        criticalAlerts: 0,
+        pendingActions: 0,
+        totalImpact: 0,
+        completedToday: 0,
+      },
+      hotelMetrics: null,
+      cafeMetrics: null,
+      portfolioMetrics: {
+        totalUnits: 0,
+        occupiedUnits: 0,
+        vacantUnits: 0,
+        totalRentRoll: 0,
+        totalArrears: 0,
+        arrearsCount: 0,
+      },
+    }
   }
 }
 
