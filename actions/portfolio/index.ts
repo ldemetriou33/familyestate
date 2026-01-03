@@ -197,15 +197,16 @@ export async function createProperty(data: PropertyFormData) {
     await prisma.debt.create({
       data: {
         propertyId: property.id,
-        name: `Mortgage - ${data.name}`,
-        type: 'MORTGAGE',
-        originalBalance: data.mortgageBalance,
+        lender: data.mortgageLender || 'Unknown Lender',
+        loanType: data.mortgageType || 'MORTGAGE',
+        principal: data.mortgageBalance,
         currentBalance: data.mortgageBalance,
         interestRate: data.interestRate || 0,
         monthlyPayment: calculateMortgagePayment(data.mortgageBalance, data.interestRate || 5, 25),
-        lender: data.mortgageLender || '',
         startDate: new Date(),
         maturityDate: data.mortgageTermEndDate || new Date(Date.now() + 25 * 365 * 24 * 60 * 60 * 1000),
+        isFixed: data.mortgageType === 'FIXED',
+        notes: `Mortgage for ${data.name}`,
       },
     })
   }
