@@ -34,12 +34,41 @@ export default function CommandCenterSection() {
   // Fetch command center specific data
   const [commandCenterData, setCommandCenterData] = useState<Awaited<ReturnType<typeof getCommandCenterData>> | null>(null)
   const [loadingCommandCenter, setLoadingCommandCenter] = useState(true)
+  const [errorCommandCenter, setErrorCommandCenter] = useState<Error | null>(null)
 
   useEffect(() => {
-    getCommandCenterData().then(data => {
-      setCommandCenterData(data)
-      setLoadingCommandCenter(false)
-    })
+    let cancelled = false
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (!cancelled) {
+        setLoadingCommandCenter(false)
+        setErrorCommandCenter(new Error('Request timed out. Please check your database connection.'))
+      }
+    }, 10000) // 10 second timeout
+
+    getCommandCenterData()
+      .then(data => {
+        if (!cancelled) {
+          clearTimeout(timeout)
+          setCommandCenterData(data)
+          setLoadingCommandCenter(false)
+          setErrorCommandCenter(null)
+        }
+      })
+      .catch(err => {
+        if (!cancelled) {
+          clearTimeout(timeout)
+          console.error('Failed to load command center data:', err)
+          setErrorCommandCenter(err instanceof Error ? err : new Error('Failed to load data'))
+          setLoadingCommandCenter(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      clearTimeout(timeout)
+    }
   }, [])
 
   // Extract data with fallbacks - use commandCenterData as primary source
@@ -249,8 +278,24 @@ export default function CommandCenterSection() {
 
   if (loading || loadingCommandCenter) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+        <p className="text-sm text-[var(--text-muted)]">Loading dashboard data...</p>
+      </div>
+    )
+  }
+
+  if (errorCommandCenter) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertTriangle className="w-8 h-8 text-red-500" />
+        <p className="text-sm text-red-500">Failed to load data. Please refresh the page.</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:bg-[var(--accent)]/90"
+        >
+          Refresh
+        </button>
       </div>
     )
   }

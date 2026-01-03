@@ -37,7 +37,10 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
       setData(dashboardData)
     } catch (err) {
       console.error('Failed to fetch dashboard data:', err)
-      setError(err instanceof Error ? err : new Error('Failed to fetch data'))
+      const error = err instanceof Error ? err : new Error('Failed to fetch data')
+      setError(error)
+      // Don't set loading to false on error - let components handle empty state
+      // This allows the UI to show error messages instead of infinite loading
     } finally {
       setLoading(false)
     }

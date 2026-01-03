@@ -84,7 +84,19 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
     take: 10,
   })
 
-  const actionSummary = await getDailyActionSummary()
+  // Get action summary with error handling
+  let actionSummary
+  try {
+    actionSummary = await getDailyActionSummary()
+  } catch (error) {
+    console.error('Failed to get action summary:', error)
+    // Return empty action summary on error
+    actionSummary = {
+      pendingActions: [],
+      totalImpact: 0,
+      completedToday: 0,
+    }
+  }
 
   const todayHotelMetric = await prisma.hotelMetric.findFirst({
     where: { date: { gte: today } },
