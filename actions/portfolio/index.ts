@@ -356,22 +356,26 @@ export async function createDailyLog(data: {
 // ============================================
 
 export async function seedPortfolioData() {
-  // Check if data already exists
-  const existingProperties = await prisma.property.count()
-  if (existingProperties > 0) {
-    return { success: false, message: 'Data already exists' }
+  // Allow re-seeding - delete existing data first
+  try {
+    await prisma.rentRoll.deleteMany({})
+    await prisma.unit.deleteMany({})
+    await prisma.debt.deleteMany({})
+    await prisma.property.deleteMany({})
+  } catch (error) {
+    console.error('Error clearing existing data:', error)
   }
 
-  // Create Hotel
+  // Create Hotel (from lib/constants.ts)
   const hotel = await prisma.property.create({
     data: {
       name: 'The Grand Abbey Hotel',
       type: 'HOTEL',
-      address: '123 Abbey Road',
+      address: '15 Abbey Road',
       city: 'London',
       postcode: 'SW1A 1AA',
       purchasePrice: 12500000,
-      currentValue: 14000000,
+      currentValue: 14200000,
       mortgageBalance: 8750000,
       interestRate: 4.85,
       mortgageLender: 'Barclays Commercial',
@@ -380,40 +384,42 @@ export async function seedPortfolioData() {
     },
   })
 
-  // Create hotel rooms
-  for (let i = 1; i <= 20; i++) {
+  // Create hotel rooms (24 rooms)
+  for (let i = 1; i <= 24; i++) {
     await prisma.unit.create({
       data: {
         propertyId: hotel.id,
         unitNumber: `${100 + i}`,
-        floor: Math.floor(i / 5) + 1,
-        type: i <= 15 ? 'Standard' : 'Suite',
-        status: Math.random() > 0.3 ? 'OCCUPIED' : 'VACANT',
-        currentRate: i <= 15 ? 150 : 250,
-        squareMeters: i <= 15 ? 25 : 40,
+        floor: Math.floor((i - 1) / 6) + 1,
+        type: i <= 18 ? 'Standard' : 'Suite',
+        status: i <= 18 ? 'OCCUPIED' : 'VACANT',
+        currentRate: i <= 18 ? 150 : 250,
+        squareMeters: i <= 18 ? 25 : 40,
         bedrooms: 1,
         bathrooms: 1,
       },
     })
   }
 
-  // Create Cafe
-  await prisma.property.create({
+  // Create Cafe (from lib/constants.ts)
+  const cafe = await prisma.property.create({
     data: {
       name: 'Abbey Café',
       type: 'CAFE',
-      address: '125 Abbey Road',
+      address: '17 Abbey Road',
       city: 'London',
       postcode: 'SW1A 1AA',
       purchasePrice: 450000,
       currentValue: 520000,
       mortgageBalance: 315000,
       interestRate: 5.50,
+      mortgageLender: 'HSBC',
+      mortgageType: 'FIXED',
       dataSource: DataSource.MANUAL,
     },
   })
 
-  // Create 12 Residential Properties
+  // Create 12 Residential Properties (from lib/constants.ts rentalProperties)
   const residentialData = [
     { name: 'Kensington Flat', city: 'London', postcode: 'SW7 2AA', price: 850000, rent: 3200 },
     { name: 'Islington Flat', city: 'London', postcode: 'N1 8JA', price: 625000, rent: 2450 },
