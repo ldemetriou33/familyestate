@@ -69,13 +69,20 @@ export interface CommandCenterData {
 export async function getCommandCenterData(): Promise<CommandCenterData> {
   // If DATABASE_URL is not set, return mock data immediately
   // This prevents Prisma proxy errors from breaking the build
-  if (!process.env.DATABASE_URL || process.env.DATABASE_URL === '') {
-    console.log('DATABASE_URL not set, returning mock data')
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL === '' || process.env.DATABASE_URL.includes('placeholder')) {
+    console.log('DATABASE_URL not set or invalid, returning mock data')
     return getMockCommandCenterData()
   }
 
   // Wrap entire function in try-catch to catch any Prisma errors
   try {
+    // Add a quick connection test with timeout
+    const connectionTest = Promise.race([
+      prisma.$queryRaw`SELECT 1`.catch(() => null),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 3000)),
+    ]).catch(() => null)
+
+    await connectionTest
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 

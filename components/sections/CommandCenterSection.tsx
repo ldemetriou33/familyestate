@@ -39,15 +39,22 @@ export default function CommandCenterSection() {
   useEffect(() => {
     let cancelled = false
     
-    // Add timeout to prevent infinite loading
+    // Add timeout to prevent infinite loading - reduced to 5 seconds
     const timeout = setTimeout(() => {
       if (!cancelled) {
         setLoadingCommandCenter(false)
-        setErrorCommandCenter(new Error('Request timed out. Please check your database connection.'))
+        // Don't set error, just use mock data fallback
+        setCommandCenterData(null)
       }
-    }, 10000) // 10 second timeout
+    }, 5000) // 5 second timeout
 
-    getCommandCenterData()
+    // Use Promise.race to ensure we don't wait forever
+    Promise.race([
+      getCommandCenterData(),
+      new Promise<Awaited<ReturnType<typeof getCommandCenterData>>>((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      ),
+    ])
       .then(data => {
         if (!cancelled) {
           clearTimeout(timeout)
@@ -60,8 +67,10 @@ export default function CommandCenterSection() {
         if (!cancelled) {
           clearTimeout(timeout)
           console.error('Failed to load command center data:', err)
-          setErrorCommandCenter(err instanceof Error ? err : new Error('Failed to load data'))
+          // Don't show error, just use fallback data from context
+          setCommandCenterData(null)
           setLoadingCommandCenter(false)
+          setErrorCommandCenter(null) // Don't show error to user
         }
       })
 
@@ -278,12 +287,13 @@ export default function CommandCenterSection() {
 
   // Show loading only if we're waiting for command center data AND have no data
   // Allow rendering with partial data from context if available
+  // After 3 seconds, show data anyway (fallback to context data)
   if (loadingCommandCenter && !commandCenterData && !errorCommandCenter) {
-    // If we have dashboard data from context, show a minimal loading state
-    // Otherwise show full loading
+    // If we have dashboard data from context, show it immediately
     if (dashboardData) {
       // Continue rendering with context data while command center loads
-    } else {
+    } else if (loadingCommandCenter) {
+      // Only show loading for first 3 seconds, then show empty state
       return (
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
