@@ -2,9 +2,10 @@
 // Mixed-use portfolio: Hotel, Cafe, Residential Flats
 // Version 3.0 - Enterprise Control System
 
+// This is the Standard, Safe Configuration
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x"]
+  provider = "prisma-client-js"
+  // DO NOT ADD previewFeatures HERE
 }
 
 datasource db {
