@@ -68,32 +68,58 @@ export interface CommandCenterData {
  */
 export async function getCommandCenterData(): Promise<CommandCenterData> {
   // If DATABASE_URL is not set, return mock data immediately
-  if (!process.env.DATABASE_URL) {
+  // This prevents Prisma proxy errors from breaking the build
+  if (!process.env.DATABASE_URL || process.env.DATABASE_URL === '') {
     console.log('DATABASE_URL not set, returning mock data')
     return getMockCommandCenterData()
   }
 
+  // Wrap entire function in try-catch to catch any Prisma errors
   try {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // Fetch data with individual error handling for each query
-    const cashPosition = await prisma.cashPosition.findFirst({
-      orderBy: { date: 'desc' },
-    }).catch((err) => {
+    // Try to use Prisma - if it fails, return mock data
+    let cashPosition
+    try {
+      cashPosition = await prisma.cashPosition.findFirst({
+        orderBy: { date: 'desc' },
+      })
+    } catch (err) {
       console.error('Error fetching cash position:', err)
-      return null
-    })
+      // If Prisma throws (e.g., proxy error), return mock data immediately
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      cashPosition = null
+    }
 
-    const alerts = await prisma.alert.findMany({
-      where: { isDismissed: false },
-      include: { property: { select: { name: true } } },
-      orderBy: [
-        { severity: 'asc' }, // CRITICAL first
-        { createdAt: 'desc' },
-      ],
-      take: 10,
-    }).catch(() => [])
+    let alerts: Array<{
+      id: string
+      title: string
+      message: string
+      severity: string
+      category: string
+      createdAt: Date
+      property: { name: string } | null
+    }> = []
+    try {
+      alerts = await prisma.alert.findMany({
+        where: { isDismissed: false },
+        include: { property: { select: { name: true } } },
+        orderBy: [
+          { severity: 'asc' }, // CRITICAL first
+          { createdAt: 'desc' },
+        ],
+        take: 10,
+      })
+    } catch (err) {
+      console.error('Error fetching alerts:', err)
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      alerts = []
+    }
 
     // Get action summary with error handling
     let actionSummary
@@ -109,39 +135,81 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
       }
     }
 
-    const todayHotelMetric = await prisma.hotelMetric.findFirst({
-      where: { date: { gte: today } },
-      orderBy: { date: 'desc' },
-    }).catch(() => null)
+    let todayHotelMetric: any = null
+    let todayCafeSales: any = null
+    let rentRollStats: any = { _sum: { monthlyRent: 0, arrearsAmount: 0 }, _count: { _all: 0 } }
+    let unitStats: any[] = []
+    let arrearsCount = 0
+    
+    try {
+      todayHotelMetric = await prisma.hotelMetric.findFirst({
+        where: { date: { gte: today } },
+        orderBy: { date: 'desc' },
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      todayHotelMetric = null
+    }
 
-    const todayCafeSales = await prisma.cafeSales.findFirst({
-      where: { date: { gte: today } },
-      orderBy: { date: 'desc' },
-    }).catch(() => null)
+    try {
+      todayCafeSales = await prisma.cafeSales.findFirst({
+        where: { date: { gte: today } },
+        orderBy: { date: 'desc' },
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      todayCafeSales = null
+    }
 
-    const rentRollStats = await prisma.rentRoll.aggregate({
-      where: { isActive: true },
-      _sum: {
-        monthlyRent: true,
-        arrearsAmount: true,
-      },
-      _count: {
-        _all: true,
-      },
-    }).catch(() => ({ _sum: { monthlyRent: 0, arrearsAmount: 0 }, _count: { _all: 0 } }))
+    try {
+      rentRollStats = await prisma.rentRoll.aggregate({
+        where: { isActive: true },
+        _sum: {
+          monthlyRent: true,
+          arrearsAmount: true,
+        },
+        _count: {
+          _all: true,
+        },
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      rentRollStats = { _sum: { monthlyRent: 0, arrearsAmount: 0 }, _count: { _all: 0 } }
+    }
 
-    const unitStats = await prisma.unit.groupBy({
-      by: ['status'],
-      _count: { _all: true },
-    }).catch(() => [])
+    try {
+      // @ts-expect-error - Prisma proxy may not have correct types when DATABASE_URL is missing
+      unitStats = await prisma.unit.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      unitStats = []
+    }
 
     // Count arrears
-    const arrearsCount = await prisma.rentRoll.count({
-      where: {
-        isActive: true,
-        arrearsAmount: { gt: 0 },
-      },
-    }).catch(() => 0)
+    try {
+      arrearsCount = await prisma.rentRoll.count({
+        where: {
+          isActive: true,
+          arrearsAmount: { gt: 0 },
+        },
+      })
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('DATABASE_URL')) {
+        return getMockCommandCenterData()
+      }
+      arrearsCount = 0
+    }
 
     // Calculate unit stats
     let totalUnits = 0
