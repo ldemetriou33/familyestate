@@ -94,6 +94,29 @@ export default function PortfolioAdminPage() {
     setSeeding(false)
   }
 
+  const handleDeleteAllData = async () => {
+    if (!confirm('⚠️ WARNING: This will delete ALL properties, units, and rent roll data. This action cannot be undone. Are you absolutely sure?')) {
+      return
+    }
+    if (!confirm('This is your last chance. Delete ALL portfolio data?')) {
+      return
+    }
+    
+    setDeleting(true)
+    try {
+      const result = await deleteAllPortfolioData()
+      if (result.success) {
+        showNotification('success', 'All portfolio data deleted successfully!')
+        await loadData()
+      } else {
+        showNotification('error', result.message || 'Failed to delete data')
+      }
+    } catch (error) {
+      showNotification('error', 'Failed to delete portfolio data')
+    }
+    setDeleting(false)
+  }
+
   const handleDeleteProperty = async (id: string) => {
     if (!confirm('Are you sure you want to delete this property? This will also delete all associated units.')) {
       return
@@ -177,6 +200,20 @@ export default function PortfolioAdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {properties.length > 0 && (
+            <button
+              onClick={handleDeleteAllData}
+              disabled={deleting}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50"
+            >
+              {deleting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Delete All Data
+            </button>
+          )}
           {properties.length === 0 && (
             <button
               onClick={handleSeedData}
