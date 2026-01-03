@@ -8,6 +8,10 @@
  *     { "path": "/api/cron/agents?schedule=early", "schedule": "0 6 * * *" },
  *     { "path": "/api/cron/agents?schedule=hourly", "schedule": "0 * * * *" },
  *     { "path": "/api/cron/agents?schedule=evening", "schedule": "0 18 * * *" }
+ */
+
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
  *   ]
  * }
  */
