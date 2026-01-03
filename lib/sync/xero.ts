@@ -340,6 +340,7 @@ export async function syncXeroTransactions(): Promise<{
   
   for (const tx of transactions.BankTransactions) {
     // Create or update financial transaction
+    const isIncome = tx.Type.includes('RECEIVE')
     await prisma.financialTransaction.upsert({
       where: {
         id: tx.BankTransactionID,
@@ -349,8 +350,8 @@ export async function syncXeroTransactions(): Promise<{
         date: new Date(tx.Date),
         description: tx.LineItems?.[0]?.Description || tx.Type,
         amount: tx.Total,
-        type: tx.Type.includes('RECEIVE') ? 'INCOME' : 'EXPENSE',
-        category: 'BANK_TRANSACTION',
+        type: isIncome ? 'INCOME' : 'EXPENSE',
+        category: isIncome ? 'OTHER_INCOME' : 'OTHER_EXPENSE',
         vendor: tx.Contact?.Name,
         dataSource: DataSource.BANK_FEED,
         confidence: DataConfidence.HIGH,
