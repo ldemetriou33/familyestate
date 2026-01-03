@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   CheckCircle, 
   XCircle, 
@@ -16,103 +16,7 @@ import {
 } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatGBP } from '@/lib/utils'
-
-// Types
-interface ApprovalItem {
-  id: string
-  type: 'EXPENSE' | 'RATE_CHANGE' | 'REFUND' | 'WRITE_OFF'
-  title: string
-  description: string
-  amount: number
-  requestedBy: string
-  requestedAt: Date
-  status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  priority: 'HIGH' | 'MEDIUM' | 'LOW'
-  propertyName?: string
-}
-
-interface RateProposal {
-  id: string
-  propertyName: string
-  currentRate: number
-  proposedRate: number
-  changePercent: number
-  reasoning: string
-  aiGenerated: boolean
-  effectiveFrom: Date
-  status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'APPLIED'
-  createdBy: string
-  createdAt: Date
-}
-
-// Mock data
-const mockApprovals: ApprovalItem[] = [
-  {
-    id: '1',
-    type: 'EXPENSE',
-    title: 'Emergency Boiler Repair',
-    description: 'Boiler replacement at Flat 4B - tenant reported no hot water',
-    amount: 2500,
-    requestedBy: 'John Manager',
-    requestedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    status: 'PENDING',
-    priority: 'HIGH',
-    propertyName: 'Victoria Apartments',
-  },
-  {
-    id: '2',
-    type: 'EXPENSE',
-    title: 'Monthly Cleaning Service',
-    description: 'Recurring cleaning for hotel common areas',
-    amount: 450,
-    requestedBy: 'Sarah Admin',
-    requestedAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    status: 'PENDING',
-    priority: 'LOW',
-    propertyName: 'The Grand Hotel',
-  },
-  {
-    id: '3',
-    type: 'REFUND',
-    title: 'Guest Refund - Room Issue',
-    description: 'Partial refund for AC malfunction during stay',
-    amount: 85,
-    requestedBy: 'Reception Team',
-    requestedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    status: 'PENDING',
-    priority: 'MEDIUM',
-    propertyName: 'The Grand Hotel',
-  },
-]
-
-const mockRateProposals: RateProposal[] = [
-  {
-    id: '1',
-    propertyName: 'The Grand Hotel',
-    currentRate: 95,
-    proposedRate: 115,
-    changePercent: 21.05,
-    reasoning: 'Local event (Music Festival) next weekend. Historical data shows 40% increase in demand during similar events.',
-    aiGenerated: true,
-    effectiveFrom: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    status: 'PENDING_APPROVAL',
-    createdBy: 'AI Engine',
-    createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-  },
-  {
-    id: '2',
-    propertyName: 'The Grand Hotel',
-    currentRate: 95,
-    proposedRate: 75,
-    changePercent: -21.05,
-    reasoning: 'Occupancy forecast at 42% for next week. Recommend 20% discount to drive bookings.',
-    aiGenerated: true,
-    effectiveFrom: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-    status: 'PENDING_APPROVAL',
-    createdBy: 'AI Engine',
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
-  },
-]
+import { getPendingApprovals, getPendingRateProposals, type ApprovalItem, type RateProposal } from '@/actions/approvals/get-approvals'
 
 const typeConfig = {
   EXPENSE: { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -129,8 +33,28 @@ const priorityConfig = {
 
 export function ApprovalWorkflowPanel() {
   const [activeTab, setActiveTab] = useState<'expenses' | 'rates'>('expenses')
-  const [approvals, setApprovals] = useState(mockApprovals)
-  const [rateProposals, setRateProposals] = useState(mockRateProposals)
+  const [approvals, setApprovals] = useState<ApprovalItem[]>([])
+  const [rateProposals, setRateProposals] = useState<RateProposal[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true)
+      try {
+        const [approvalsData, ratesData] = await Promise.all([
+          getPendingApprovals(),
+          getPendingRateProposals(),
+        ])
+        setApprovals(approvalsData)
+        setRateProposals(ratesData)
+      } catch (error) {
+        console.error('Failed to load approvals:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
   const handleApprove = (id: string) => {
     setApprovals(prev => 
@@ -156,8 +80,19 @@ export function ApprovalWorkflowPanel() {
     )
   }
 
-  const pendingApprovals = approvals.filter(a => a.status === 'PENDING')
-  const pendingRates = rateProposals.filter(r => r.status === 'PENDING_APPROVAL')
+  const pendingApprovals = approvals.filter(a => a.status === 'PENDING_APPROVAL' || a.status === 'DRAFT')
+  const pendingRates = rateProposals.filter(r => r.status === 'PENDING_APPROVAL' || r.status === 'DRAFT')
+  
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Clock className="w-8 h-8 mx-auto mb-2 animate-spin text-bloomberg-accent" />
+          <p className="text-sm text-bloomberg-textMuted">Loading approvals...</p>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card>
@@ -209,7 +144,7 @@ export function ApprovalWorkflowPanel() {
               </div>
             ) : (
               pendingApprovals.map((item) => {
-                const config = typeConfig[item.type]
+                const config = typeConfig[item.type] || typeConfig.EXPENSE
                 const priorityCfg = priorityConfig[item.priority]
                 const Icon = config.icon
 
@@ -229,14 +164,14 @@ export function ApprovalWorkflowPanel() {
                             <p className="text-xs text-bloomberg-textMuted mt-0.5">{item.propertyName}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-lg font-bold text-bloomberg-text">{formatGBP(item.amount)}</p>
+                            <p className="text-lg font-bold text-bloomberg-text">{formatGBP(item.amount || 0)}</p>
                             <span className={`text-xs px-2 py-0.5 rounded-full ${priorityCfg.bg} ${priorityCfg.color}`}>
                               {item.priority}
                             </span>
                           </div>
                         </div>
                         <p className="text-sm text-bloomberg-textMuted mt-2 line-clamp-2">
-                          {item.description}
+                          {item.description || 'No description provided'}
                         </p>
                         <div className="flex items-center justify-between mt-3">
                           <div className="flex items-center gap-2 text-xs text-bloomberg-textMuted">

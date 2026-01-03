@@ -12,6 +12,8 @@ import { AnomalyDetailModal } from '@/components/modals/AnomalyDetailModal'
 import { DataHealthWrapper, DataHealthIndicator } from '@/components/ui/DataHealthIndicator'
 import { AgentDashboard } from '@/components/agents'
 import { useDashboardData, useHotelData, useCafeData, usePortfolioData, useFinanceData, useAlertsData } from '@/contexts/DashboardDataContext'
+import { DataSource, DataConfidence } from '@prisma/client'
+import { AlertCategory, Priority, ActionStatus } from '@/lib/types/abbey-os'
 import { formatGBP } from '@/lib/utils'
 import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Database, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -41,19 +43,67 @@ export default function CommandCenterSection() {
   }, [])
 
   // Extract data with fallbacks - use commandCenterData as primary source
-  const cashPosition = commandCenterData?.cashPosition || {
-    operatingBalance: 0,
-    reserveBalance: 0,
-    totalBalance: 0,
-    inflows: 0,
-    outflows: 0,
-    netMovement: 0,
-    projected30Day: null,
-    projected90Day: null,
-  }
+  const cashPosition = useMemo(() => {
+    if (commandCenterData?.cashPosition) {
+      return {
+        id: 'current',
+        date: new Date(),
+        operatingBalance: commandCenterData.cashPosition.operatingBalance || 0,
+        reserveBalance: commandCenterData.cashPosition.reserveBalance || 0,
+        inflows: commandCenterData.cashPosition.inflows || 0,
+        outflows: commandCenterData.cashPosition.outflows || 0,
+        ...(commandCenterData.cashPosition.projected30Day !== null && { projected30Day: commandCenterData.cashPosition.projected30Day }),
+        ...(commandCenterData.cashPosition.projected90Day !== null && { projected90Day: commandCenterData.cashPosition.projected90Day }),
+      }
+    }
+    return {
+      id: 'current',
+      date: new Date(),
+      operatingBalance: 0,
+      reserveBalance: 0,
+      inflows: 0,
+      outflows: 0,
+    }
+  }, [commandCenterData])
 
-  const alerts = commandCenterData?.alerts || alertsData?.alerts || []
-  const actionItems = commandCenterData?.actionItems || []
+  // Map alerts to match expected type
+  const alerts = useMemo(() => {
+    const commandAlerts = commandCenterData?.alerts || []
+    const contextAlerts = alertsData?.alerts || []
+    
+    // Use commandCenterData alerts if available, otherwise use context alerts
+    const allAlerts = commandAlerts.length > 0 ? commandAlerts : contextAlerts
+    
+    // Map to include required fields for Alert type
+    return allAlerts.map(alert => {
+      const a = alert as any
+      return {
+        id: alert.id,
+        title: alert.title,
+        message: alert.message,
+        severity: alert.severity,
+        category: (['MAINTENANCE', 'FINANCIAL', 'COMPLIANCE', 'OCCUPANCY', 'OPERATIONAL'].includes(a.category)) ? a.category as AlertCategory : 'OPERATIONAL' as AlertCategory,
+        createdAt: alert.createdAt,
+        propertyId: (typeof a.propertyId === 'string') ? a.propertyId : undefined,
+        isRead: (typeof a.isRead === 'boolean') ? a.isRead : false,
+        isDismissed: (typeof a.isDismissed === 'boolean') ? a.isDismissed : false,
+      }
+    })
+  }, [commandCenterData, alertsData])
+  // Map actionItems to match expected type
+  const actionItems = useMemo(() => {
+    const items = commandCenterData?.actionItems || []
+    return items.map(item => ({
+      id: item.id,
+      title: item.title,
+      description: item.description ?? undefined,
+      priority: (item.priority === 'CRITICAL' ? 'HIGH' : item.priority === 'HIGH' ? 'HIGH' : item.priority === 'MEDIUM' ? 'MEDIUM' : 'LOW') as Priority,
+      status: (item.status === 'DRAFT' ? 'PENDING' : item.status === 'EXECUTED' ? 'COMPLETED' : item.status === 'APPROVAL_REQ' ? 'PENDING' : 'IN_PROGRESS') as ActionStatus,
+      category: item.category ?? undefined,
+      estimatedImpactGbp: item.estimatedImpactGbp ?? undefined,
+      dueDate: item.dueDate ?? undefined,
+    }))
+  }, [commandCenterData])
 
   // Generate forecast from current data
   const forecast30Day = useMemo(() => {
@@ -64,12 +114,9 @@ export default function CommandCenterSection() {
       const date = new Date(today)
       date.setDate(date.getDate() + i)
       forecasts.push({
-        date: date.toISOString().split('T')[0],
-        cashflow: commandCenterData.cashPosition.projected30Day ? 
-          commandCenterData.cashPosition.projected30Day / 30 : 
-          commandCenterData.cashPosition.netMovement,
-        occupancy: commandCenterData.hotelMetrics?.occupancyRate || 0,
-        revenue: commandCenterData.cafeMetrics?.salesToday || 0,
+        id: `forecast-${i}`,
+        date: date,
+        predictedRevenue: commandCenterData.cafeMetrics?.salesToday || 0,
       })
     }
     return forecasts
@@ -103,12 +150,12 @@ export default function CommandCenterSection() {
     if (!cafeData) return { grossMargin: 0, salesToday: 0, coversToday: 0, laborPercentage: 0 }
     const todaySales = cafeData.todaySales
     // Calculate gross margin if we have cost data, otherwise use 0
-    const grossMargin = todaySales && 'grossMargin' in todaySales ? todaySales.grossMargin : 0
+    const grossMargin = todaySales && 'grossMargin' in todaySales && todaySales.grossMargin !== null ? todaySales.grossMargin : 0
     return {
-      grossMargin,
+      grossMargin: grossMargin || 0,
       salesToday: todaySales?.grossSales || 0,
       coversToday: todaySales?.covers || 0,
-      laborPercentage: todaySales && 'labourPercentage' in todaySales ? todaySales.labourPercentage : 0,
+      laborPercentage: (todaySales && 'labourPercentage' in todaySales && todaySales.labourPercentage !== null) ? todaySales.labourPercentage : 0,
     }
   }, [commandCenterData, cafeData])
 
@@ -160,28 +207,28 @@ export default function CommandCenterSection() {
     return {
       cashPosition: {
         lastUpdated: new Date(),
-        source: 'BANK_FEED',
-        confidence: 'HIGH',
+        source: DataSource.BANK_FEED,
+        confidence: DataConfidence.HIGH,
       },
       hotelMetrics: {
         lastUpdated: hotel?.lastUpdatedAt || new Date(),
-        source: hotel?.dataSource || 'MANUAL',
-        confidence: hotel?.confidence || 'MEDIUM',
+        source: hotel?.dataSource || DataSource.MANUAL,
+        confidence: hotel?.confidence || DataConfidence.MEDIUM,
       },
       cafeMetrics: {
         lastUpdated: cafe?.lastUpdatedAt || new Date(),
-        source: cafe?.dataSource || 'MANUAL',
-        confidence: cafe?.confidence || 'MEDIUM',
+        source: cafe?.dataSource || DataSource.MANUAL,
+        confidence: cafe?.confidence || DataConfidence.MEDIUM,
       },
       portfolioMetrics: {
         lastUpdated: portfolio?.lastUpdatedAt || new Date(),
-        source: portfolio?.dataSource || 'MANUAL',
-        confidence: 'MEDIUM',
+        source: portfolio?.dataSource || DataSource.MANUAL,
+        confidence: DataConfidence.MEDIUM,
       },
       alerts: {
         lastUpdated: new Date(),
-        source: 'SYSTEM_GENERATED',
-        confidence: 'HIGH',
+        source: DataSource.SYSTEM_GENERATED,
+        confidence: DataConfidence.HIGH,
       },
     }
   }, [hotelData, cafeData, portfolioData])
@@ -189,15 +236,15 @@ export default function CommandCenterSection() {
   // Build AI context from current data
   const aiContext: BusinessContext = {
     hotelOccupancy: (hotelMetrics.occupancyRate || 0) / 100,
-    hotelADR: hotelMetrics.adr,
-    cafeMargin: cafeMetrics.grossMargin,
-    cafeSales: cafeMetrics.salesToday,
-    arrearsTotal: portfolioMetrics.totalArrears,
-    rentRoll: portfolioMetrics.totalRentRoll,
-    cashBalance: cashPosition.operatingBalance + cashPosition.reserveBalance,
-    vacantUnits: portfolioMetrics.vacantUnits,
-    maintenanceIssues: portfolioMetrics.maintenanceUnits,
-    complianceIssues: portfolioMetrics.complianceIssues,
+    hotelADR: hotelMetrics.adr || 0,
+    cafeMargin: cafeMetrics.grossMargin || 0,
+    cafeSales: cafeMetrics.salesToday || 0,
+    arrearsTotal: portfolioMetrics.totalArrears || 0,
+    rentRoll: portfolioMetrics.totalRentRoll || 0,
+    cashBalance: (cashPosition.operatingBalance || 0) + (cashPosition.reserveBalance || 0),
+    vacantUnits: portfolioMetrics.vacantUnits || 0,
+    maintenanceIssues: portfolioMetrics.maintenanceUnits || 0,
+    complianceIssues: portfolioMetrics.complianceIssues || 0,
   }
 
   if (loading || loadingCommandCenter) {

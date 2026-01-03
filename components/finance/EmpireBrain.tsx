@@ -21,74 +21,11 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatGBP } from '@/lib/utils'
 
-// Mock market data - in production this would come from an API
-const SONIA_RATE = 5.20 // Current Bank of England base rate
+import { getPropertyFinancials, getPortfolioMetrics, type PropertyFinancials, type PortfolioMetrics } from '@/actions/finance/get-empire-brain-data'
+import { fetchSONIARate } from '@/lib/services/sonia'
+
+// Market spread constant
 const MARKET_SPREAD = 1.5 // Typical spread for property mortgages
-
-interface PropertyFinancials {
-  id: string
-  name: string
-  type: 'HOTEL' | 'CAFE' | 'RESIDENTIAL'
-  currentValue: number
-  mortgageBalance: number
-  mortgageRate: number
-  termEndDate: Date
-  penaltyFreeDate: Date
-  mortgageLender: string
-  mortgageType: 'FIXED' | 'VARIABLE' | 'TRACKER'
-  monthlyPayment: number
-  rentalYield: number
-  annualRevenue: number
-  annualExpenses: number
-}
-
-// Mock property data
-const propertyFinancials: PropertyFinancials[] = [
-  {
-    id: '1',
-    name: 'The Grand Hotel',
-    type: 'HOTEL',
-    currentValue: 2500000,
-    mortgageBalance: 1200000,
-    mortgageRate: 6.5,
-    termEndDate: new Date('2025-06-15'),
-    penaltyFreeDate: new Date('2025-03-15'),
-    mortgageLender: 'NatWest',
-    mortgageType: 'FIXED',
-    monthlyPayment: 8500,
-    rentalYield: 8.5,
-    annualRevenue: 450000,
-    annualExpenses: 280000,
-  },
-  {
-    id: '2',
-    name: 'Victoria Apartments',
-    type: 'RESIDENTIAL',
-    currentValue: 1800000,
-    mortgageBalance: 950000,
-    mortgageRate: 5.8,
-    termEndDate: new Date('2024-09-20'),
-    penaltyFreeDate: new Date('2024-06-20'),
-    mortgageLender: 'Barclays',
-    mortgageType: 'FIXED',
-    monthlyPayment: 5800,
-    rentalYield: 6.2,
-    annualRevenue: 156000,
-    annualExpenses: 45000,
-  },
-]
-
-// Mock portfolio metrics
-const portfolioMetrics = {
-  totalValue: 4800000,
-  totalDebt: 2150000,
-  ltv: 44.8,
-  cashReserves: 125000,
-  monthlyNetIncome: 28500,
-  dscr: 1.68,
-  occupancyLast3Months: [85, 88, 91],
-  cafeNetMargin: 22,
-}
 
 interface Recommendation {
   id: string
@@ -104,15 +41,15 @@ interface Recommendation {
   confidence: number
 }
 
-function analyzePortfolio(): Recommendation[] {
+function analyzePortfolio(propertyFinancials: PropertyFinancials[], portfolioMetrics: PortfolioMetrics, soniaRate: number): Recommendation[] {
   const recommendations: Recommendation[] = []
-  const marketRate = SONIA_RATE + MARKET_SPREAD
+  const marketRate = soniaRate + MARKET_SPREAD
 
   // Refinance Analysis
   propertyFinancials.forEach(property => {
     const rateDiff = property.mortgageRate - marketRate
     const monthlyPaymentSavings = (rateDiff / 100) * property.mortgageBalance / 12
-    const penaltyFreeIn = Math.ceil((property.penaltyFreeDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    const penaltyFreeIn = property.penaltyFreeDate ? Math.ceil((property.penaltyFreeDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 999
     
     if (rateDiff > 0.5 && penaltyFreeIn < 120) {
       recommendations.push({
@@ -123,7 +60,7 @@ function analyzePortfolio(): Recommendation[] {
         description: `Current rate (${property.mortgageRate}%) is ${rateDiff.toFixed(2)}% above market. Penalty-free window opens in ${penaltyFreeIn} days.`,
         impact: `Save ${formatGBP(monthlyPaymentSavings)}/month (${formatGBP(monthlyPaymentSavings * 12)}/year)`,
         savings: monthlyPaymentSavings * 12,
-        deadline: property.penaltyFreeDate,
+        deadline: property.penaltyFreeDate || undefined,
         action: 'Request broker quotes',
         confidence: 85,
       })
@@ -201,14 +138,35 @@ export function EmpireBrain() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(true)
   const [selectedRec, setSelectedRec] = useState<Recommendation | null>(null)
+  const [propertyFinancials, setPropertyFinancials] = useState<PropertyFinancials[]>([])
+  const [portfolioMetrics, setPortfolioMetrics] = useState<PortfolioMetrics | null>(null)
+  const [soniaRate, setSoniaRate] = useState(5.20)
 
   useEffect(() => {
-    // Simulate AI analysis
-    const timer = setTimeout(() => {
-      setRecommendations(analyzePortfolio())
-      setIsAnalyzing(false)
-    }, 1500)
-    return () => clearTimeout(timer)
+    const loadData = async () => {
+      setIsAnalyzing(true)
+      try {
+        const [propertiesData, metricsData] = await Promise.all([
+          getPropertyFinancials(),
+          getPortfolioMetrics(),
+        ])
+        setPropertyFinancials(propertiesData)
+        setPortfolioMetrics(metricsData)
+        // Analyze portfolio with real data
+        const soniaData = await fetchSONIARate()
+        if (soniaData) {
+          setSoniaRate(soniaData.rate)
+        }
+        if (metricsData) {
+          setRecommendations(analyzePortfolio(propertiesData, metricsData, soniaData?.rate || 5.20))
+        }
+      } catch (error) {
+        console.error('Failed to load Empire Brain data:', error)
+      } finally {
+        setIsAnalyzing(false)
+      }
+    }
+    loadData()
   }, [])
 
   const getTypeIcon = (type: Recommendation['type']) => {
@@ -239,7 +197,7 @@ export function EmpireBrain() {
     }
   }
 
-  const marketRate = SONIA_RATE + MARKET_SPREAD
+  const marketRate = soniaRate + MARKET_SPREAD
 
   return (
     <Card className="bg-gradient-to-br from-[var(--bg-secondary)] via-[var(--bg-panel)] to-[var(--bg-tertiary)] border-[var(--accent)]/30">
@@ -258,12 +216,27 @@ export function EmpireBrain() {
             </div>
           </div>
           <button 
-            onClick={() => {
+            onClick={async () => {
               setIsAnalyzing(true)
-              setTimeout(() => {
-                setRecommendations(analyzePortfolio())
+              try {
+                const [propertiesData, metricsData, soniaData] = await Promise.all([
+                  getPropertyFinancials(),
+                  getPortfolioMetrics(),
+                  fetchSONIARate(),
+                ])
+                setPropertyFinancials(propertiesData)
+                setPortfolioMetrics(metricsData)
+                if (soniaData) {
+                  setSoniaRate(soniaData.rate)
+                }
+                if (metricsData) {
+                  setRecommendations(analyzePortfolio(propertiesData, metricsData, soniaData?.rate || 5.20))
+                }
+              } catch (error) {
+                console.error('Failed to refresh Empire Brain data:', error)
+              } finally {
                 setIsAnalyzing(false)
-              }, 1500)
+              }
             }}
             className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
           >
@@ -276,7 +249,7 @@ export function EmpireBrain() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-3 bg-[var(--bg-primary)]/50 rounded-lg">
             <p className="text-xs text-[var(--text-muted)]">SONIA Rate</p>
-            <p className="text-lg font-bold text-[var(--text-primary)]">{SONIA_RATE}%</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{soniaRate.toFixed(2)}%</p>
           </div>
           <div className="p-3 bg-[var(--bg-primary)]/50 rounded-lg">
             <p className="text-xs text-[var(--text-muted)]">Market Rate</p>
@@ -284,12 +257,12 @@ export function EmpireBrain() {
           </div>
           <div className="p-3 bg-[var(--bg-primary)]/50 rounded-lg">
             <p className="text-xs text-[var(--text-muted)]">Portfolio LTV</p>
-            <p className="text-lg font-bold text-[var(--text-primary)]">{portfolioMetrics.ltv}%</p>
+            <p className="text-lg font-bold text-[var(--text-primary)]">{portfolioMetrics?.ltv.toFixed(1) || 0}%</p>
           </div>
           <div className="p-3 bg-[var(--bg-primary)]/50 rounded-lg">
             <p className="text-xs text-[var(--text-muted)]">DSCR</p>
-            <p className={`text-lg font-bold ${portfolioMetrics.dscr > 1.25 ? 'text-green-500' : 'text-amber-500'}`}>
-              {portfolioMetrics.dscr.toFixed(2)}x
+            <p className={`text-lg font-bold ${(portfolioMetrics?.dscr || 0) > 1.25 ? 'text-green-500' : 'text-amber-500'}`}>
+              {portfolioMetrics?.dscr.toFixed(2) || '0.00'}x
             </p>
           </div>
         </div>
