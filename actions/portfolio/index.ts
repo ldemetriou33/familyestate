@@ -325,12 +325,24 @@ export async function createDailyLog(data: {
   weather?: string
   mood?: string
 }) {
+  if (!data.propertyId) {
+    throw new Error('propertyId is required for DailyLog')
+  }
+
+  // Combine notes with mood and weather if provided
+  let notes = data.notes
+  if (data.mood) {
+    notes = `${notes}\nMood: ${data.mood}`
+  }
+  if (data.weather) {
+    notes = `${notes}\nWeather: ${data.weather}`
+  }
+
   const log = await prisma.dailyLog.create({
     data: {
-      propertyId: data.propertyId || undefined,
+      propertyId: data.propertyId,
       date: data.date,
-      notes: data.mood ? `${data.notes}\nMood: ${data.mood}` : data.notes,
-      weatherNote: data.weather,
+      notes,
     },
   })
 

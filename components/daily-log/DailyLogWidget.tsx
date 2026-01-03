@@ -93,6 +93,12 @@ export function DailyLogWidget() {
     return logDate.toDateString() === today.toDateString()
   })
 
+  const extractWeatherFromNotes = (notes: string | null | undefined): string | null => {
+    if (!notes) return null
+    const weatherMatch = notes.match(/Weather:\s*(\w+)/i)
+    return weatherMatch ? weatherMatch[1].toLowerCase() : null
+  }
+
   const getWeatherIcon = (weather: string | null | undefined) => {
     const option = weatherOptions.find(w => w.value === weather)
     if (!option) return null
@@ -238,15 +244,19 @@ export function DailyLogWidget() {
         )}
 
         {/* Today's Log (Compact View) */}
-        {!loading && !expanded && todayLog && (
-          <div className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
-            {todayLog.weatherNote && getWeatherIcon(todayLog.weatherNote)}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-[var(--text-primary)]">{todayLog.notes}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-1">Today</p>
+        {!loading && !expanded && todayLog && (() => {
+          const weather = extractWeatherFromNotes(todayLog.notes)
+          return (
+            <div className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg">
+              {weather && getWeatherIcon(weather)}
+              {!weather && <div className="w-4 h-4" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[var(--text-primary)]">{todayLog.notes}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-1">Today</p>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
 
         {/* No Today's Log */}
         {!loading && !expanded && !todayLog && logs.length > 0 && (
@@ -266,17 +276,17 @@ export function DailyLogWidget() {
         {/* Expanded View - All Logs */}
         {!loading && expanded && logs.length > 0 && (
           <div className="space-y-3">
-            {logs.map((log) => (
-              <div
-                key={log.id}
-                className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg"
-              >
-                {log.weatherNote && getWeatherIcon(log.weatherNote)}
-                {!log.weatherNote && (
-                  <div className="w-4 h-4" /> 
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[var(--text-primary)]">{log.notes}</p>
+            {logs.map((log) => {
+              const weather = extractWeatherFromNotes(log.notes)
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-3 p-3 bg-[var(--bg-secondary)] rounded-lg"
+                >
+                  {weather && getWeatherIcon(weather)}
+                  {!weather && <div className="w-4 h-4" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-[var(--text-primary)]">{log.notes}</p>
                   <div className="flex items-center gap-2 mt-1">
                     <p className="text-xs text-[var(--text-muted)]">{formatDate(log.date)}</p>
                     {log.property && (
@@ -287,7 +297,8 @@ export function DailyLogWidget() {
                   </div>
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </CardContent>
