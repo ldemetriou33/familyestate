@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Percent, Activity } from 'lucide-react'
-import { calculatePortfolioMetrics, getRentalPropertiesWithPayments } from '@/lib/portfolio-calculations'
+import { calculatePortfolioMetrics, getRentalPropertiesWithPayments } from '@/actions/portfolio/get-portfolio-metrics'
 import { formatGBP, formatPercentage } from '@/lib/utils'
 import { fetchSONIARate } from '@/lib/services/sonia'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
