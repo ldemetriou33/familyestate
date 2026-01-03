@@ -465,6 +465,28 @@ export async function seedPortfolioData() {
 }
 
 // ============================================
+// DELETE ALL DATA (Remove mock data)
+// ============================================
+
+export async function deleteAllPortfolioData() {
+  try {
+    // Delete in correct order (respecting foreign key constraints)
+    await prisma.rentRoll.deleteMany()
+    await prisma.unit.deleteMany()
+    await prisma.debt.deleteMany()
+    await prisma.property.deleteMany()
+    
+    return { success: true, message: 'All portfolio data deleted successfully' }
+  } catch (error) {
+    console.error('Failed to delete portfolio data:', error)
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Failed to delete data' 
+    }
+  }
+}
+
+// ============================================
 // HELPERS
 // ============================================
 

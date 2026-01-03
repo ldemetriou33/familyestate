@@ -30,6 +30,7 @@ import {
   deleteProperty,
   createUnit,
   seedPortfolioData,
+  deleteAllPortfolioData,
   PropertyFormData,
   UnitFormData
 } from '@/actions/portfolio'
@@ -49,6 +50,7 @@ export default function PortfolioAdminPage() {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
   const [selectedPropertyForUnit, setSelectedPropertyForUnit] = useState<string | null>(null)
   const [seeding, setSeeding] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   const showNotification = useCallback((type: 'success' | 'error', message: string) => {

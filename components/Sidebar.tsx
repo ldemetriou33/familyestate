@@ -12,8 +12,10 @@ import {
   X,
   Settings,
   Link2,
-  Brain
+  Brain,
+  Settings2
 } from 'lucide-react'
+import Link from 'next/link'
 import { UserButton, useUser } from '@clerk/nextjs'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance' | 'legal-brain'
@@ -120,6 +122,13 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
 
       {/* Quick Actions */}
       <div className="px-4 py-2 border-t border-[var(--border-primary)]">
+        <Link
+          href="/dashboard/admin/portfolio"
+          className="flex items-center justify-center gap-2 px-3 py-2 mb-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+        >
+          <Settings2 className="w-4 h-4" />
+          Portfolio Admin
+        </Link>
         <div className="flex gap-2">
           <button 
             onClick={() => onOpenSettings?.('integrations')}
