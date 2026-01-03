@@ -371,6 +371,9 @@ export default async function LandingPage() {
           </p>
         </div>
       </footer>
+
+      {/* Floating Admin Button (only visible to admins) */}
+      <FloatingAdminButton />
     </div>
   )
 }
