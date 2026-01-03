@@ -227,6 +227,7 @@ export async function POST(request: NextRequest) {
 // ============================================
 
 async function handlePayment(payment: SquarePayment): Promise<string | null> {
+  const prisma = await getPrisma()
   // Find or default property for this location
   const propertyId = locationToPropertyMap[payment.location_id] || await getDefaultCafePropertyId()
   
@@ -274,6 +275,7 @@ async function handlePayment(payment: SquarePayment): Promise<string | null> {
 }
 
 async function handleOrder(order: SquareOrder): Promise<string | null> {
+  const prisma = await getPrisma()
   // Only process completed orders
   if (order.state !== 'COMPLETED') {
     return null
@@ -345,6 +347,7 @@ async function handleOrder(order: SquareOrder): Promise<string | null> {
 }
 
 async function getDefaultCafePropertyId(): Promise<string | null> {
+  const prisma = await getPrisma()
   const cafeProperty = await prisma.property.findFirst({
     where: { type: 'CAFE' },
   })
@@ -352,6 +355,7 @@ async function getDefaultCafePropertyId(): Promise<string | null> {
 }
 
 async function updateCafeDailySales(propertyId: string, date: Date): Promise<void> {
+  const prisma = await getPrisma()
   const startOfDay = new Date(date)
   startOfDay.setHours(0, 0, 0, 0)
   
