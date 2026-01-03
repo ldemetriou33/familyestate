@@ -437,7 +437,7 @@ export async function getAlertsData() {
 
   // Check for overdue rent
   const overdueRent = await prisma.rentRoll.findMany({
-    where: { status: 'OVERDUE' },
+    where: { paymentStatus: 'OVERDUE' },
     include: { unit: { include: { property: true } } },
   })
 
