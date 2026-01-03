@@ -241,7 +241,7 @@ async function handleReservationUpsert(data: CloudbedsReservationPayload['data']
       deposit: data.depositPaid || 0,
       balance: data.balanceDue || data.totalAmount,
       specialRequests: data.notes,
-      dataSource: DataSource.PMS,
+      dataSource: DataSource.PMS_CLOUDBEDS,
       lastUpdatedAt: new Date(),
     },
     update: {
@@ -359,7 +359,7 @@ async function updateHotelMetrics(propertyId: string, date: Date): Promise<void>
       roomsSold: occupiedRooms,
       totalRevenue: revenue,
       roomRevenue: revenue,
-      dataSource: DataSource.PMS,
+      dataSource: DataSource.PMS_CLOUDBEDS,
       lastUpdatedAt: new Date(),
     },
     update: {
@@ -369,7 +369,7 @@ async function updateHotelMetrics(propertyId: string, date: Date): Promise<void>
       roomsSold: occupiedRooms,
       totalRevenue: revenue,
       roomRevenue: revenue,
-      dataSource: DataSource.PMS,
+      dataSource: DataSource.PMS_CLOUDBEDS,
       lastUpdatedAt: new Date(),
     },
   })
