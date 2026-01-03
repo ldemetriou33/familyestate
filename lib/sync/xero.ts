@@ -82,12 +82,12 @@ interface XeroBankStatement {
 
 async function getStoredTokens(): Promise<XeroTokens | null> {
   const integration = await prisma.integrationConnection.findFirst({
-    where: { provider: 'XERO', status: 'CONNECTED' },
+    where: { provider: 'XERO', isActive: true },
   })
   
-  if (!integration?.config) return null
+  if (!integration?.credentials) return null
   
-  const config = integration.config as Record<string, unknown>
+  const config = integration.credentials as Record<string, unknown>
   return {
     access_token: config.access_token as string,
     refresh_token: config.refresh_token as string,
@@ -124,10 +124,10 @@ async function refreshTokens(refreshToken: string): Promise<XeroTokens | null> {
     
     // Store the new tokens
     await prisma.integrationConnection.updateMany({
-      where: { provider: 'XERO', status: 'CONNECTED' },
+      where: { provider: 'XERO', isActive: true },
       data: {
-        config: newTokens as object,
-        lastSyncedAt: new Date(),
+        credentials: newTokens as object,
+        lastSyncAt: new Date(),
       },
     })
     
@@ -412,9 +412,9 @@ export async function runXeroSync(): Promise<{
   
   // Update integration connection status
   await prisma.integrationConnection.updateMany({
-    where: { provider: 'XERO', status: 'CONNECTED' },
+    where: { provider: 'XERO', isActive: true },
     data: {
-      lastSyncedAt: new Date(),
+      lastSyncAt: new Date(),
     },
   })
   
