@@ -297,54 +297,65 @@ export async function detectLowOccupancy(): Promise<GeneratedAction[]> {
  * Get daily action summary for Command Center
  */
 export async function getDailyActionSummary() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
 
-  const [pendingActions, criticalCount, completedToday, totalImpact] = await Promise.all([
-    // Get pending actions sorted by priority and impact
-    prisma.actionItem.findMany({
-      where: {
-        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
-      },
-      orderBy: [
-        { priority: 'asc' }, // CRITICAL first
-        { estimatedImpactGbp: 'desc' },
-      ],
-      take: 10,
-    }),
+    const [pendingActions, criticalCount, completedToday, totalImpact] = await Promise.all([
+      // Get pending actions sorted by priority and impact
+      prisma.actionItem.findMany({
+        where: {
+          workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
+        },
+        orderBy: [
+          { priority: 'asc' }, // CRITICAL first
+          { estimatedImpactGbp: 'desc' },
+        ],
+        take: 10,
+      }).catch(() => []),
 
-    // Count critical actions
-    prisma.actionItem.count({
-      where: {
-        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
-        priority: 'CRITICAL',
-      },
-    }),
+      // Count critical actions
+      prisma.actionItem.count({
+        where: {
+          workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
+          priority: 'CRITICAL',
+        },
+      }).catch(() => 0),
 
-    // Count completed today (VERIFIED or EXECUTED)
-    prisma.actionItem.count({
-      where: {
-        workflowStatus: { in: ['EXECUTED', 'VERIFIED'] },
-        executedAt: { gte: today },
-      },
-    }),
+      // Count completed today (VERIFIED or EXECUTED)
+      prisma.actionItem.count({
+        where: {
+          workflowStatus: { in: ['EXECUTED', 'VERIFIED'] },
+          executedAt: { gte: today },
+        },
+      }).catch(() => 0),
 
-    // Sum of pending impact
-    prisma.actionItem.aggregate({
-      where: {
-        workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
-      },
-      _sum: {
-        estimatedImpactGbp: true,
-      },
-    }),
-  ])
+      // Sum of pending impact
+      prisma.actionItem.aggregate({
+        where: {
+          workflowStatus: { in: ['DRAFT', 'PENDING_APPROVAL', 'APPROVED', 'SCHEDULED', 'IN_PROGRESS'] },
+        },
+        _sum: {
+          estimatedImpactGbp: true,
+        },
+      }).catch(() => ({ _sum: { estimatedImpactGbp: 0 } })),
+    ])
 
-  return {
-    pendingActions,
-    criticalCount,
-    completedToday,
-    totalImpact: totalImpact._sum.estimatedImpactGbp || 0,
+    return {
+      pendingActions: pendingActions || [],
+      criticalCount: criticalCount || 0,
+      completedToday: completedToday || 0,
+      totalImpact: totalImpact._sum?.estimatedImpactGbp || 0,
+    }
+  } catch (error) {
+    console.error('Error in getDailyActionSummary:', error)
+    // Return empty summary on any error
+    return {
+      pendingActions: [],
+      criticalCount: 0,
+      completedToday: 0,
+      totalImpact: 0,
+    }
   }
 }
 

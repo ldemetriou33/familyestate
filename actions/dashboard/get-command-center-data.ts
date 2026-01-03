@@ -73,7 +73,10 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
     // Fetch data with individual error handling for each query
     const cashPosition = await prisma.cashPosition.findFirst({
       orderBy: { date: 'desc' },
-    }).catch(() => null)
+    }).catch((err) => {
+      console.error('Error fetching cash position:', err)
+      return null
+    })
 
     const alerts = await prisma.alert.findMany({
       where: { isDismissed: false },
@@ -227,37 +230,49 @@ export async function getCommandCenterData(): Promise<CommandCenterData> {
     }
   } catch (error) {
     console.error('Failed to get command center data:', error)
-    // Return empty data structure to prevent complete failure
-    return {
-      cashPosition: {
-        operatingBalance: 0,
-        reserveBalance: 0,
-        totalBalance: 0,
-        inflows: 0,
-        outflows: 0,
-        netMovement: 0,
-        projected30Day: null,
-        projected90Day: null,
-      },
-      alerts: [],
-      actionItems: [],
-      metrics: {
-        criticalAlerts: 0,
-        pendingActions: 0,
-        totalImpact: 0,
-        completedToday: 0,
-      },
-      hotelMetrics: null,
-      cafeMetrics: null,
-      portfolioMetrics: {
-        totalUnits: 0,
-        occupiedUnits: 0,
-        vacantUnits: 0,
-        totalRentRoll: 0,
-        totalArrears: 0,
-        arrearsCount: 0,
-      },
+    // Log the full error for debugging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message)
+      console.error('Error stack:', error.stack)
     }
+    // Return empty data structure to prevent complete failure
+    return getEmptyCommandCenterData()
+  }
+}
+
+/**
+ * Return empty command center data structure
+ */
+function getEmptyCommandCenterData(): CommandCenterData {
+  return {
+    cashPosition: {
+      operatingBalance: 0,
+      reserveBalance: 0,
+      totalBalance: 0,
+      inflows: 0,
+      outflows: 0,
+      netMovement: 0,
+      projected30Day: null,
+      projected90Day: null,
+    },
+    alerts: [],
+    actionItems: [],
+    metrics: {
+      criticalAlerts: 0,
+      pendingActions: 0,
+      totalImpact: 0,
+      completedToday: 0,
+    },
+    hotelMetrics: null,
+    cafeMetrics: null,
+    portfolioMetrics: {
+      totalUnits: 0,
+      occupiedUnits: 0,
+      vacantUnits: 0,
+      totalRentRoll: 0,
+      totalArrears: 0,
+      arrearsCount: 0,
+    },
   }
 }
 
