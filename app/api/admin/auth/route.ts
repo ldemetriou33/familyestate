@@ -1,6 +1,6 @@
-// Admin Auth API - Check if current user is admin
+// Admin Auth API - Check if current user is admin (Supabase Auth)
 import { NextResponse } from 'next/server'
-import { getAdminUser } from '@/lib/admin/auth'
+import { getAdminUser } from '@/lib/supabase/auth'
 
 export const dynamic = 'force-dynamic'
 

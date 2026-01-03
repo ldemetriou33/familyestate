@@ -8,7 +8,7 @@ import {
   Filter, 
   MoreVertical, 
   Edit, 
-  Trash2, 
+  Trash2,
   Eye,
   EyeOff,
   Star,
@@ -19,6 +19,7 @@ import {
   XCircle,
   Archive
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface CMSProperty {
   id: string
@@ -59,22 +60,61 @@ export default function PropertiesPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [actionMenu, setActionMenu] = useState<string | null>(null)
 
+  const supabase = createClient()
+  
   const loadProperties = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (statusFilter) params.set('status', statusFilter)
-      
-      const res = await fetch(`/api/admin/properties?${params}`)
-      const data = await res.json()
-      setProperties(Array.isArray(data) ? data : [])
+      let query = supabase
+        .from('properties')
+        .select(`
+          id,
+          name,
+          slug,
+          location:city,
+          assetType:type,
+          status,
+          currentValue:current_value,
+          heroImageUrl:hero_image_url,
+          isFeatured:is_featured,
+          isPublished:is_published,
+          createdAt:created_at,
+          rooms:units(count)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (statusFilter) {
+        query = query.eq('status', statusFilter)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      // Transform to match interface
+      const props = (data || []).map((prop: any) => ({
+        id: prop.id,
+        name: prop.name,
+        slug: prop.slug,
+        location: prop.location || '',
+        assetType: prop.assetType || 'HOTEL',
+        status: prop.status || 'ACTIVE',
+        currentValue: prop.currentValue,
+        heroImageUrl: prop.heroImageUrl,
+        isFeatured: prop.isFeatured,
+        isPublished: prop.isPublished,
+        rooms: prop.rooms || [],
+        createdAt: prop.createdAt,
+      }))
+
+      setProperties(props)
     } catch (error) {
       console.error('Failed to load properties:', error)
       setProperties([])
     } finally {
       setLoading(false)
     }
-  }, [statusFilter])
+  }, [statusFilter, supabase])
 
   useEffect(() => {
     loadProperties()
@@ -84,7 +124,12 @@ export default function PropertiesPage() {
     if (!confirm('Are you sure you want to delete this property?')) return
     
     try {
-      await fetch(`/api/admin/properties/${id}`, { method: 'DELETE' })
+      const { error } = await supabase
+        .from('properties')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
       loadProperties()
     } catch (error) {
       console.error('Delete failed:', error)
@@ -94,11 +139,12 @@ export default function PropertiesPage() {
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
-      await fetch(`/api/admin/properties/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
-      })
+      const { error } = await supabase
+        .from('properties')
+        .update({ status })
+        .eq('id', id)
+      
+      if (error) throw error
       loadProperties()
     } catch (error) {
       console.error('Status update failed:', error)
@@ -108,11 +154,12 @@ export default function PropertiesPage() {
 
   const handleTogglePublish = async (id: string, currentState: boolean) => {
     try {
-      await fetch(`/api/admin/properties/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublished: !currentState }),
-      })
+      const { error } = await supabase
+        .from('properties')
+        .update({ is_published: !currentState })
+        .eq('id', id)
+      
+      if (error) throw error
       loadProperties()
     } catch (error) {
       console.error('Publish toggle failed:', error)

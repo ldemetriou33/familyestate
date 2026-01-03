@@ -18,6 +18,7 @@ import {
   Check,
   X
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface CMSRoom {
   id: string
@@ -56,22 +57,66 @@ export default function RoomsPage() {
   const [bulkActionLoading, setBulkActionLoading] = useState(false)
   const [actionMenu, setActionMenu] = useState<string | null>(null)
 
+  const supabase = createClient()
+  
   const loadRooms = useCallback(async () => {
     setLoading(true)
     try {
-      const params = new URLSearchParams()
-      if (eventModeFilter) params.set('eventMode', 'true')
-      
-      const res = await fetch(`/api/admin/rooms?${params}`)
-      const data = await res.json()
-      setRooms(Array.isArray(data) ? data : [])
+      let query = supabase
+        .from('units')
+        .select(`
+          id,
+          name,
+          room_number,
+          category,
+          base_price,
+          surge_price,
+          is_event_mode_active,
+          is_available,
+          is_published,
+          properties!inner(id, name, city)
+        `)
+        .order('name')
+
+      if (eventModeFilter) {
+        query = query.eq('is_event_mode_active', true)
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+
+      // Transform to match interface
+      const rooms = (data || []).map((unit: any) => {
+        const property = Array.isArray(unit.properties) ? unit.properties[0] : unit.properties
+        return {
+          id: unit.id,
+          name: unit.name,
+          roomNumber: unit.room_number,
+          roomType: unit.category,
+          viewType: 'STANDARD' as const,
+          basePrice: unit.base_price,
+          eventPrice: unit.surge_price,
+          isEventPremiumActive: unit.is_event_mode_active,
+          eventPremiumMultiplier: unit.surge_price && unit.base_price ? unit.surge_price / unit.base_price : 1.5,
+          isAvailable: unit.is_available,
+          isPublished: unit.is_published,
+          property: {
+            id: property?.id || '',
+            name: property?.name || '',
+            location: property?.city || '',
+          },
+        }
+      })
+
+      setRooms(rooms)
     } catch (error) {
       console.error('Failed to load rooms:', error)
       setRooms([])
     } finally {
       setLoading(false)
     }
-  }, [eventModeFilter])
+  }, [eventModeFilter, supabase])
 
   useEffect(() => {
     loadRooms()
@@ -81,7 +126,12 @@ export default function RoomsPage() {
     if (!confirm('Are you sure you want to delete this room?')) return
     
     try {
-      await fetch(`/api/admin/rooms/${id}`, { method: 'DELETE' })
+      const { error } = await supabase
+        .from('units')
+        .delete()
+        .eq('id', id)
+      
+      if (error) throw error
       loadRooms()
     } catch (error) {
       console.error('Delete failed:', error)
@@ -91,11 +141,19 @@ export default function RoomsPage() {
 
   const handleToggleEventMode = async (id: string, currentState: boolean) => {
     try {
-      await fetch(`/api/admin/rooms/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isEventPremiumActive: !currentState }),
-      })
+      const basePrice = rooms.find(r => r.id === id)?.basePrice || 0
+      const multiplier = rooms.find(r => r.id === id)?.eventPremiumMultiplier || 1.5
+      const surgePrice = !currentState ? basePrice * multiplier : null
+
+      const { error } = await supabase
+        .from('units')
+        .update({
+          is_event_mode_active: !currentState,
+          surge_price: surgePrice,
+        })
+        .eq('id', id)
+      
+      if (error) throw error
       loadRooms()
     } catch (error) {
       console.error('Toggle failed:', error)

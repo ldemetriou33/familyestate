@@ -12,6 +12,7 @@ import {
   History,
   AlertCircle
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 
 interface SiteContent {
   id: string
@@ -48,16 +49,38 @@ export default function ContentPage() {
   const [showAddNew, setShowAddNew] = useState(false)
   const [newItem, setNewItem] = useState({ key: '', value: '', label: '', section: '' })
 
+  const supabase = createClient()
+  
   const loadContent = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/admin/content')
-      const data = await res.json()
-      setContent(Array.isArray(data) ? data : [])
+      const { data, error } = await supabase
+        .from('content_blocks')
+        .select('*')
+        .eq('is_active', true)
+        .order('section_key')
+
+      if (error) throw error
+
+      // Transform to match interface (content is JSONB, extract as string)
+      const contentItems: SiteContent[] = (data || []).map((block: any) => ({
+        id: block.id,
+        key: block.section_key,
+        value: typeof block.content === 'string' ? block.content : JSON.stringify(block.content),
+        section: null, // Not in schema, but we can infer from key
+        contentType: 'text',
+        label: null,
+        description: null,
+        version: 1,
+        previousValue: null,
+        updatedAt: block.updated_at,
+      }))
+
+      setContent(contentItems)
       
-      // Initialize edited values with current values
+      // Initialize edited values
       const values: Record<string, string> = {}
-      data.forEach((item: SiteContent) => {
+      contentItems.forEach((item) => {
         values[item.key] = item.value
       })
       setEditedValues(values)
@@ -67,7 +90,7 @@ export default function ContentPage() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [supabase])
 
   useEffect(() => {
     loadContent()
@@ -76,17 +99,25 @@ export default function ContentPage() {
   const handleSave = async (key: string) => {
     setSaving(true)
     try {
-      const item = content.find(c => c.key === key)
-      await fetch('/api/admin/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key,
-          value: editedValues[key],
-          section: item?.section,
-          label: item?.label,
-        }),
-      })
+      // Try to parse as JSON, fallback to string
+      let contentValue: any = editedValues[key]
+      try {
+        contentValue = JSON.parse(editedValues[key])
+      } catch {
+        // Keep as string if not valid JSON
+      }
+
+      const { error } = await supabase
+        .from('content_blocks')
+        .upsert({
+          section_key: key,
+          content: contentValue,
+          is_active: true,
+        }, {
+          onConflict: 'section_key',
+        })
+
+      if (error) throw error
       setSavedKey(key)
       setTimeout(() => setSavedKey(null), 2000)
       loadContent()
@@ -100,17 +131,29 @@ export default function ContentPage() {
   const handleSaveAll = async () => {
     setSaving(true)
     try {
-      const items = Object.entries(editedValues).map(([key, value]) => ({
-        key,
-        value,
-        section: content.find(c => c.key === key)?.section,
-      }))
-      
-      await fetch('/api/admin/content', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+      const updates = Object.entries(editedValues).map(([key, value]) => {
+        let contentValue: any = value
+        try {
+          contentValue = JSON.parse(value)
+        } catch {
+          // Keep as string
+        }
+        return {
+          section_key: key,
+          content: contentValue,
+          is_active: true,
+        }
       })
+
+      // Upsert all items
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('content_blocks')
+          .upsert(update, { onConflict: 'section_key' })
+        
+        if (error) throw error
+      }
+
       loadContent()
     } catch (error) {
       console.error('Save all failed:', error)
@@ -124,11 +167,22 @@ export default function ContentPage() {
     
     setSaving(true)
     try {
-      await fetch('/api/admin/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem),
-      })
+      let contentValue: any = newItem.value
+      try {
+        contentValue = JSON.parse(newItem.value)
+      } catch {
+        // Keep as string
+      }
+
+      const { error } = await supabase
+        .from('content_blocks')
+        .insert({
+          section_key: newItem.key,
+          content: contentValue,
+          is_active: true,
+        })
+
+      if (error) throw error
       setNewItem({ key: '', value: '', label: '', section: '' })
       setShowAddNew(false)
       loadContent()

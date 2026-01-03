@@ -1,7 +1,108 @@
 import Link from 'next/link'
 import { Building2, Shield, TrendingUp, Zap, ArrowRight, Hotel, UtensilsCrossed, Home } from 'lucide-react'
+import { createServerClient } from '@/lib/supabase/server'
 
-export default function LandingPage() {
+// Fetch data from Supabase (with fallback to seed data)
+async function getHomepageData() {
+  try {
+    const supabase = await createServerClient()
+    
+    // Fetch content blocks
+    const { data: contentBlocks } = await supabase
+      .from('content_blocks')
+      .select('section_key, content')
+      .eq('is_active', true)
+
+    // Fetch published properties
+    const { data: properties } = await supabase
+      .from('properties')
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        hero_image_url,
+        location:city,
+        highlights,
+        units:units!inner(
+          id,
+          name,
+          base_price,
+          surge_price,
+          is_event_mode_active,
+          category,
+          capacity
+        )
+      `)
+      .eq('is_published', true)
+      .eq('status', 'Active')
+      .limit(1) // Just get the hotel for now
+
+    // Transform content blocks to object
+    const content: Record<string, any> = {}
+    if (contentBlocks) {
+      contentBlocks.forEach((block: any) => {
+        content[block.section_key] = block.content
+      })
+    }
+
+    return {
+      content,
+      property: properties?.[0] || null,
+    }
+  } catch (error) {
+    console.error('Failed to fetch homepage data:', error)
+    // Return fallback data
+    return {
+      content: {
+        home_hero: {
+          title: 'Your Mixed Portfolio. One Command Center.',
+          subtitle: 'Manage your hotel, cafe, and residential properties from a single dashboard. AI-powered insights. Automated actions. Complete control.',
+          cta_text: 'Access Dashboard',
+          cta_link: '/sign-in',
+          secondary_cta_text: 'Create Account',
+          secondary_cta_link: '/sign-up',
+        },
+        home_about: {
+          title: 'One System. Three Businesses.',
+          description: 'Abbey OS unifies your entire property portfolio into a single, intelligent operating system.',
+        },
+        home_value: {
+          title: 'Best Value Wembley Accommodation',
+          description: 'Experience luxury at Abbey Point Hotel. Stunning views of Wembley Arch. Perfect for event-goers and business travelers.',
+        },
+      },
+      property: null,
+    }
+  }
+}
+
+export default async function LandingPage() {
+  const { content, property } = await getHomepageData()
+  
+  const hero = content.home_hero || {
+    title: 'Your Mixed Portfolio. One Command Center.',
+    subtitle: 'Manage your hotel, cafe, and residential properties from a single dashboard. AI-powered insights. Automated actions. Complete control.',
+    cta_text: 'Access Dashboard',
+    cta_link: '/sign-in',
+    secondary_cta_text: 'Create Account',
+    secondary_cta_link: '/sign-up',
+  }
+
+  const about = content.home_about || {
+    title: 'One System. Three Businesses.',
+    description: 'Abbey OS unifies your entire property portfolio into a single, intelligent operating system.',
+  }
+
+  const value = content.home_value || {
+    title: 'Best Value Wembley Accommodation',
+    description: 'Experience luxury at Abbey Point Hotel. Stunning views of Wembley Arch. Perfect for event-goers and business travelers.',
+  }
+
+  // Get rooms with event mode for display
+  const eventModeRooms = property?.units?.filter((u: any) => u.is_event_mode_active) || []
+  const regularRooms = property?.units?.filter((u: any) => !u.is_event_mode_active) || []
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-bloomberg-darker via-bloomberg-panel to-bloomberg-darker">
       {/* Hero Section */}
@@ -42,44 +143,83 @@ export default function LandingPage() {
             </div>
             
             <h2 className="text-5xl md:text-6xl font-bold text-bloomberg-text mb-6 leading-tight">
-              Your Mixed Portfolio.
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-bloomberg-accent to-blue-400">
-                One Command Center.
-              </span>
+              {hero.title || 'Your Mixed Portfolio. One Command Center.'}
             </h2>
             
             <p className="text-xl text-bloomberg-textMuted mb-10 max-w-2xl mx-auto">
-              Manage your hotel, cafe, and residential properties from a single dashboard. 
-              AI-powered insights. Automated actions. Complete control.
+              {hero.subtitle || 'Manage your hotel, cafe, and residential properties from a single dashboard. AI-powered insights. Automated actions. Complete control.'}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link 
-                href="/sign-in"
+                href={hero.cta_link || '/sign-in'}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-bloomberg-accent hover:bg-bloomberg-accentHover text-white rounded-xl font-semibold text-lg transition-all shadow-lg shadow-bloomberg-accent/30 hover:shadow-bloomberg-accent/50 hover:scale-105"
               >
-                Access Dashboard
+                {hero.cta_text || 'Access Dashboard'}
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link 
-                href="/sign-up"
+                href={hero.secondary_cta_link || '/sign-up'}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-bloomberg-panel hover:bg-bloomberg-darker border border-bloomberg-border text-bloomberg-text rounded-xl font-semibold text-lg transition-all"
               >
-                Create Account
+                {hero.secondary_cta_text || 'Create Account'}
               </Link>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Property Showcase (if available) */}
+      {property && (
+        <div className="max-w-7xl mx-auto px-6 py-20">
+          <div className="text-center mb-16">
+            <h3 className="text-3xl font-bold text-bloomberg-text mb-4">{value.title}</h3>
+            <p className="text-bloomberg-textMuted max-w-2xl mx-auto">{value.description}</p>
+          </div>
+
+          {/* Rooms Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Event Mode Rooms (Highlighted) */}
+            {eventModeRooms.slice(0, 3).map((room: any) => (
+              <div
+                key={room.id}
+                className="p-6 bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-2 border-amber-500/50 rounded-2xl hover:border-amber-400 transition-all relative overflow-hidden"
+              >
+                <div className="absolute top-4 right-4 px-3 py-1 bg-amber-500 text-slate-900 text-xs font-bold rounded-full">
+                  HIGH DEMAND
+                </div>
+                <h4 className="text-xl font-bold text-bloomberg-text mb-2">{room.name}</h4>
+                <p className="text-bloomberg-textMuted text-sm mb-4">{room.category}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-bold text-amber-400">£{room.surge_price?.toFixed(0) || room.base_price.toFixed(0)}</span>
+                  <span className="text-sm text-bloomberg-textMuted line-through">£{room.base_price.toFixed(0)}</span>
+                  <span className="text-xs text-amber-400 font-semibold">Event Rate</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Regular Rooms */}
+            {regularRooms.slice(0, 3).map((room: any) => (
+              <div
+                key={room.id}
+                className="p-6 bg-bloomberg-panel/50 border border-bloomberg-border rounded-2xl hover:border-blue-500/50 transition-all"
+              >
+                <h4 className="text-xl font-bold text-bloomberg-text mb-2">{room.name}</h4>
+                <p className="text-bloomberg-textMuted text-sm mb-4">{room.category}</p>
+                <div className="text-2xl font-bold text-bloomberg-text">
+                  £{room.base_price.toFixed(0)}<span className="text-sm text-bloomberg-textMuted">/night</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Features Section */}
       <div className="max-w-7xl mx-auto px-6 py-20">
         <div className="text-center mb-16">
-          <h3 className="text-3xl font-bold text-bloomberg-text mb-4">One System. Three Businesses.</h3>
-          <p className="text-bloomberg-textMuted max-w-2xl mx-auto">
-            Abbey OS unifies your entire property portfolio into a single, intelligent operating system.
-          </p>
+          <h3 className="text-3xl font-bold text-bloomberg-text mb-4">{about.title}</h3>
+          <p className="text-bloomberg-textMuted max-w-2xl mx-auto">{about.description}</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">

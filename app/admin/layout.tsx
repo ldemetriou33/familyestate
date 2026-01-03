@@ -48,21 +48,27 @@ export default function AdminLayout({
   const router = useRouter()
 
   useEffect(() => {
-    // Check admin access
-    fetch('/api/admin/auth')
-      .then(res => res.json())
-      .then(data => {
+    // Check admin access via Supabase Auth
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/admin/auth')
+        const data = await res.json()
+        
         if (!data.isAdmin) {
-          router.push('/dashboard')
+          // Redirect to sign-in if not authenticated
+          router.push('/sign-in?redirect=/admin')
         } else {
           setUser(data)
         }
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/sign-in?redirect=/admin')
+      } finally {
         setLoading(false)
-      })
-      .catch(() => {
-        router.push('/dashboard')
-        setLoading(false)
-      })
+      }
+    }
+    
+    checkAuth()
   }, [router])
 
   if (loading) {
