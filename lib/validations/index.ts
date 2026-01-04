@@ -56,7 +56,7 @@ export const UnitCreateSchema = z.object({
 
 export const ContentUpdateSchema = z.object({
   section_key: z.string().min(1).max(100),
-  content: z.record(z.any()),
+  content: z.record(z.string(), z.any()),
   is_active: z.boolean().optional(),
 })
 
