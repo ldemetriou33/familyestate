@@ -287,21 +287,32 @@ export default function CommandCenterSection() {
 
   // Show loading only if we're waiting for command center data AND have no data
   // Allow rendering with partial data from context if available
-  // After 3 seconds, show data anyway (fallback to context data)
-  if (loadingCommandCenter && !commandCenterData && !errorCommandCenter) {
-    // If we have dashboard data from context, show it immediately
-    if (dashboardData) {
-      // Continue rendering with context data while command center loads
-    } else if (loadingCommandCenter) {
-      // Only show loading for first 3 seconds, then show empty state
-      return (
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
-          <p className="text-sm text-[var(--text-muted)]">Loading command center data...</p>
-          <p className="text-xs text-[var(--text-muted)]">This may take a few seconds</p>
-        </div>
-      )
-    }
+  // After timeout, always show data (even if empty)
+  if (loadingCommandCenter && !commandCenterData && !errorCommandCenter && !dashboardData) {
+    // Only show loading spinner if we have absolutely no data
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <Loader2 className="w-8 h-8 animate-spin text-[var(--accent)]" />
+        <p className="text-sm text-[var(--text-muted)]">Loading command center data...</p>
+        <p className="text-xs text-[var(--text-muted)]">This may take a few seconds</p>
+      </div>
+    )
+  }
+  
+  // If we have an error but no data, show error message with refresh option
+  if (errorCommandCenter && !commandCenterData && !dashboardData) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-4">
+        <AlertTriangle className="w-8 h-8 text-amber-500" />
+        <p className="text-sm text-[var(--text-primary)]">Failed to load command center data</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg hover:opacity-90 transition-opacity"
+        >
+          Refresh Page
+        </button>
+      </div>
+    )
   }
 
   if (errorCommandCenter) {
