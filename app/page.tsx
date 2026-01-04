@@ -9,8 +9,8 @@ import DynamicAssetTable from '@/components/dashboard/DynamicAssetTable'
 import DebtMaturitySchedule from '@/components/dashboard/DebtMaturitySchedule'
 import OwnershipStructure from '@/components/dashboard/OwnershipStructure'
 import CapitalAllocationScenario from '@/components/dashboard/CapitalAllocationScenario'
+import RegulatoryTimer from '@/components/dashboard/RegulatoryTimer'
 import { formatGBP } from '@/lib/utils'
-import { calculateIHTExposure } from '@/lib/logic/iht-calculator'
 
 type ViewType = 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator'
 
