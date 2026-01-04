@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { LayoutDashboard, Calculator, TrendingUp, TrendingDown } from 'lucide-react'
+import { LayoutDashboard, Calculator, TrendingUp, TrendingDown, Building2 } from 'lucide-react'
 import SovereignDashboard from '@/components/sovereign/SovereignDashboard'
 import DebtEquityCalculator from '@/components/sovereign/DebtEquityCalculator'
 import ConsolidationRoadmapView from '@/components/sovereign/ConsolidationRoadmap'
 import PruningModule from '@/components/sovereign/PruningModule'
+import EngineModule from '@/components/sovereign/EngineModule'
 
 export default function SovereignPage() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'calculator' | 'consolidation' | 'pruning'>('dashboard')
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'calculator' | 'consolidation' | 'pruning' | 'engine'>('dashboard')
 
   useEffect(() => {
     if (tabParam === 'consolidation') {
@@ -71,6 +72,17 @@ export default function SovereignPage() {
               <TrendingDown className="w-5 h-5" />
               Pruning Module
             </button>
+            <button
+              onClick={() => setActiveTab('engine')}
+              className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors ${
+                activeTab === 'engine'
+                  ? 'text-amber-400 border-b-2 border-amber-400'
+                  : 'text-slate-400 hover:text-slate-300'
+              }`}
+            >
+              <Building2 className="w-5 h-5" />
+              The Engine
+            </button>
           </div>
         </div>
       </div>
@@ -81,6 +93,7 @@ export default function SovereignPage() {
         {activeTab === 'calculator' && <DebtEquityCalculator />}
         {activeTab === 'consolidation' && <ConsolidationRoadmapView />}
         {activeTab === 'pruning' && <PruningModule />}
+        {activeTab === 'engine' && <EngineModule />}
       </div>
     </div>
   )
