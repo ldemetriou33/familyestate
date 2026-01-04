@@ -273,7 +273,7 @@ export default function EditDebtPage() {
                   <option key={entity.id} value={entity.id}>
                     {entity.name} ({entity.jurisdiction})
                   </option>
-                )))}
+                ))}
               </select>
             </div>
 
