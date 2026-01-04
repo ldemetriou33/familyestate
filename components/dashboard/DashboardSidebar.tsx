@@ -17,16 +17,19 @@ import {
 import type { Family } from '@/lib/types/saas'
 
 const navigation = [
-  { name: 'Overview', href: '/', icon: LayoutDashboard },
-  { name: 'Assets', href: '/assets', icon: Building2 },
-  { name: 'Financials', href: '/financials', icon: DollarSign },
-  { name: 'Ownership', href: '/ownership', icon: Users },
-  { name: 'Regulatory Roadmap', href: '/regulatory', icon: AlertTriangle },
-  { name: 'Documents', href: '/documents', icon: FileText },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Overview', view: 'overview' as const, icon: LayoutDashboard },
+  { name: 'Assets', view: 'assets' as const, icon: Building2 },
+  { name: 'Financials', view: 'financials' as const, icon: DollarSign },
+  { name: 'Ownership', view: 'ownership' as const, icon: Users },
+  { name: 'Calculator', view: 'calculator' as const, icon: AlertTriangle },
 ]
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  currentView?: 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator'
+  onNavigate?: (view: 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator') => void
+}
+
+export default function DashboardSidebar({ currentView = 'overview', onNavigate }: DashboardSidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [families, setFamilies] = useState<Family[]>([])
@@ -132,13 +135,17 @@ export default function DashboardSidebar() {
       <nav className="flex-1 p-4 space-y-1">
         {navigation.map((item) => {
           const Icon = item.icon
-          const isActive = pathname === item.href
-          const href = selectedFamilyId ? `${item.href}?family=${selectedFamilyId}` : item.href
+          const isActive = currentView === item.view
+          const handleClick = () => {
+            if (onNavigate) {
+              onNavigate(item.view)
+            }
+          }
           return (
-            <Link
+            <button
               key={item.name}
-              href={href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              onClick={handleClick}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive
                   ? 'bg-blue-50 text-blue-700 border border-blue-200'
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -146,7 +153,7 @@ export default function DashboardSidebar() {
             >
               <Icon className="w-4 h-4" />
               {item.name}
-            </Link>
+            </button>
           )
         })}
       </nav>
