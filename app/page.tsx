@@ -103,21 +103,23 @@ function DashboardContent() {
           {/* View Content */}
           {view === 'overview' && (
             <>
-              {/* Asset Register */}
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Asset Register</h2>
-                <DynamicAssetTable assets={assets} onUpdateAsset={updateAsset} />
-              </div>
-
               {/* Financial Summary */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <DebtMaturitySchedule assets={legacyAssets as any} />
                 <OwnershipStructure
                   principalEquity={totals.principalEquity}
                   minorityEquity={totals.minorityEquity}
                   debt={totals.totalDebt}
                   totalValue={totals.totalGrossValue}
                 />
+                <DebtMaturitySchedule assets={legacyAssets as any} />
+              </div>
+
+              {/* Regulatory/Tax Timers */}
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-slate-900 mb-4">Regulatory Timeline</h2>
+                <div className="bg-white border border-slate-200 rounded-lg p-6">
+                  <RegulatoryTimer compact={false} />
+                </div>
               </div>
             </>
           )}
