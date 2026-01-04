@@ -32,7 +32,7 @@ export async function getUserFamilies(): Promise<Family[]> {
  * Get current user's active family (from session or first family)
  */
 export async function getActiveFamily(): Promise<Family | null> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const user = (await supabase.auth.getUser()).data.user
 
   if (!user) return null
@@ -45,7 +45,7 @@ export async function getActiveFamily(): Promise<Family | null> {
  * Get complete estate portfolio for a family
  */
 export async function getEstatePortfolio(familyId: string): Promise<EstatePortfolio | null> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
 
   // Fetch family
   const { data: family, error: familyError } = await supabase
@@ -178,7 +178,7 @@ export async function createFamily(data: {
   name: string
   currency: 'USD' | 'GBP' | 'EUR'
 }): Promise<Family | null> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   const user = (await supabase.auth.getUser()).data.user
 
   if (!user) return null
