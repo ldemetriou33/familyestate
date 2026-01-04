@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { EstateAsset, AssetStatus, AssetTier } from '@/lib/types/estate-state'
-import { formatGBP, formatEUR, formatUSD } from '@/lib/utils'
+import { formatGBP, formatEUR } from '@/lib/utils'
 
 interface EditAssetModalProps {
   asset: EstateAsset | null
