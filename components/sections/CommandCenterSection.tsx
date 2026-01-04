@@ -12,7 +12,7 @@ import { AnomalyDetailModal } from '@/components/modals/AnomalyDetailModal'
 import { DataHealthWrapper, DataHealthIndicator } from '@/components/ui/DataHealthIndicator'
 import { AgentDashboard } from '@/components/agents'
 import { useDashboardData, useHotelData, useCafeData, usePortfolioData, useFinanceData, useAlertsData } from '@/contexts/DashboardDataContext'
-import { DataSource, DataConfidence } from '@prisma/client'
+import { DataSource, DataConfidence } from '@/components/ui/DataHealthIndicator'
 import { AlertCategory, Priority, ActionStatus } from '@/lib/types/abbey-os'
 import { formatGBP } from '@/lib/utils'
 import { Hotel, UtensilsCrossed, Building2, TrendingUp, TrendingDown, Database, CheckCircle, AlertTriangle, Loader2 } from 'lucide-react'
@@ -250,28 +250,28 @@ export default function CommandCenterSection() {
     return {
       cashPosition: {
         lastUpdated: new Date(),
-        source: DataSource.BANK_FEED,
-        confidence: DataConfidence.HIGH,
+        source: 'BANK_FEED' as DataSource,
+        confidence: 'HIGH' as DataConfidence,
       },
       hotelMetrics: {
         lastUpdated: hotel?.lastUpdatedAt || new Date(),
-        source: hotel?.dataSource || DataSource.MANUAL,
-        confidence: hotel?.confidence || DataConfidence.MEDIUM,
+        source: hotel?.dataSource || ('MANUAL' as DataSource),
+        confidence: hotel?.confidence || ('MEDIUM' as DataConfidence),
       },
       cafeMetrics: {
         lastUpdated: cafe?.lastUpdatedAt || new Date(),
-        source: cafe?.dataSource || DataSource.MANUAL,
-        confidence: cafe?.confidence || DataConfidence.MEDIUM,
+        source: cafe?.dataSource || ('MANUAL' as DataSource),
+        confidence: cafe?.confidence || ('MEDIUM' as DataConfidence),
       },
       portfolioMetrics: {
         lastUpdated: portfolio?.lastUpdatedAt || new Date(),
-        source: portfolio?.dataSource || DataSource.MANUAL,
-        confidence: DataConfidence.MEDIUM,
+        source: portfolio?.dataSource || ('MANUAL' as DataSource),
+        confidence: 'MEDIUM' as DataConfidence,
       },
       alerts: {
         lastUpdated: new Date(),
-        source: DataSource.SYSTEM_GENERATED,
-        confidence: DataConfidence.HIGH,
+        source: 'SYSTEM_GENERATED' as DataSource,
+        confidence: 'HIGH' as DataConfidence,
       },
     }
   }, [hotelData, cafeData, portfolioData])
