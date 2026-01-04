@@ -1,6 +1,6 @@
 -- ============================================
--- ABBEY OS - Fix Existing Tables
--- Adds missing columns and fixes schema for existing tables
+-- ABBEY OS - Fix Existing Tables (Version 2)
+-- Handles any existing table structure gracefully
 -- ============================================
 
 -- Enable UUID extension
@@ -35,113 +35,152 @@ EXCEPTION
 END $$;
 
 -- ============================================
--- ADD MISSING COLUMNS TO EXISTING TABLES
+-- FIX PROPERTIES TABLE
 -- ============================================
 
--- Fix properties table
 DO $$ 
 BEGIN
-    -- First, ensure properties table has an id column (primary key)
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
-        -- Add id column if it doesn't exist
-        ALTER TABLE properties ADD COLUMN id UUID PRIMARY KEY DEFAULT uuid_generate_v4();
+    -- Check if properties table exists, if not create it
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'properties') THEN
+        CREATE TABLE properties (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name TEXT NOT NULL,
+            type property_type NOT NULL DEFAULT 'Hotel',
+            slug TEXT UNIQUE,
+            location_lat DECIMAL(10, 8),
+            location_long DECIMAL(11, 8),
+            status property_status NOT NULL DEFAULT 'Active',
+            description TEXT,
+            hero_image_url TEXT,
+            gallery_images TEXT[] DEFAULT '{}',
+            amenities TEXT[] DEFAULT '{}',
+            highlights TEXT[] DEFAULT '{}',
+            address TEXT,
+            city TEXT,
+            postcode TEXT,
+            country TEXT DEFAULT 'UK',
+            meta_title TEXT,
+            meta_description TEXT,
+            is_featured BOOLEAN DEFAULT false,
+            is_published BOOLEAN DEFAULT false,
+            published_at TIMESTAMPTZ,
+            sort_order INTEGER DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
     ELSE
-        -- If id exists but isn't UUID, we might need to handle it differently
-        -- For now, just ensure it's the right type
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id' AND data_type != 'uuid') THEN
-            -- If id exists but is wrong type, we can't easily fix it - skip for now
-            RAISE NOTICE 'id column exists but is not UUID type';
+        -- Table exists, add missing columns
+        -- First ensure id column exists and is UUID
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
+            ALTER TABLE properties ADD COLUMN id UUID DEFAULT uuid_generate_v4();
+            -- Make it primary key if there isn't one
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE table_name='properties' AND constraint_type='PRIMARY KEY'
+            ) THEN
+                ALTER TABLE properties ADD PRIMARY KEY (id);
+            END IF;
         END IF;
-    END IF;
-    
-    -- Add missing columns to properties if they don't exist
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='status') THEN
-        ALTER TABLE properties ADD COLUMN status property_status NOT NULL DEFAULT 'Active';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='type') THEN
-        ALTER TABLE properties ADD COLUMN type property_type NOT NULL DEFAULT 'Hotel';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='slug') THEN
-        ALTER TABLE properties ADD COLUMN slug TEXT UNIQUE;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='location_lat') THEN
-        ALTER TABLE properties ADD COLUMN location_lat DECIMAL(10, 8);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='location_long') THEN
-        ALTER TABLE properties ADD COLUMN location_long DECIMAL(11, 8);
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='hero_image_url') THEN
-        ALTER TABLE properties ADD COLUMN hero_image_url TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='gallery_images') THEN
-        ALTER TABLE properties ADD COLUMN gallery_images TEXT[] DEFAULT '{}';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='amenities') THEN
-        ALTER TABLE properties ADD COLUMN amenities TEXT[] DEFAULT '{}';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='highlights') THEN
-        ALTER TABLE properties ADD COLUMN highlights TEXT[] DEFAULT '{}';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='address') THEN
-        ALTER TABLE properties ADD COLUMN address TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='city') THEN
-        ALTER TABLE properties ADD COLUMN city TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='postcode') THEN
-        ALTER TABLE properties ADD COLUMN postcode TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='country') THEN
-        ALTER TABLE properties ADD COLUMN country TEXT DEFAULT 'UK';
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='meta_title') THEN
-        ALTER TABLE properties ADD COLUMN meta_title TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='meta_description') THEN
-        ALTER TABLE properties ADD COLUMN meta_description TEXT;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='is_featured') THEN
-        ALTER TABLE properties ADD COLUMN is_featured BOOLEAN DEFAULT false;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='is_published') THEN
-        ALTER TABLE properties ADD COLUMN is_published BOOLEAN DEFAULT false;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='published_at') THEN
-        ALTER TABLE properties ADD COLUMN published_at TIMESTAMPTZ;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='sort_order') THEN
-        ALTER TABLE properties ADD COLUMN sort_order INTEGER DEFAULT 0;
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='created_at') THEN
-        ALTER TABLE properties ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
-    END IF;
-    
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='updated_at') THEN
-        ALTER TABLE properties ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+        
+        -- Add all other missing columns
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='name') THEN
+            ALTER TABLE properties ADD COLUMN name TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='type') THEN
+            ALTER TABLE properties ADD COLUMN type property_type DEFAULT 'Hotel';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='slug') THEN
+            ALTER TABLE properties ADD COLUMN slug TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='status') THEN
+            ALTER TABLE properties ADD COLUMN status property_status DEFAULT 'Active';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='location_lat') THEN
+            ALTER TABLE properties ADD COLUMN location_lat DECIMAL(10, 8);
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='location_long') THEN
+            ALTER TABLE properties ADD COLUMN location_long DECIMAL(11, 8);
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='description') THEN
+            ALTER TABLE properties ADD COLUMN description TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='hero_image_url') THEN
+            ALTER TABLE properties ADD COLUMN hero_image_url TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='gallery_images') THEN
+            ALTER TABLE properties ADD COLUMN gallery_images TEXT[] DEFAULT '{}';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='amenities') THEN
+            ALTER TABLE properties ADD COLUMN amenities TEXT[] DEFAULT '{}';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='highlights') THEN
+            ALTER TABLE properties ADD COLUMN highlights TEXT[] DEFAULT '{}';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='address') THEN
+            ALTER TABLE properties ADD COLUMN address TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='city') THEN
+            ALTER TABLE properties ADD COLUMN city TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='postcode') THEN
+            ALTER TABLE properties ADD COLUMN postcode TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='country') THEN
+            ALTER TABLE properties ADD COLUMN country TEXT DEFAULT 'UK';
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='meta_title') THEN
+            ALTER TABLE properties ADD COLUMN meta_title TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='meta_description') THEN
+            ALTER TABLE properties ADD COLUMN meta_description TEXT;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='is_featured') THEN
+            ALTER TABLE properties ADD COLUMN is_featured BOOLEAN DEFAULT false;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='is_published') THEN
+            ALTER TABLE properties ADD COLUMN is_published BOOLEAN DEFAULT false;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='published_at') THEN
+            ALTER TABLE properties ADD COLUMN published_at TIMESTAMPTZ;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='sort_order') THEN
+            ALTER TABLE properties ADD COLUMN sort_order INTEGER DEFAULT 0;
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='created_at') THEN
+            ALTER TABLE properties ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+        END IF;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='updated_at') THEN
+            ALTER TABLE properties ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+        END IF;
     END IF;
 END $$;
 
--- Create other tables if they don't exist
--- First create units table without foreign key, then add it
+-- ============================================
+-- CREATE OTHER TABLES
+-- ============================================
+
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     property_id UUID NOT NULL,
@@ -166,19 +205,13 @@ CREATE TABLE IF NOT EXISTS units (
     UNIQUE(property_id, room_number)
 );
 
--- Add foreign key constraint separately (after ensuring properties.id exists)
+-- Add foreign key constraint only if it doesn't exist
 DO $$ 
 BEGIN
-    -- Only add foreign key if properties table has id column
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
-        -- Drop constraint if it exists
-        IF EXISTS (
-            SELECT 1 FROM information_schema.table_constraints 
-            WHERE constraint_name = 'units_property_id_fkey'
-        ) THEN
-            ALTER TABLE units DROP CONSTRAINT units_property_id_fkey;
-        END IF;
-        -- Add foreign key
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'units_property_id_fkey'
+    ) THEN
         ALTER TABLE units ADD CONSTRAINT units_property_id_fkey 
             FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE;
     END IF;
