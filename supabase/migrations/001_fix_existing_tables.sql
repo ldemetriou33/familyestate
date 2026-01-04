@@ -144,10 +144,10 @@ END $$;
 -- First create units table without foreign key, then add it
 CREATE TABLE IF NOT EXISTS units (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    property_id UUID NOT NULL,
-    name TEXT NOT NULL,
-    category unit_category NOT NULL DEFAULT 'Room',
-    base_price DECIMAL(10, 2) NOT NULL,
+    property_id UUID,
+    name TEXT,
+    category unit_category DEFAULT 'Room',
+    base_price DECIMAL(10, 2),
     surge_price DECIMAL(10, 2),
     is_event_mode_active BOOLEAN DEFAULT false,
     amenities TEXT[] DEFAULT '{}',
@@ -162,15 +162,106 @@ CREATE TABLE IF NOT EXISTS units (
     is_published BOOLEAN DEFAULT true,
     sort_order INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(property_id, room_number)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Add foreign key constraint separately (after ensuring properties.id exists)
+-- Add missing columns to units table if they don't exist
 DO $$ 
 BEGIN
-    -- Only add foreign key if properties table has id column
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='property_id') THEN
+        ALTER TABLE units ADD COLUMN property_id UUID;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='name') THEN
+        ALTER TABLE units ADD COLUMN name TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='category') THEN
+        ALTER TABLE units ADD COLUMN category unit_category DEFAULT 'Room';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='base_price') THEN
+        ALTER TABLE units ADD COLUMN base_price DECIMAL(10, 2);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='surge_price') THEN
+        ALTER TABLE units ADD COLUMN surge_price DECIMAL(10, 2);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='is_event_mode_active') THEN
+        ALTER TABLE units ADD COLUMN is_event_mode_active BOOLEAN DEFAULT false;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='amenities') THEN
+        ALTER TABLE units ADD COLUMN amenities TEXT[] DEFAULT '{}';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='images') THEN
+        ALTER TABLE units ADD COLUMN images TEXT[] DEFAULT '{}';
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='capacity') THEN
+        ALTER TABLE units ADD COLUMN capacity INTEGER DEFAULT 2;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='room_number') THEN
+        ALTER TABLE units ADD COLUMN room_number TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='floor') THEN
+        ALTER TABLE units ADD COLUMN floor INTEGER;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='description') THEN
+        ALTER TABLE units ADD COLUMN description TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='bed_type') THEN
+        ALTER TABLE units ADD COLUMN bed_type TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='square_meters') THEN
+        ALTER TABLE units ADD COLUMN square_meters DECIMAL(8, 2);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='is_available') THEN
+        ALTER TABLE units ADD COLUMN is_available BOOLEAN DEFAULT true;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='is_published') THEN
+        ALTER TABLE units ADD COLUMN is_published BOOLEAN DEFAULT true;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='sort_order') THEN
+        ALTER TABLE units ADD COLUMN sort_order INTEGER DEFAULT 0;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='created_at') THEN
+        ALTER TABLE units ADD COLUMN created_at TIMESTAMPTZ DEFAULT NOW();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='updated_at') THEN
+        ALTER TABLE units ADD COLUMN updated_at TIMESTAMPTZ DEFAULT NOW();
+    END IF;
+END $$;
+
+-- Add unique constraint if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE constraint_name = 'units_property_id_room_number_key'
+    ) THEN
+        ALTER TABLE units ADD CONSTRAINT units_property_id_room_number_key UNIQUE(property_id, room_number);
+    END IF;
+END $$;
+
+-- Add foreign key constraint separately (after ensuring both columns exist)
+DO $$ 
+BEGIN
+    -- Check if both columns exist
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='property_id') THEN
         -- Drop constraint if it exists
         IF EXISTS (
             SELECT 1 FROM information_schema.table_constraints 
