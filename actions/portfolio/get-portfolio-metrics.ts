@@ -159,7 +159,7 @@ function getMockPortfolioMetrics(): PortfolioMetrics {
     totalMonthlyRentalIncome += property.monthlyRentalIncome
 
     // Use SONIA rate for variable loans, otherwise use fixed rate
-    const effectiveRate = property.loanType === 'variable' ? soniaRate : property.currentInterestRate
+    const effectiveRate = (property.loanType as string) === 'variable' ? soniaRate : property.currentInterestRate
 
     // Calculate monthly mortgage payment
     if (property.currentMortgageBalance > 0) {
@@ -281,7 +281,7 @@ function getMockRentalPropertiesWithPayments(): PropertyWithPayments[] {
   const soniaRate = 5.25 // Approximate SONIA rate
 
   return rentalProperties.map((property) => {
-    const effectiveRate = property.loanType === 'variable' ? soniaRate : property.currentInterestRate
+    const effectiveRate = (property.loanType as string) === 'variable' ? soniaRate : property.currentInterestRate
     const monthlyMortgagePayment = calculateMonthlyMortgagePayment(
       property.currentMortgageBalance,
       effectiveRate,
