@@ -32,16 +32,11 @@ export default function SovereignCommandDashboard() {
     // Calculate car park event revenue
     let carParkEvent = 0
     if (carParkAsset?.metadata.spaces && calculateMonthlyRevenue) {
-      try {
-        carParkEvent = calculateMonthlyRevenue(
-          20, // Normal daily rate per space
-          50, // Event rate per space
-          carParkAsset.metadata.spaces
-        )
-      } catch (error) {
-        console.error('Error calculating monthly revenue:', error)
-        carParkEvent = 0
-      }
+      carParkEvent = calculateMonthlyRevenue(
+        20, // Normal daily rate per space
+        50, // Event rate per space
+        carParkAsset.metadata.spaces
+      )
     }
 
     const flow = calculateGlobalCashFlow({

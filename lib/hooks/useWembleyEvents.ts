@@ -70,27 +70,29 @@ export function useWembleyEvents() {
   /**
    * Check if event mode is active for a specific date
    */
-  const isEventDate = (date: string): boolean => {
+  const isEventDate = useCallback((date: string): boolean => {
     return events.some((e) => e.date === date && e.isActive)
-  }
+  }, [events])
 
   /**
    * Get events in a date range
    */
-  const getEventsInRange = (startDate: string, endDate: string): WembleyEvent[] => {
+  const getEventsInRange = useCallback((startDate: string, endDate: string): WembleyEvent[] => {
     return events.filter(
       (e) => e.date >= startDate && e.date <= endDate && e.isActive
     )
-  }
+  }, [events])
 
   /**
    * Calculate projected revenue for a month
    */
-  const calculateMonthlyRevenue = (
+  const calculateMonthlyRevenue = useCallback((
     normalPrice: number,
     eventPrice: number,
     spaces: number
   ): number => {
+    if (!events.length) return normalPrice * spaces * 30 // Fallback if events not loaded
+    
     const today = new Date()
     const year = today.getFullYear()
     const month = today.getMonth()
@@ -101,7 +103,7 @@ export function useWembleyEvents() {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day)
       const dateStr = date.toISOString().split('T')[0]
-      const isEvent = isEventDate(dateStr)
+      const isEvent = events.some((e) => e.date === dateStr && e.isActive)
 
       const dailyRevenue = isEvent
         ? eventPrice * spaces
@@ -111,7 +113,7 @@ export function useWembleyEvents() {
     }
 
     return totalRevenue
-  }
+  }, [events])
 
   return {
     events,
@@ -122,4 +124,3 @@ export function useWembleyEvents() {
     calculateMonthlyRevenue,
   }
 }
-
