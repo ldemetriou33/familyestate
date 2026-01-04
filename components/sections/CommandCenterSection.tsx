@@ -39,20 +39,25 @@ export default function CommandCenterSection() {
   useEffect(() => {
     let cancelled = false
     
-    // Add timeout to prevent infinite loading - reduced to 5 seconds
+    // Set loading to true immediately
+    setLoadingCommandCenter(true)
+    setErrorCommandCenter(null)
+
+    // Add timeout to prevent infinite loading - reduced to 3 seconds
     const timeout = setTimeout(() => {
       if (!cancelled) {
+        console.log('Command center data timeout - using fallback')
         setLoadingCommandCenter(false)
-        // Don't set error, just use mock data fallback
         setCommandCenterData(null)
+        setErrorCommandCenter(null)
       }
-    }, 5000) // 5 second timeout
+    }, 3000) // 3 second timeout
 
     // Use Promise.race to ensure we don't wait forever
     Promise.race([
       getCommandCenterData(),
       new Promise<Awaited<ReturnType<typeof getCommandCenterData>>>((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout')), 5000)
+        setTimeout(() => reject(new Error('Timeout')), 3000)
       ),
     ])
       .then(data => {
