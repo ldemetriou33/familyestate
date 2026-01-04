@@ -36,6 +36,7 @@ export const hotel = {
 export const cafe = {
   name: 'Abbey Café',
   weeklyTarget: 15000, // £15,000 weekly target
+  location: 'Abbey Point Hotel',
 } as const
 
 export const rentalProperties = [
