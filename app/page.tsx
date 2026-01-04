@@ -3,6 +3,9 @@ import { Building2, Shield, TrendingUp, Zap, ArrowRight, Hotel, UtensilsCrossed,
 import { createServerClient } from '@/lib/supabase/server'
 import { FloatingAdminButton } from '@/components/admin/FloatingAdminButton'
 
+// Mark as dynamic since we use cookies for Supabase
+export const dynamic = 'force-dynamic'
+
 // Fetch data from Supabase (with fallback to seed data)
 async function getHomepageData() {
   try {

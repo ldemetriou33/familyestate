@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { LayoutDashboard, Calculator, TrendingUp, TrendingDown, Building2 } from 'lucide-react'
 import SovereignDashboard from '@/components/sovereign/SovereignDashboard'
@@ -9,7 +9,7 @@ import ConsolidationRoadmapView from '@/components/sovereign/ConsolidationRoadma
 import PruningModule from '@/components/sovereign/PruningModule'
 import EngineModule from '@/components/sovereign/EngineModule'
 
-export default function SovereignPage() {
+function SovereignTabs() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState<'dashboard' | 'calculator' | 'consolidation' | 'pruning' | 'engine'>('dashboard')
@@ -19,6 +19,10 @@ export default function SovereignPage() {
       setActiveTab('consolidation')
     } else if (tabParam === 'pruning') {
       setActiveTab('pruning')
+    } else if (tabParam === 'engine') {
+      setActiveTab('engine')
+    } else if (tabParam === 'calculator') {
+      setActiveTab('calculator')
     }
   }, [tabParam])
 
@@ -96,6 +100,18 @@ export default function SovereignPage() {
         {activeTab === 'engine' && <EngineModule />}
       </div>
     </div>
+  )
+}
+
+export default function SovereignPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500" />
+      </div>
+    }>
+      <SovereignTabs />
+    </Suspense>
   )
 }
 
