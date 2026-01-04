@@ -21,7 +21,7 @@ const entitySchema = z.object({
   contact_phone: z.string().optional(),
   legal_representative: z.string().optional(),
   notes: z.string().optional(),
-  is_active: z.boolean().default(true),
+  is_active: z.boolean().optional(),
 })
 
 type EntityFormData = z.infer<typeof entitySchema>

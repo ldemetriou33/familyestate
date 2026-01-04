@@ -21,15 +21,15 @@ const mortgageSchema = z.object({
   reference_number: z.string().optional(),
   original_loan_amount: z.string().min(1),
   current_balance: z.string().min(1),
-  currency: z.string().default('GBP'),
+  currency: z.string().optional(),
   interest_rate: z.string().min(1),
-  structure: z.string().default('FIXED'),
+  structure: z.string().optional(),
   base_rate: z.string().optional(),
   margin: z.string().optional(),
   start_date: z.string().min(1),
   maturity_date: z.string().optional(),
   term_years: z.string().optional(),
-  payment_frequency: z.string().default('MONTHLY'),
+  payment_frequency: z.string().optional(),
   next_payment_date: z.string().optional(),
   penalty_free_date: z.string().optional(),
   early_repayment_penalty: z.string().optional(),
@@ -37,7 +37,7 @@ const mortgageSchema = z.object({
   property_valuation: z.string().optional(),
   valuation_date: z.string().optional(),
   max_ltv_allowed: z.string().optional(),
-  status: z.string().default('ACTIVE'),
+  status: z.string().optional(),
   security_type: z.string().optional(),
   property_id: z.string().optional(),
   entity_id: z.string().optional(),
@@ -72,6 +72,12 @@ export default function EditMortgagePage() {
     reset,
   } = useForm<MortgageFormData>({
     resolver: zodResolver(mortgageSchema),
+    defaultValues: {
+      currency: 'GBP',
+      structure: 'FIXED',
+      payment_frequency: 'MONTHLY',
+      status: 'ACTIVE',
+    },
   })
 
   useEffect(() => {
