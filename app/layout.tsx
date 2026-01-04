@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
-      <body className={`${inter.className} density-comfortable`}>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
+      <body className={`${inter.className} density-comfortable bg-slate-50`}>
         <ThemeProvider>
           <IntegrationsProvider>
             <ApprovalsProvider>
