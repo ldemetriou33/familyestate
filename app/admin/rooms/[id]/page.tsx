@@ -356,7 +356,7 @@ export default function EditRoomPage() {
                     placeholder={calculatedSurgePrice || 'Auto-calculated'}
                     className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                   />
-                  <p className="text-xs text-slate-400 mt-1">Leave empty for auto-calculation (1.5x base price)</p>
+                  <p className="text-xs text-slate-400 mt-1">Leave empty for auto-calculation ({PRICING.DEFAULT_SURGE_MULTIPLIER}x base price)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Calculated Surge Price</label>
