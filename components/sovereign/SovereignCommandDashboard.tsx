@@ -26,6 +26,14 @@ export default function SovereignCommandDashboard() {
     const estateData = seedSovereignEstate()
     setEstate(estateData)
 
+    // Calculate consolidation scenario immediately
+    try {
+      const scenario = runConsolidationScenario(estateData.assets, cashInjection)
+      setConsolidationScenario(scenario)
+    } catch (error) {
+      console.error('Error calculating consolidation scenario:', error)
+    }
+
     // Calculate cash flow
     const carParkAsset = estateData.assets.find((a) => a.id === 'wembley-car-park')
     const carParkNormal = DEFAULT_CASH_FLOW_INPUTS.carParkNormal
@@ -52,7 +60,7 @@ export default function SovereignCommandDashboard() {
       carParkEvent: carParkEvent - carParkNormal, // Additional event revenue
     })
     setCashFlow(flow)
-  }, [calculateMonthlyRevenue])
+  }, [calculateMonthlyRevenue, cashInjection])
 
   const handleScenarioChange = (scenario: any) => {
     setConsolidationScenario(scenario)
