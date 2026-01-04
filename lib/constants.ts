@@ -31,6 +31,7 @@ export const hotel = {
   currentMortgageBalance: 8750000,
   currentInterestRate: 4.85,
   monthlyRentalIncome: 45000, // Estimated monthly hotel revenue
+  location: 'Wembley, London',
 } as const
 
 export const cafe = {
