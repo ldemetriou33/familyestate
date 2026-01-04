@@ -1,20 +1,42 @@
-// Supabase Auth Callback Handler
-// Handles magic link and OAuth redirects
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { NextResponse } from 'next/server'
 
-import { createServerClient } from '@/lib/supabase/server'
-import { NextRequest, NextResponse } from 'next/server'
-
-export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-  const redirect = requestUrl.searchParams.get('redirect') || '/dashboard'
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get('code')
+  const next = searchParams.get('next') ?? '/admin'
 
   if (code) {
-    const supabase = await createServerClient()
-    await supabase.auth.exchangeCodeForSession(code)
+    const cookieStore = await cookies()
+    
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return cookieStore.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            cookieStore.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            cookieStore.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
+
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
+    
+    console.error('Auth error:', error.message)
   }
 
-  // Redirect to the requested page or dashboard
-  return NextResponse.redirect(new URL(redirect, request.url))
+  // Redirect to sign-in with error
+  return NextResponse.redirect(`${origin}/sign-in?error=auth-failed`)
 }
-
