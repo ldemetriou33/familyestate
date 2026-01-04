@@ -19,7 +19,8 @@ import {
   Home,
   UtensilsCrossed,
   Database,
-  DollarSign
+  DollarSign,
+  Brain
 } from 'lucide-react'
 
 interface AdminUser {
