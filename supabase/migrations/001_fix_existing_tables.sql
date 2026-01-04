@@ -256,12 +256,17 @@ BEGIN
     END IF;
 END $$;
 
--- Add foreign key constraint separately (after ensuring both columns exist)
+-- Add foreign key constraint separately (after ensuring both columns exist and are UUID)
 DO $$ 
 BEGIN
-    -- Check if both columns exist
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id')
-       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='units' AND column_name='property_id') THEN
+    -- Check if both columns exist and are UUID type
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='properties' AND column_name='id' AND data_type='uuid'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='units' AND column_name='property_id' AND data_type='uuid'
+    ) THEN
         -- Drop constraint if it exists
         IF EXISTS (
             SELECT 1 FROM information_schema.table_constraints 
@@ -272,6 +277,8 @@ BEGIN
         -- Add foreign key
         ALTER TABLE units ADD CONSTRAINT units_property_id_fkey 
             FOREIGN KEY (property_id) REFERENCES properties(id) ON DELETE CASCADE;
+    ELSE
+        RAISE NOTICE 'Cannot add foreign key: columns must both be UUID type';
     END IF;
 END $$;
 
