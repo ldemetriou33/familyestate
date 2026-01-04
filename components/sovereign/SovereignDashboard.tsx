@@ -94,9 +94,9 @@ export default function SovereignDashboard() {
         <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <Building2 className="w-8 h-8 text-blue-400" />
-            <span className="text-sm text-slate-400">Dad's Share</span>
+            <span className="text-sm text-slate-400">Dad&apos;s Share</span>
           </div>
-          <p className="text-sm text-slate-400 mb-1">Dad's Equity Share</p>
+          <p className="text-sm text-slate-400 mb-1">Dad&apos;s Equity Share</p>
           <p className="text-2xl font-bold text-white">
             {formatGBP(sovereign_equity.dad_share_equity)}
           </p>
@@ -125,13 +125,13 @@ export default function SovereignDashboard() {
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Dad's Share (Current)</span>
+            <span className="text-slate-400">Dad&apos;s Share (Current)</span>
             <span className="text-lg font-semibold text-green-400">
               {formatGBP(sovereign_equity.dad_share_equity)}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-slate-400">Uncles' Share</span>
+            <span className="text-slate-400">Uncles&apos; Share</span>
             <span className="text-lg font-semibold text-slate-400">
               {formatGBP(sovereign_equity.uncles_share_equity)}
             </span>
