@@ -62,6 +62,12 @@ export default function EditDebtPage() {
     reset,
   } = useForm<DebtFormData>({
     resolver: zodResolver(debtSchema),
+    defaultValues: {
+      debt_type: 'OTHER',
+      currency: 'GBP',
+      payment_frequency: 'MONTHLY',
+      status: 'ACTIVE',
+    },
   })
 
   useEffect(() => {
