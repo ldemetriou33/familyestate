@@ -107,7 +107,7 @@ export async function getPendingRateProposals(): Promise<RateProposal[]> {
     take: 20,
   })
 
-  return proposals.map(p => ({
+  return proposals.map((p: any) => ({
     id: p.id,
     propertyName: p.property.name,
     currentRate: p.currentRate,
