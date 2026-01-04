@@ -225,7 +225,7 @@ export async function updateUnit(formData: FormData): Promise<ActionResult<Unit>
  */
 export async function createUnit(
   propertyId: string, 
-  data: unknown
+  data: Record<string, unknown>
 ): Promise<ActionResult<Unit>> {
   try {
     await requireAdmin()
