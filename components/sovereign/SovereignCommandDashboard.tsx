@@ -136,6 +136,7 @@ export default function SovereignCommandDashboard() {
               assets={estate.assets}
               initialCashInjection={cashInjection}
               onScenarioChange={handleScenarioChange}
+              onCashInjectionChange={handleCashInjectionChange}
             />
           )}
         </motion.div>
