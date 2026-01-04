@@ -18,13 +18,15 @@ function DashboardContent() {
   const { assets, updateAsset, totals, currency } = useEstateContext()
   const [view, setView] = useState<ViewType>('overview')
 
-  // Convert assets to format expected by IHT calculator (simplified - just check personal assets)
+  // IHT exposure check (simplified - just check personal assets)
   const personalAssets = assets.filter((a) => a.entity === 'Personal')
   const personalAssetsValue = personalAssets.reduce((sum, asset) => {
     const valueInGBP = asset.currency === 'GBP' ? asset.value : asset.value * 0.85
     return sum + valueInGBP
   }, 0)
   const ihtExposure = personalAssetsValue > 2_000_000
+  const ihtExcess = Math.max(0, personalAssetsValue - 2_000_000)
+  const ihtEstimatedTax = ihtExcess * 0.2
 
   // Calculate cash flow (simplified - project from assets)
   const cashFlowYTD = totals.principalEquity * 0.05 // 5% yield estimate
@@ -71,7 +73,8 @@ function DashboardContent() {
                 <span className="text-sm font-semibold text-red-900">IHT Exposure Alert</span>
               </div>
               <p className="text-sm text-red-700">
-                Personal assets exceed £2M threshold. Consider estate planning strategies.
+                Personal assets exceed £2M threshold by {formatGBP(ihtExcess)}. Estimated tax at
+                20% effective rate: {formatGBP(ihtEstimatedTax)}.
               </p>
             </div>
           )}
