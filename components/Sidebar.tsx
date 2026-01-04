@@ -19,7 +19,6 @@ import {
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { LogOut } from 'lucide-react'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance' | 'legal-brain'
 
