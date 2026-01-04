@@ -11,6 +11,7 @@ interface ConsolidationSliderProps {
   assets: SovereignAsset[]
   initialCashInjection: number
   onScenarioChange: (scenario: any) => void
+  onCashInjectionChange?: (value: number) => void
 }
 
 export default function ConsolidationSlider({
