@@ -92,7 +92,7 @@ export async function updateProperty(formData: FormData): Promise<ActionResult<P
     // Validate with Zod
     const validation = PropertyUpdateSchema.safeParse({ id, ...updateData })
     if (!validation.success) {
-      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
+      return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
@@ -194,7 +194,7 @@ export async function updateUnit(formData: FormData): Promise<ActionResult<Unit>
     // Validate with Zod
     const validation = UnitUpdateSchema.safeParse({ id, ...updateData })
     if (!validation.success) {
-      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
+      return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
@@ -237,7 +237,7 @@ export async function createUnit(
     // Validate input
     const validation = UnitCreateSchema.safeParse({ property_id: propertyId, ...data })
     if (!validation.success) {
-      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
+      return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
     const unitData = {
@@ -285,7 +285,7 @@ export async function updateSiteContent(
     // Validate
     const validation = ContentUpdateSchema.safeParse({ section_key: key, content })
     if (!validation.success) {
-      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
+      return { success: false, error: validation.error.issues[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
