@@ -4,18 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "cache-clean": "echo cleaning",
-    "deploy": "git add -A && git commit -m \"Auto-deploy: $(date '+%Y-%m-%d %H:%M:%S')\" && git push origin main",
-    "watch": "node auto-deploy.js"
+    "type-check": "tsc --noEmit",
+    "db:types": "supabase gen types typescript --project-id YOUR_PROJECT_REF > lib/types/database.ts",
+    "deploy": "git add -A && git commit -m \"Auto-deploy: $(date '+%Y-%m-%d %H:%M:%S')\" && git push origin main"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.36.5",
     "@hookform/resolvers": "^5.2.2",
-    "@prisma/client": "^7.2.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.89.0",
     "@types/papaparse": "^5.5.2",
@@ -24,7 +21,6 @@
     "openai": "^6.15.0",
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.4.5",
-    "prisma": "^7.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.70.0",

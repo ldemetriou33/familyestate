@@ -10,6 +10,7 @@ import { ArrowLeft, Save, Loader2, Zap, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { updateUnit } from '@/app/actions/admin-actions'
 import { toast } from 'sonner'
+import { PRICING } from '@/lib/constants'
 
 // Validation schema
 const unitSchema = z.object({
@@ -155,11 +156,17 @@ export default function EditRoomPage() {
         }
       })
 
-      await updateUnit(formData)
+      const result = await updateUnit(formData)
       
-      toast.success('Room updated successfully!')
-      router.refresh()
-      router.push('/admin/rooms')
+      if (result.success) {
+        toast.success('Room updated successfully!')
+        router.refresh()
+        router.push('/admin/rooms')
+      } else {
+        const errorMessage = result.error || 'Failed to update room'
+        setError(errorMessage)
+        toast.error(errorMessage)
+      }
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to update room'
       setError(errorMessage)
@@ -173,14 +180,15 @@ export default function EditRoomPage() {
     if (!confirm('Delete this room? This action cannot be undone.')) return
 
     try {
-      const { error } = await supabase
-        .from('units')
-        .delete()
-        .eq('id', roomId)
+      const { deleteUnit } = await import('@/app/actions/admin-actions')
+      const result = await deleteUnit(roomId)
 
-      if (error) throw error
-      toast.success('Room deleted successfully!')
-      router.push('/admin/rooms')
+      if (result.success) {
+        toast.success('Room deleted successfully!')
+        router.push('/admin/rooms')
+      } else {
+        toast.error(result.error || 'Failed to delete room')
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete room')
     }
@@ -200,7 +208,7 @@ export default function EditRoomPage() {
   ]
 
   const calculatedSurgePrice = isEventModeActive && basePrice
-    ? (parseFloat(basePrice) * 1.5).toFixed(2)
+    ? (parseFloat(basePrice) * PRICING.DEFAULT_SURGE_MULTIPLIER).toFixed(2)
     : null
 
   if (loading) {

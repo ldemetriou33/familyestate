@@ -2,283 +2,248 @@
 
 import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { createServerClient } from '@/lib/supabase/server'
 import { requireAdmin } from '@/lib/supabase/auth'
-import { z } from 'zod'
+import { 
+  PropertyUpdateSchema, 
+  UnitUpdateSchema, 
+  UnitCreateSchema,
+  ContentUpdateSchema 
+} from '@/lib/validations'
+import type { ActionResult, Property, Unit, ContentBlock, MortgageDetails } from '@/lib/types'
+import { REVALIDATION_PATHS, PRICING } from '@/lib/constants'
 
-// ============================================
-// VALIDATION SCHEMAS
-// ============================================
-
-const PropertyUpdateSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).optional(),
-  description: z.string().optional(),
-  status: z.enum(['Active', 'Maintenance', 'Sold', 'Development', 'Archived']).optional(),
-  city: z.string().optional(),
-  country: z.string().optional(),
-  address: z.string().optional(),
-  hero_image_url: z.string().url().optional().nullable(),
-  mortgage_details: z.object({
-    lender: z.string().optional(),
-    rate: z.string().optional(),
-    balance: z.number().optional(),
-    monthly_payment: z.number().optional(),
-    loan_type: z.string().optional(),
-    term_years: z.number().optional(),
-    start_date: z.string().optional(),
-  }).optional(),
-})
-
-const UnitUpdateSchema = z.object({
-  id: z.string().uuid(),
-  name: z.string().min(1).optional(),
-  base_price: z.number().min(0).optional(),
-  surge_price: z.number().min(0).optional().nullable(),
-  is_event_mode_active: z.boolean().optional(),
-  amenities: z.array(z.string()).optional(),
-  images: z.array(z.string()).optional(),
-  capacity: z.number().min(1).optional(),
-  room_number: z.string().optional(),
-  description: z.string().optional(),
-  is_available: z.boolean().optional(),
-  is_published: z.boolean().optional(),
-})
-
-const UnitCreateSchema = z.object({
-  property_id: z.string().uuid(),
-  name: z.string().min(1),
-  category: z.enum(['Room', 'Suite', 'Plot', 'Apartment', 'Villa']).default('Room'),
-  base_price: z.number().min(0),
-  surge_price: z.number().min(0).optional().nullable(),
-  is_event_mode_active: z.boolean().default(false),
-  amenities: z.array(z.string()).default([]),
-  images: z.array(z.string()).default([]),
-  capacity: z.number().min(1).default(2),
-  room_number: z.string().optional(),
-  description: z.string().optional(),
-  is_available: z.boolean().default(true),
-  is_published: z.boolean().default(true),
-})
-
-const SiteContentUpdateSchema = z.object({
-  section_key: z.string().min(1),
-  content: z.record(z.any()),
-  is_active: z.boolean().optional(),
-})
-
-// ============================================
-// SERVER ACTIONS
-// ============================================
+// Helper to revalidate multiple paths
+function revalidatePaths(paths: readonly string[]) {
+  paths.forEach(path => revalidatePath(path))
+}
 
 /**
  * Update Property - Updates name, description, status, and mortgage info
  */
-export async function updateProperty(formData: FormData) {
+export async function updateProperty(formData: FormData): Promise<ActionResult<Property>> {
   try {
-    // Require admin authentication
     await requireAdmin()
 
-    // Extract and validate data from FormData
-    const rawData = {
-      id: formData.get('id') as string,
-      name: formData.get('name') as string | null,
-      description: formData.get('description') as string | null,
-      status: formData.get('status') as string | null,
-      city: formData.get('city') as string | null,
-      country: formData.get('country') as string | null,
-      address: formData.get('address') as string | null,
-      hero_image_url: formData.get('hero_image_url') as string | null,
-      // Mortgage details
-      mortgage_lender: formData.get('mortgage_lender') as string | null,
-      mortgage_rate: formData.get('mortgage_rate') as string | null,
-      mortgage_balance: formData.get('mortgage_balance') as string | null,
-      mortgage_monthly_payment: formData.get('mortgage_monthly_payment') as string | null,
-      mortgage_loan_type: formData.get('mortgage_loan_type') as string | null,
-      mortgage_term_years: formData.get('mortgage_term_years') as string | null,
-      mortgage_start_date: formData.get('mortgage_start_date') as string | null,
+    if (!supabaseAdmin) {
+      return { success: false, error: 'Database not configured' }
     }
 
-    // Build mortgage_details JSONB object if any mortgage fields are provided
-    let mortgage_details = null
-    if (
-      rawData.mortgage_lender ||
-      rawData.mortgage_rate ||
-      rawData.mortgage_balance ||
-      rawData.mortgage_monthly_payment
-    ) {
-      mortgage_details = {}
-      if (rawData.mortgage_lender) mortgage_details.lender = rawData.mortgage_lender
-      if (rawData.mortgage_rate) mortgage_details.rate = rawData.mortgage_rate
-      if (rawData.mortgage_balance) mortgage_details.balance = parseFloat(rawData.mortgage_balance)
-      if (rawData.mortgage_monthly_payment) mortgage_details.monthly_payment = parseFloat(rawData.mortgage_monthly_payment)
-      if (rawData.mortgage_loan_type) mortgage_details.loan_type = rawData.mortgage_loan_type
-      if (rawData.mortgage_term_years) mortgage_details.term_years = parseInt(rawData.mortgage_term_years)
-      if (rawData.mortgage_start_date) mortgage_details.start_date = rawData.mortgage_start_date
+    const id = formData.get('id') as string
+    if (!id) {
+      return { success: false, error: 'Property ID is required' }
     }
 
     // Build update object
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 
-    if (rawData.name) {
-      updateData.name = rawData.name
-      // Auto-generate slug from name
-      updateData.slug = rawData.name
+    // Basic fields
+    const name = formData.get('name') as string | null
+    if (name) {
+      updateData.name = name
+      // Generate slug from name
+      updateData.slug = name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '')
+        .substring(0, 100) || 'untitled'
     }
-    if (rawData.description !== null) updateData.description = rawData.description
-    if (rawData.status) updateData.status = rawData.status
-    if (rawData.city !== null) updateData.city = rawData.city
-    if (rawData.country !== null) updateData.country = rawData.country
-    if (rawData.address !== null) updateData.address = rawData.address
-    if (rawData.hero_image_url !== null) updateData.hero_image_url = rawData.hero_image_url
-    if (mortgage_details !== null) updateData.mortgage_details = mortgage_details
 
-    // Use admin client to bypass RLS
-    if (!supabaseAdmin) {
-      throw new Error('Supabase admin client not configured')
+    const description = formData.get('description')
+    if (description !== null) updateData.description = description
+
+    const status = formData.get('status')
+    if (status) updateData.status = status
+
+    const city = formData.get('city')
+    if (city !== null) updateData.city = city
+
+    const country = formData.get('country')
+    if (country !== null) updateData.country = country
+
+    const address = formData.get('address')
+    if (address !== null) updateData.address = address
+
+    const heroImageUrl = formData.get('hero_image_url')
+    if (heroImageUrl !== null) updateData.hero_image_url = heroImageUrl
+
+    // Mortgage details
+    const mortgageLender = formData.get('mortgage_lender') as string | null
+    const mortgageRate = formData.get('mortgage_rate') as string | null
+    const mortgageBalance = formData.get('mortgage_balance') as string | null
+    const mortgageMonthlyPayment = formData.get('mortgage_monthly_payment') as string | null
+    const mortgageLoanType = formData.get('mortgage_loan_type') as string | null
+    const mortgageTermYears = formData.get('mortgage_term_years') as string | null
+    const mortgageStartDate = formData.get('mortgage_start_date') as string | null
+
+    if (mortgageLender || mortgageRate || mortgageBalance || mortgageMonthlyPayment) {
+      const mortgageDetails: MortgageDetails = {}
+      if (mortgageLender) mortgageDetails.lender = mortgageLender
+      if (mortgageRate) mortgageDetails.rate = mortgageRate
+      if (mortgageBalance) mortgageDetails.balance = parseFloat(mortgageBalance)
+      if (mortgageMonthlyPayment) mortgageDetails.monthly_payment = parseFloat(mortgageMonthlyPayment)
+      if (mortgageLoanType) mortgageDetails.loan_type = mortgageLoanType
+      if (mortgageTermYears) mortgageDetails.term_years = parseInt(mortgageTermYears)
+      if (mortgageStartDate) mortgageDetails.start_date = mortgageStartDate
+      updateData.mortgage_details = mortgageDetails
+    }
+
+    // Validate with Zod
+    const validation = PropertyUpdateSchema.safeParse({ id, ...updateData })
+    if (!validation.success) {
+      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
       .from('properties')
       .update(updateData)
-      .eq('id', rawData.id)
+      .eq('id', id)
       .select()
       .single()
 
     if (error) {
       console.error('Error updating property:', error)
-      throw new Error(`Failed to update property: ${error.message}`)
+      return { success: false, error: error.message }
     }
 
-    // Revalidate paths
-    revalidatePath('/admin')
-    revalidatePath('/admin/properties')
-    revalidatePath('/admin/properties/[id]', 'page')
-    revalidatePath('/')
-
-    return { success: true, data }
+    revalidatePaths(REVALIDATION_PATHS.property)
+    return { success: true, data: data as Property }
   } catch (error) {
     console.error('updateProperty error:', error)
-    throw error
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
 }
 
 /**
  * Update Unit - Updates price, surge price, and event toggles
  */
-export async function updateUnit(formData: FormData) {
+export async function updateUnit(formData: FormData): Promise<ActionResult<Unit>> {
   try {
     await requireAdmin()
 
-    const rawData = {
-      id: formData.get('id') as string,
-      name: formData.get('name') as string | null,
-      base_price: formData.get('base_price') as string | null,
-      surge_price: formData.get('surge_price') as string | null,
-      is_event_mode_active: formData.get('is_event_mode_active') === 'true' || formData.get('is_event_mode_active') === 'on',
-      amenities: formData.get('amenities') as string | null,
-      images: formData.get('images') as string | null,
-      capacity: formData.get('capacity') as string | null,
-      room_number: formData.get('room_number') as string | null,
-      description: formData.get('description') as string | null,
-      is_available: formData.get('is_available') === 'true' || formData.get('is_available') === 'on',
-      is_published: formData.get('is_published') === 'true' || formData.get('is_published') === 'on',
+    if (!supabaseAdmin) {
+      return { success: false, error: 'Database not configured' }
     }
 
-    const updateData: any = {
+    const id = formData.get('id') as string
+    if (!id) {
+      return { success: false, error: 'Unit ID is required' }
+    }
+
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 
-    if (rawData.name) updateData.name = rawData.name
-    if (rawData.base_price) updateData.base_price = parseFloat(rawData.base_price)
-    if (rawData.surge_price !== null && rawData.surge_price !== '') {
-      updateData.surge_price = parseFloat(rawData.surge_price)
-    } else if (rawData.surge_price === '') {
-      updateData.surge_price = null
-    }
-    if (rawData.is_event_mode_active !== undefined) {
-      updateData.is_event_mode_active = rawData.is_event_mode_active
-    }
-    if (rawData.amenities) {
-      try {
-        updateData.amenities = JSON.parse(rawData.amenities)
-      } catch {
-        updateData.amenities = rawData.amenities.split(',').map(a => a.trim())
-      }
-    }
-    if (rawData.images) {
-      try {
-        updateData.images = JSON.parse(rawData.images)
-      } catch {
-        updateData.images = rawData.images.split(',').map(i => i.trim())
-      }
-    }
-    if (rawData.capacity) updateData.capacity = parseInt(rawData.capacity)
-    if (rawData.room_number !== null) updateData.room_number = rawData.room_number
-    if (rawData.description !== null) updateData.description = rawData.description
-    if (rawData.is_available !== undefined) updateData.is_available = rawData.is_available
-    if (rawData.is_published !== undefined) updateData.is_published = rawData.is_published
+    const name = formData.get('name')
+    if (name) updateData.name = name
 
-    if (!supabaseAdmin) {
-      throw new Error('Supabase admin client not configured')
+    const basePrice = formData.get('base_price') as string | null
+    if (basePrice) updateData.base_price = parseFloat(basePrice)
+
+    const surgePrice = formData.get('surge_price') as string | null
+    if (surgePrice !== null) {
+      updateData.surge_price = surgePrice === '' ? null : parseFloat(surgePrice)
+    }
+
+    const isEventModeActive = formData.get('is_event_mode_active')
+    if (isEventModeActive !== null) {
+      updateData.is_event_mode_active = isEventModeActive === 'true' || isEventModeActive === 'on'
+    }
+
+    const amenities = formData.get('amenities') as string | null
+    if (amenities) {
+      try {
+        updateData.amenities = JSON.parse(amenities)
+      } catch {
+        updateData.amenities = amenities.split(',').map(a => a.trim()).filter(Boolean)
+      }
+    }
+
+    const images = formData.get('images') as string | null
+    if (images) {
+      try {
+        updateData.images = JSON.parse(images)
+      } catch {
+        updateData.images = images.split(',').map(i => i.trim()).filter(Boolean)
+      }
+    }
+
+    const capacity = formData.get('capacity') as string | null
+    if (capacity) updateData.capacity = parseInt(capacity)
+
+    const roomNumber = formData.get('room_number')
+    if (roomNumber !== null) updateData.room_number = roomNumber
+
+    const description = formData.get('description')
+    if (description !== null) updateData.description = description
+
+    const isAvailable = formData.get('is_available')
+    if (isAvailable !== null) {
+      updateData.is_available = isAvailable === 'true' || isAvailable === 'on'
+    }
+
+    const isPublished = formData.get('is_published')
+    if (isPublished !== null) {
+      updateData.is_published = isPublished === 'true' || isPublished === 'on'
+    }
+
+    // Validate with Zod
+    const validation = UnitUpdateSchema.safeParse({ id, ...updateData })
+    if (!validation.success) {
+      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
       .from('units')
       .update(updateData)
-      .eq('id', rawData.id)
+      .eq('id', id)
       .select()
       .single()
 
     if (error) {
       console.error('Error updating unit:', error)
-      throw new Error(`Failed to update unit: ${error.message}`)
+      return { success: false, error: error.message }
     }
 
-    revalidatePath('/admin')
-    revalidatePath('/admin/rooms')
-    revalidatePath('/admin/rooms/[id]', 'page')
-    revalidatePath('/')
-
-    return { success: true, data }
+    revalidatePaths(REVALIDATION_PATHS.unit)
+    return { success: true, data: data as Unit }
   } catch (error) {
     console.error('updateUnit error:', error)
-    throw error
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
 }
 
 /**
  * Create Unit - Adds new room to a property
  */
-export async function createUnit(propertyId: string, data: any) {
+export async function createUnit(
+  propertyId: string, 
+  data: unknown
+): Promise<ActionResult<Unit>> {
   try {
     await requireAdmin()
 
-    const unitData = {
-      property_id: propertyId,
-      name: data.name || 'New Room',
-      category: data.category || 'Room',
-      base_price: parseFloat(data.base_price) || 0,
-      surge_price: data.surge_price ? parseFloat(data.surge_price) : null,
-      is_event_mode_active: data.is_event_mode_active || false,
-      amenities: Array.isArray(data.amenities) ? data.amenities : [],
-      images: Array.isArray(data.images) ? data.images : [],
-      capacity: parseInt(data.capacity) || 2,
-      room_number: data.room_number || null,
-      description: data.description || null,
-      is_available: data.is_available !== false,
-      is_published: data.is_published !== false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+    if (!supabaseAdmin) {
+      return { success: false, error: 'Database not configured' }
     }
 
-    if (!supabaseAdmin) {
-      throw new Error('Supabase admin client not configured')
+    // Validate input
+    const validation = UnitCreateSchema.safeParse({ property_id: propertyId, ...data })
+    if (!validation.success) {
+      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
+    }
+
+    const unitData = {
+      ...validation.data,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
     const { data: newUnit, error } = await supabaseAdmin
@@ -289,30 +254,38 @@ export async function createUnit(propertyId: string, data: any) {
 
     if (error) {
       console.error('Error creating unit:', error)
-      throw new Error(`Failed to create unit: ${error.message}`)
+      return { success: false, error: error.message }
     }
 
-    revalidatePath('/admin')
-    revalidatePath('/admin/rooms')
-    revalidatePath('/admin/properties')
-    revalidatePath('/')
-
-    return { success: true, data: newUnit }
+    revalidatePaths(REVALIDATION_PATHS.unit)
+    return { success: true, data: newUnit as Unit }
   } catch (error) {
     console.error('createUnit error:', error)
-    throw error
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
 }
 
 /**
  * Update Site Content - Edits website text blocks
  */
-export async function updateSiteContent(key: string, content: any) {
+export async function updateSiteContent(
+  key: string, 
+  content: Record<string, unknown>
+): Promise<ActionResult<ContentBlock>> {
   try {
     await requireAdmin()
 
     if (!supabaseAdmin) {
-      throw new Error('Supabase admin client not configured')
+      return { success: false, error: 'Database not configured' }
+    }
+
+    // Validate
+    const validation = ContentUpdateSchema.safeParse({ section_key: key, content })
+    if (!validation.success) {
+      return { success: false, error: validation.error.errors[0]?.message || 'Validation failed' }
     }
 
     const { data, error } = await supabaseAdmin
@@ -330,17 +303,102 @@ export async function updateSiteContent(key: string, content: any) {
 
     if (error) {
       console.error('Error updating site content:', error)
-      throw new Error(`Failed to update site content: ${error.message}`)
+      return { success: false, error: error.message }
     }
 
-    revalidatePath('/admin')
-    revalidatePath('/admin/content')
-    revalidatePath('/')
-
-    return { success: true, data }
+    revalidatePaths(REVALIDATION_PATHS.content)
+    return { success: true, data: data as ContentBlock }
   } catch (error) {
     console.error('updateSiteContent error:', error)
-    throw error
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
   }
 }
 
+/**
+ * Delete Unit
+ */
+export async function deleteUnit(id: string): Promise<ActionResult<null>> {
+  try {
+    await requireAdmin()
+
+    if (!supabaseAdmin) {
+      return { success: false, error: 'Database not configured' }
+    }
+
+    const { error } = await supabaseAdmin
+      .from('units')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting unit:', error)
+      return { success: false, error: error.message }
+    }
+
+    revalidatePaths(REVALIDATION_PATHS.unit)
+    return { success: true, data: null }
+  } catch (error) {
+    console.error('deleteUnit error:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
+  }
+}
+
+/**
+ * Toggle Event Mode (convenience action)
+ */
+export async function toggleEventMode(
+  unitId: string, 
+  enabled: boolean,
+  surgeMultiplier: number = PRICING.DEFAULT_SURGE_MULTIPLIER
+): Promise<ActionResult<Unit>> {
+  try {
+    await requireAdmin()
+
+    if (!supabaseAdmin) {
+      return { success: false, error: 'Database not configured' }
+    }
+
+    // Get current unit to calculate surge price
+    const { data: unit, error: fetchError } = await supabaseAdmin
+      .from('units')
+      .select('base_price')
+      .eq('id', unitId)
+      .single()
+
+    if (fetchError || !unit) {
+      return { success: false, error: 'Unit not found' }
+    }
+
+    const surgePrice = enabled ? unit.base_price * surgeMultiplier : null
+
+    const { data, error } = await supabaseAdmin
+      .from('units')
+      .update({
+        is_event_mode_active: enabled,
+        surge_price: surgePrice,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', unitId)
+      .select()
+      .single()
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    revalidatePaths(REVALIDATION_PATHS.unit)
+    return { success: true, data: data as Unit }
+  } catch (error) {
+    console.error('toggleEventMode error:', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }
+  }
+}

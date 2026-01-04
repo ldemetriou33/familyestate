@@ -146,10 +146,14 @@ export default function EditPropertyPage() {
         }
       })
 
-      await updateProperty(formData)
+      const result = await updateProperty(formData)
       
-      toast.success('Property updated successfully!')
-      router.refresh()
+      if (result.success) {
+        toast.success('Property updated successfully!')
+        router.refresh()
+      } else {
+        toast.error(result.error || 'Failed to update property')
+      }
     } catch (error) {
       console.error('Failed to update property:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to update property')

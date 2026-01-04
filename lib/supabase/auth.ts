@@ -1,10 +1,15 @@
 // Supabase Auth Helpers
 // Admin authentication using Supabase Auth
+// Supports multiple admins via comma-separated ADMIN_EMAILS env variable
 
 import { createServerClient } from './server'
-import { cookies } from 'next/headers'
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL
+// Support multiple admins via comma-separated list
+// Falls back to single ADMIN_EMAIL for backward compatibility
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '')
+  .split(',')
+  .map(email => email.trim().toLowerCase())
+  .filter(Boolean)
 
 export async function getCurrentUser() {
   try {
@@ -23,8 +28,8 @@ export async function getCurrentUser() {
 }
 
 export async function isAdmin(): Promise<boolean> {
-  if (!ADMIN_EMAIL) {
-    console.warn('ADMIN_EMAIL not set in environment variables')
+  if (ADMIN_EMAILS.length === 0) {
+    console.warn('No admin emails configured. Set ADMIN_EMAILS or ADMIN_EMAIL env variable.')
     return false
   }
 
@@ -34,14 +39,14 @@ export async function isAdmin(): Promise<boolean> {
       return false
     }
     
-    return user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+    return ADMIN_EMAILS.includes(user.email.toLowerCase())
   } catch (error) {
     console.error('Error checking admin status:', error)
     return false
   }
 }
 
-export async function requireAdmin() {
+export async function requireAdmin(): Promise<true> {
   const admin = await isAdmin()
   if (!admin) {
     throw new Error('Unauthorized: Admin access required')
