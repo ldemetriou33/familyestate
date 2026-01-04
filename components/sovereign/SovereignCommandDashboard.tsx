@@ -98,6 +98,44 @@ export default function SovereignCommandDashboard() {
             <AssetTable assets={estate.assets} />
           </div>
 
+          {/* Global Cash Flow */}
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-slate-900 mb-4">Global Cash Flow</h2>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="bg-white border border-slate-200 rounded-lg p-4">
+                <p className="text-sm text-slate-500 mb-1">Hotel Lease (NNN)</p>
+                <p className="text-xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome.hotelLease)}</p>
+                <p className="text-xs text-slate-400 mt-1">Monthly</p>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-lg p-4">
+                <p className="text-sm text-slate-500 mb-1">Cafe Royal</p>
+                <p className="text-xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome.cafeRoyal)}</p>
+                <p className="text-xs text-slate-400 mt-1">Monthly</p>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-lg p-4">
+                <p className="text-sm text-slate-500 mb-1">Car Park</p>
+                <p className="text-xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome.carPark)}</p>
+                <p className="text-xs text-slate-400 mt-1">Normal Mode</p>
+              </div>
+              <div className="bg-white border border-slate-200 rounded-lg p-4">
+                <p className="text-sm text-slate-500 mb-1">User Portfolio</p>
+                <p className="text-xl font-bold text-slate-900">
+                  {formatGBP(cashFlow.monthlyIncome.userPortfolio)}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">8% Yield</p>
+              </div>
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-700 mb-1 font-medium">Monthly Net Income</p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {formatGBP(cashFlow.monthlySovereignSalary)}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Annual: {formatGBP(cashFlow.annualProjection)}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Financial Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <DebtMaturitySchedule assets={estate.assets} />
