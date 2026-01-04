@@ -14,10 +14,13 @@ import type {
 
 // Helper to create ownership structure
 function createOwnership(
-  entity: 'MAD_LTD' | 'DEM_BRO_LTD' | 'PERSONAL' | 'CYPRUS_COMPANY',
+  entity: 'MAD_LTD' | 'DEM_BRO_LTD' | 'PERSONAL' | 'CYPRUS_COMPANY' | 'DIFC_FOUNDATION',
   dadShare: number,
   uncleAShare: number = 0,
-  uncleBShare: number = 0
+  uncleBShare: number = 0,
+  model: 'SHARED' | 'CONSOLIDATED' | 'VAULTED' = 'SHARED',
+  vaultedToDIFC: boolean = false,
+  consolidationTarget: boolean = false
 ): Ownership {
   return {
     entity,
@@ -25,6 +28,9 @@ function createOwnership(
     uncle_a_share: uncleAShare,
     uncle_b_share: uncleBShare,
     total_share: dadShare + uncleAShare + uncleBShare,
+    model,
+    vaulted_to_difc: vaultedToDIFC,
+    consolidation_target: consolidationTarget,
   }
 }
 
@@ -79,7 +85,7 @@ function createRevenue(
 export function seedEstateData(): EstatePortfolio {
   const assets: Asset[] = []
 
-  // 1. Abbey Point Hotel
+  // 1. Abbey Point Hotel (Core Asset)
   const abbeyPointId = 'abbey-point-hotel'
   assets.push({
     id: abbeyPointId,
@@ -89,7 +95,7 @@ export function seedEstateData(): EstatePortfolio {
     valuation: 7_000_000,
     currency: 'GBP',
     status: 'OPERATIONAL',
-    ownership: createOwnership('MAD_LTD', 0.333, 0.333, 0.334),
+    ownership: createOwnership('MAD_LTD', 0.333, 0.333, 0.334, 'SHARED', false, true),
     debts: [
       createDebt(
         abbeyPointId,
@@ -107,11 +113,13 @@ export function seedEstateData(): EstatePortfolio {
       createRevenue(abbeyPointId, 1_500_000, 'GBP', 'HOTEL', true),
     ],
     metadata: {
-      notes: 'Operational hotel near Wembley',
+      notes: 'Operational hotel near Wembley. Core asset for consolidation.',
+      is_core_asset: true,
+      lease_payment: 450_000, // Annual Triple Net lease
     },
   })
 
-  // 2. Hotel Car Park Strip
+  // 2. Hotel Car Park Strip (Core Asset)
   const carParkId = 'hotel-car-park'
   assets.push({
     id: carParkId,
@@ -121,13 +129,14 @@ export function seedEstateData(): EstatePortfolio {
     valuation: 450_000,
     currency: 'GBP',
     status: 'OPERATIONAL',
-    ownership: createOwnership('MAD_LTD', 0.333, 0.333, 0.334),
+    ownership: createOwnership('MAD_LTD', 0.333, 0.333, 0.334, 'SHARED', false, true),
     debts: [],
     revenues: [],
     metadata: {
       spaces: 15,
       notes: 'Unencumbered. Strategic utility for Wembley Event Mode',
       strategic_goal: 'High yield potential during events',
+      is_core_asset: true,
     },
   })
 
@@ -196,7 +205,7 @@ export function seedEstateData(): EstatePortfolio {
     },
   })
 
-  // 6. Oakwood Close (Grandma's House)
+  // 6. Oakwood Close (Grandma's House) - PAYOFF Status
   const oakwoodId = 'oakwood-close'
   assets.push({
     id: oakwoodId,
@@ -205,8 +214,8 @@ export function seedEstateData(): EstatePortfolio {
     country: 'UK',
     valuation: 750_000,
     currency: 'GBP',
-    status: 'OPERATIONAL',
-    ownership: createOwnership('PERSONAL', 1.0),
+    status: 'PAYOFF',
+    ownership: createOwnership('PERSONAL', 1.0, 0, 0, 'SHARED'),
     debts: [
       createDebt(
         oakwoodId,
@@ -217,17 +226,18 @@ export function seedEstateData(): EstatePortfolio {
         'GBP',
         true, // Compound interest
         undefined,
-        'Equity Release @ ~6.2% accruing. Wealth Leak alert needed'
+        'Equity Release @ ~6.2% accruing. Wealth Leak alert needed. Mymms sale will clear this.'
       ),
     ],
     revenues: [],
     metadata: {
-      notes: 'Wealth Leak alert needed (Compound interest tracker)',
+      notes: 'Wealth Leak alert needed (Compound interest tracker). Mymms sale will clear debt.',
     },
   })
 
-  // 7. 91 Milton Avenue
+  // 7. 91 Milton Avenue (Pruning Asset - SELL)
   const miltonAveId = 'milton-avenue-91'
+  const sellByDate = new Date('2026-05-01').toISOString() // May 2026 UK Renters' Rights
   assets.push({
     id: miltonAveId,
     name: '91 Milton Avenue',
@@ -235,8 +245,8 @@ export function seedEstateData(): EstatePortfolio {
     country: 'UK',
     valuation: 675_000,
     currency: 'GBP',
-    status: 'RENTING',
-    ownership: createOwnership('PERSONAL', 1.0),
+    status: 'SELL',
+    ownership: createOwnership('PERSONAL', 1.0, 0, 0, 'SHARED'),
     debts: [
       createDebt(miltonAveId, 400_000, 400_000, 0, 'MORTGAGE', 'GBP'),
     ],
@@ -244,11 +254,12 @@ export function seedEstateData(): EstatePortfolio {
       createRevenue(miltonAveId, 25_000, 'GBP', 'RENTAL'),
     ],
     metadata: {
-      notes: 'Renting (£25k/yr)',
+      notes: 'Renting (£25k/yr). Pruning asset - UK Renters\' Rights enforcement May 2026',
+      sell_by_date: sellByDate,
     },
   })
 
-  // 8. Ora House (Reg 0/12808)
+  // 8. Ora House (Reg 0/12808) - Core Asset
   const oraHouseId = 'ora-house'
   assets.push({
     id: oraHouseId,
@@ -258,17 +269,18 @@ export function seedEstateData(): EstatePortfolio {
     valuation: 480_000,
     currency: 'EUR',
     status: 'STRATEGIC_HOLD',
-    ownership: createOwnership('CYPRUS_COMPANY', 0.333, 0.333, 0.334),
+    ownership: createOwnership('CYPRUS_COMPANY', 0.333, 0.333, 0.334, 'SHARED', false, true),
     debts: [],
     revenues: [],
     metadata: {
       registration_number: '0/12808',
       notes: 'Potential H1 Zone uplift. Strategic Goal: Buyout target using User Loan',
       strategic_goal: 'Buyout target using User Loan',
+      is_core_asset: true,
     },
   })
 
-  // 9. Parekklisia Land (Reg 0/13758)
+  // 9. Parekklisia Land (Reg 0/13758) - Core Asset
   const parekklisiaId = 'parekklisia-land'
   assets.push({
     id: parekklisiaId,
@@ -278,14 +290,15 @@ export function seedEstateData(): EstatePortfolio {
     valuation: 265_000,
     currency: 'EUR',
     status: 'STRATEGIC_HOLD',
-    ownership: createOwnership('CYPRUS_COMPANY', 1.0),
+    ownership: createOwnership('CYPRUS_COMPANY', 0.333, 0.333, 0.334, 'SHARED', false, true),
     debts: [
       createDebt(parekklisiaId, 100_000, 100_000, 0, 'LOAN', 'EUR'),
     ],
     revenues: [],
     metadata: {
       registration_number: '0/13758',
-      notes: 'Strategic Hold',
+      notes: 'Strategic Hold. Consolidation target',
+      is_core_asset: true,
     },
   })
 

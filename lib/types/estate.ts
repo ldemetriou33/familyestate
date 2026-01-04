@@ -3,9 +3,11 @@
  * Sovereign Family Office Operating System
  */
 
-export type EntityType = 'MAD_LTD' | 'DEM_BRO_LTD' | 'PERSONAL' | 'CYPRUS_COMPANY'
+export type EntityType = 'MAD_LTD' | 'DEM_BRO_LTD' | 'PERSONAL' | 'CYPRUS_COMPANY' | 'DIFC_FOUNDATION'
 
-export type AssetStatus = 'OPERATIONAL' | 'UNDER_RENOVATION' | 'STRATEGIC_HOLD' | 'FOR_SALE' | 'RENTING'
+export type AssetStatus = 'OPERATIONAL' | 'UNDER_RENOVATION' | 'STRATEGIC_HOLD' | 'FOR_SALE' | 'RENTING' | 'SELL' | 'PAYOFF'
+
+export type OwnershipModel = 'SHARED' | 'CONSOLIDATED' | 'VAULTED'
 
 export type DebtType = 'MORTGAGE' | 'EQUITY_RELEASE' | 'LOAN' | 'INTEREST_ONLY'
 
@@ -20,6 +22,9 @@ export interface Ownership {
   uncle_a_share: number
   uncle_b_share: number
   total_share: number // Should equal 1.0
+  model: OwnershipModel // SHARED, CONSOLIDATED, or VAULTED
+  vaulted_to_difc?: boolean // Succession status
+  consolidation_target?: boolean // Is this a target for buyout?
 }
 
 /**
@@ -72,6 +77,9 @@ export interface Asset {
     units?: number // For residential
     notes?: string
     strategic_goal?: string
+    lease_payment?: number // Annual lease (e.g., £450k Triple Net)
+    sell_by_date?: string // ISO date for pruning (e.g., May 2026)
+    is_core_asset?: boolean // Core 4: Hotel, Car Park, Ora, Parekklisia
   }
 }
 
@@ -160,6 +168,58 @@ export interface OakwoodDecay {
 }
 
 /**
+ * Debt-to-Equity Shadow Tracking
+ */
+export interface ShadowEquity {
+  loan_amount: number
+  currency: Currency
+  interest_rate: number // e.g., 5%
+  capitalization_frequency: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL'
+  current_shadow_equity: number // Accumulated interest
+  target_entity: EntityType
+  monthly_interest_accrual: number
+}
+
+/**
+ * Consolidation Roadmap Step
+ */
+export interface ConsolidationStep {
+  step_number: number
+  asset_id: string
+  asset_name: string
+  current_ownership: number // Dad's current %
+  target_ownership: number // 100% after buyout
+  buyout_cost: number
+  priority: 'HIGH' | 'MEDIUM' | 'LOW'
+  estimated_completion?: string // ISO date
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+}
+
+/**
+ * Consolidation Roadmap
+ */
+export interface ConsolidationRoadmap {
+  core_assets: Asset[]
+  total_buyout_cost: number
+  steps: ConsolidationStep[]
+  estimated_timeline_months: number
+  current_progress: number // Percentage complete
+}
+
+/**
+ * Pruning Asset (For Sale)
+ */
+export interface PruningAsset {
+  asset_id: string
+  asset_name: string
+  current_value: number
+  sell_by_date: string // ISO date
+  days_remaining: number
+  urgency: 'CRITICAL' | 'HIGH' | 'MEDIUM'
+  reason: string // e.g., "UK Renters' Rights enforcement May 2026"
+}
+
+/**
  * Estate Portfolio
  */
 export interface EstatePortfolio {
@@ -168,5 +228,8 @@ export interface EstatePortfolio {
   cash_flow: CashFlowSummary
   sovereign_equity: SovereignEquity
   oakwood_decay?: OakwoodDecay
+  shadow_equity?: ShadowEquity
+  consolidation_roadmap?: ConsolidationRoadmap
+  pruning_assets?: PruningAsset[]
 }
 

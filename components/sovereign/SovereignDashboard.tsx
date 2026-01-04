@@ -1,13 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrendingUp, TrendingDown, DollarSign, AlertTriangle, Building2, Calculator } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, AlertTriangle, Building2, Calculator, Shield } from 'lucide-react'
 import { seedEstateData } from '@/lib/data/estate-seed'
 import { calculateSovereignEquity, calculateTotalConsolidationCost } from '@/lib/calculations/sovereign-equity'
 import { calculateCashFlow } from '@/lib/calculations/cash-flow'
 import { calculateOakwoodDecay } from '@/lib/calculations/oakwood-decay'
+import { updateShadowEquity } from '@/lib/calculations/shadow-equity'
+import { buildPruningAssets } from '@/lib/calculations/pruning'
 import type { EstatePortfolio, Asset } from '@/lib/types/estate'
 import { formatGBP } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function SovereignDashboard() {
   const [portfolio, setPortfolio] = useState<EstatePortfolio | null>(null)
