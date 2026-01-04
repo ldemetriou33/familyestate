@@ -54,11 +54,35 @@ export default function CapitalAllocationScenario({ assets }: CapitalAllocationS
         <h4 className="text-sm font-semibold text-slate-900 mb-3">Post-Transaction Ownership</h4>
         <div className="space-y-2">
           <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <span className="text-sm text-slate-600">Abbey Point Hotel</span>
+            <span className="text-sm font-medium text-slate-900">
+              {scenario.buyoutPower.hotel.canBuy
+                ? '100%'
+                : `${(33.3 + scenario.buyoutPower.hotel.percentage).toFixed(1)}%`}
+            </span>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <span className="text-sm text-slate-600">Lavender Hill</span>
+            <span className="text-sm font-medium text-slate-900">
+              {scenario.buyoutPower.lavenderHill.canBuy
+                ? '100%'
+                : `${(33.3 + scenario.buyoutPower.lavenderHill.percentage).toFixed(1)}%`}
+            </span>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-slate-100">
+            <span className="text-sm text-slate-600">Cafe Royal</span>
+            <span className="text-sm font-medium text-slate-900">
+              {scenario.buyoutPower.cafeRoyal.canBuy
+                ? '100%'
+                : `${(33.3 + scenario.buyoutPower.cafeRoyal.percentage).toFixed(1)}%`}
+            </span>
+          </div>
+          <div className="flex items-center justify-between py-2 border-b border-slate-100">
             <span className="text-sm text-slate-600">Ora House</span>
             <span className="text-sm font-medium text-slate-900">
               {scenario.buyoutPower.oraHouse.canBuy
                 ? '100%'
-                : `${(33 + scenario.buyoutPower.oraHouse.percentage).toFixed(1)}%`}
+                : `${(33.3 + scenario.buyoutPower.oraHouse.percentage).toFixed(1)}%`}
             </span>
           </div>
           <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -66,15 +90,7 @@ export default function CapitalAllocationScenario({ assets }: CapitalAllocationS
             <span className="text-sm font-medium text-slate-900">
               {scenario.buyoutPower.parekklisia.canBuy
                 ? '100%'
-                : `${(33 + scenario.buyoutPower.parekklisia.percentage).toFixed(1)}%`}
-            </span>
-          </div>
-          <div className="flex items-center justify-between py-2 border-b border-slate-100">
-            <span className="text-sm text-slate-600">Abbey Point Hotel</span>
-            <span className="text-sm font-medium text-slate-900">
-              {scenario.buyoutPower.hotel.canBuy
-                ? '100%'
-                : `${(33 + scenario.buyoutPower.hotel.percentage).toFixed(1)}%`}
+                : `${(33.3 + scenario.buyoutPower.parekklisia.percentage).toFixed(1)}%`}
             </span>
           </div>
         </div>

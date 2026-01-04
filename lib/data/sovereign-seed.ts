@@ -61,14 +61,61 @@ const engineAssets: SovereignAsset[] = [
       isCompound: false,
     },
     ownership: {
-      dad: 33,
-      uncles: 67,
+      dad: 33.3,
+      uncles: 66.7,
       entity: 'MAD_LTD',
     },
     status: 'LEASED',
     metadata: {
-      targetRent: 450_000, // Annual
+      targetRent: 450_000, // Annual Triple Net Lease
+      notes: 'Goal: Consolidation to 100%. Triple Net (NNN) Lease Target: £450k/year',
+    },
+  },
+  {
+    id: 'lavender-hill',
+    name: 'Lavender Hill',
+    tier: 'S',
+    location: 'UK',
+    currency: 'GBP',
+    valuation: 2_000_000,
+    debt: {
+      principal: 1_500_000,
+      interestRate: 5.5,
+      type: 'FIXED',
+      isCompound: false,
+    },
+    ownership: {
+      dad: 33.3,
+      uncles: 66.7,
+      entity: 'MAD_LTD',
+    },
+    status: 'OPERATIONAL',
+    metadata: {
       notes: 'Goal: Consolidation to 100%',
+    },
+  },
+  {
+    id: 'cafe-royal',
+    name: 'Cafe Royal',
+    tier: 'S',
+    location: 'UK',
+    currency: 'GBP',
+    valuation: 850_000,
+    debt: {
+      principal: 600_000,
+      interestRate: 5.5,
+      type: 'FIXED',
+      isCompound: false,
+    },
+    ownership: {
+      dad: 33.3,
+      uncles: 66.7,
+      entity: 'MAD_LTD',
+    },
+    status: 'OPERATIONAL',
+    metadata: {
+      targetRent: 112_000, // Annual: £72k (Flats) + £40k (Leased Cafe)
+      notes: 'Revenue: £72k (Flats) + £40k (Leased Cafe) = £112k/year',
     },
   },
   {
@@ -98,32 +145,32 @@ const engineAssets: SovereignAsset[] = [
 const sovereignAssets: SovereignAsset[] = [
   {
     id: 'ora-house',
-    name: 'Ora House (The HQ)',
+    name: 'Ora House (Cyprus HQ)',
     tier: 'A',
     location: 'CYPRUS',
     currency: 'EUR',
     valuation: 480_000,
     ownership: {
-      dad: 33,
-      uncles: 67,
+      dad: 33.3,
+      uncles: 66.7,
       entity: 'DEM_BRO_LTD',
     },
     status: 'STRATEGIC_HOLD',
     metadata: {
       heritageGrantEligible: 95_000,
-      notes: 'Goal: 100% Buyout. Heritage Grant Eligible (€95k potential)',
+      notes: 'Goal: 100% Buyout. Heritage Grant Eligibility: €95,000 (Cyprus Rural Housing Grant)',
     },
   },
   {
     id: 'parekklisia-land',
-    name: 'Parekklisia Land (The Alpha)',
+    name: 'Parekklisia Land',
     tier: 'A',
     location: 'CYPRUS',
     currency: 'EUR',
     valuation: 265_000,
     ownership: {
-      dad: 33,
-      uncles: 67,
+      dad: 33.3,
+      uncles: 66.7,
       entity: 'DEM_BRO_LTD',
     },
     status: 'STRATEGIC_HOLD',
@@ -153,8 +200,8 @@ const liquidityAssets: SovereignAsset[] = [
     status: 'RENOVATION',
     metadata: {
       targetExit: 2_000_000,
-      netLiquidity: 850_000, // After clearing Oakwood debt
-      notes: 'Renovation Phase. Target Exit: £2M. Net Liquidity Event: +£850k (after clearing Oakwood)',
+      netLiquidity: 850_000, // After clearing Oakwood debt (£400k)
+      notes: 'Exit Strategy: £2M Target. Use £400k for Oakwood Payoff. Net: £850k',
     },
   },
 ]
@@ -201,7 +248,7 @@ const liabilityAssets: SovereignAsset[] = [
     status: 'PRUNE',
     metadata: {
       sellByDate: '2026-05-01',
-      notes: 'PRUNE: Sell before May 2026 Renters Rights Act',
+      notes: 'Critical Deadline: 1 May 2026 - Renters Rights Implementation (Section 21 Ban)',
     },
   },
   {
@@ -219,7 +266,7 @@ const liabilityAssets: SovereignAsset[] = [
     status: 'PRUNE',
     metadata: {
       sellByDate: '2026-05-01',
-      notes: 'PRUNE: Sell before May 2026 Renters Rights Act',
+      notes: 'Critical Deadline: 1 May 2026 - Renters Rights Implementation (Section 21 Ban)',
     },
   },
 ]

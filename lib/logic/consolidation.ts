@@ -26,6 +26,18 @@ export interface ConsolidationScenario {
       cost: number
       remaining: number
     }
+    lavenderHill: {
+      canBuy: boolean
+      percentage: number
+      cost: number
+      remaining: number
+    }
+    cafeRoyal: {
+      canBuy: boolean
+      percentage: number
+      cost: number
+      remaining: number
+    }
   }
   interestSaved: {
     oakwoodDebt: number
@@ -38,10 +50,11 @@ export interface ConsolidationScenario {
 
 /**
  * Calculate buyout cost for an asset
+ * Applies 25% "Family Discount" for internal share transfers
  */
 function calculateBuyoutCost(
   asset: SovereignAsset,
-  minorityDiscount: number = 0.7 // 30% discount for minority shares
+  familyDiscount: number = 0.75 // 25% discount for family transfers
 ): number {
   if (asset.ownership.uncles === 0) return 0
 
@@ -51,23 +64,24 @@ function calculateBuyoutCost(
       : (asset.valuation - (asset.debt?.principal || 0)) * 0.85
 
   const unclesEquity = (netValue * asset.ownership.uncles) / 100
-  return unclesEquity * minorityDiscount
+  return unclesEquity * familyDiscount
 }
 
 /**
  * Calculate how much of uncles' share can be bought with available cash
+ * Uses 25% Family Discount
  */
 function calculateBuyoutPower(
   asset: SovereignAsset,
   availableCash: number,
-  minorityDiscount: number = 0.7
+  familyDiscount: number = 0.75
 ): {
   canBuy: boolean
   percentage: number
   cost: number
   remaining: number
 } {
-  const totalBuyoutCost = calculateBuyoutCost(asset, minorityDiscount)
+  const totalBuyoutCost = calculateBuyoutCost(asset, familyDiscount)
 
   if (totalBuyoutCost === 0) {
     return {
@@ -138,6 +152,8 @@ export function runConsolidationScenario(
   const oraHouse = assets.find((a) => a.id === 'ora-house')
   const parekklisia = assets.find((a) => a.id === 'parekklisia-land')
   const hotel = assets.find((a) => a.id === 'abbey-point-hotel')
+  const lavenderHill = assets.find((a) => a.id === 'lavender-hill')
+  const cafeRoyal = assets.find((a) => a.id === 'cafe-royal')
   const oakwood = assets.find((a) => a.id === 'oakwood-close')
 
   let remainingCash = cashInjection
@@ -155,6 +171,18 @@ export function runConsolidationScenario(
       remaining: 0,
     },
     hotel: {
+      canBuy: false,
+      percentage: 0,
+      cost: 0,
+      remaining: 0,
+    },
+    lavenderHill: {
+      canBuy: false,
+      percentage: 0,
+      cost: 0,
+      remaining: 0,
+    },
+    cafeRoyal: {
       canBuy: false,
       percentage: 0,
       cost: 0,
@@ -191,6 +219,20 @@ export function runConsolidationScenario(
     remainingCash -= buyout.cost
   }
 
+  // Priority 5: Lavender Hill (if cash remains)
+  if (lavenderHill) {
+    const buyout = calculateBuyoutPower(lavenderHill, remainingCash)
+    buyoutPower.lavenderHill = buyout
+    remainingCash -= buyout.cost
+  }
+
+  // Priority 6: Cafe Royal (if cash remains)
+  if (cafeRoyal) {
+    const buyout = calculateBuyoutPower(cafeRoyal, remainingCash)
+    buyoutPower.cafeRoyal = buyout
+    remainingCash -= buyout.cost
+  }
+
   // Calculate interest savings
   const interestSaved = oakwood
     ? calculateInterestSavings(oakwood)
@@ -204,6 +246,8 @@ export function runConsolidationScenario(
     buyoutPower.oraHouse.cost +
     buyoutPower.parekklisia.cost +
     buyoutPower.hotel.cost +
+    buyoutPower.lavenderHill.cost +
+    buyoutPower.cafeRoyal.cost +
     (oakwood?.debt?.principal || 0)
 
   return {

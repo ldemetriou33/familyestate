@@ -9,6 +9,7 @@ import {
   Users,
   FileText,
   Settings,
+  AlertTriangle,
 } from 'lucide-react'
 
 const navigation = [
@@ -16,6 +17,7 @@ const navigation = [
   { name: 'Assets', href: '/assets', icon: Building2 },
   { name: 'Financials', href: '/financials', icon: DollarSign },
   { name: 'Ownership', href: '/ownership', icon: Users },
+  { name: 'Regulatory Roadmap', href: '/regulatory', icon: AlertTriangle },
   { name: 'Documents', href: '/documents', icon: FileText },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]

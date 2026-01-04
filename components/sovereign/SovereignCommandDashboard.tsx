@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { seedSovereignEstate, type SovereignEstate } from '@/lib/data/sovereign-seed'
 import { calculateGlobalCashFlow, DEFAULT_CASH_FLOW_INPUTS } from '@/lib/logic/cash-flow'
+import { calculateIHTExposure } from '@/lib/logic/iht-calculator'
 import { useWembleyEvents } from '@/lib/hooks/useWembleyEvents'
 import { formatGBP } from '@/lib/utils'
 import KPIRibbon from '@/components/dashboard/KPIRibbon'
@@ -64,12 +65,30 @@ export default function SovereignCommandDashboard() {
   const ltv = (estate.totalDebt / estate.totalGrossValue) * 100
   const cashFlowYTD = cashFlow.monthlySovereignSalary * 12 // Projected annual
 
+  // Check for IHT exposure
+  const ihtExposure = calculateIHTExposure(estate.assets)
+
   return (
     <div className="min-h-screen bg-slate-50">
       <DashboardSidebar />
       <div className="ml-64">
         <DashboardHeader />
         <main className="p-6">
+          {/* IHT Alert */}
+          {ihtExposure.isExposed && (
+            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-semibold text-red-900">
+                  IHT Exposure Alert
+                </span>
+              </div>
+              <p className="text-sm text-red-700">
+                Personal assets exceed £2M threshold by {formatGBP(ihtExposure.excess)}.
+                Estimated tax at 20% effective rate: {formatGBP(ihtExposure.estimatedTax)}.
+              </p>
+            </div>
+          )}
+
           {/* KPI Ribbon */}
           <KPIRibbon aum={aum} nav={nav} ltv={ltv} cashFlowYTD={cashFlowYTD} />
 

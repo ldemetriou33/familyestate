@@ -4,7 +4,8 @@
  */
 
 export interface CashFlowInputs {
-  hotelLease: number // Monthly (£37.5k)
+  hotelLease: number // Monthly Triple Net Lease (£37.5k)
+  cafeRoyalRevenue: number // Monthly revenue (£9.33k = £112k/year)
   carParkNormal: number // Monthly normal revenue (£2k)
   carParkEvent: number // Monthly event revenue (varies)
   userPortfolioValue: number // USD ($1.2M)
@@ -14,6 +15,7 @@ export interface CashFlowInputs {
 export interface CashFlowOutputs {
   monthlyIncome: {
     hotelLease: number
+    cafeRoyal: number
     carPark: number
     userPortfolio: number
     total: number
@@ -22,6 +24,7 @@ export interface CashFlowOutputs {
   annualProjection: number
   breakdown: {
     hotel: number
+    cafeRoyal: number
     carPark: number
     userPortfolio: number
   }
@@ -33,8 +36,11 @@ export interface CashFlowOutputs {
 export function calculateGlobalCashFlow(
   inputs: CashFlowInputs
 ): CashFlowOutputs {
-  // Hotel lease (already monthly)
+  // Hotel Triple Net Lease (already monthly)
   const hotelLease = inputs.hotelLease
+
+  // Cafe Royal revenue (already monthly)
+  const cafeRoyal = inputs.cafeRoyalRevenue
 
   // Car park (normal + event)
   const carPark = inputs.carParkNormal + inputs.carParkEvent
@@ -44,11 +50,12 @@ export function calculateGlobalCashFlow(
   const annualYield = (userPortfolioGBP * inputs.userPortfolioYield) / 100
   const monthlyPortfolio = annualYield / 12
 
-  const totalMonthly = hotelLease + carPark + monthlyPortfolio
+  const totalMonthly = hotelLease + cafeRoyal + carPark + monthlyPortfolio
 
   return {
     monthlyIncome: {
       hotelLease,
+      cafeRoyal,
       carPark,
       userPortfolio: monthlyPortfolio,
       total: totalMonthly,
@@ -57,6 +64,7 @@ export function calculateGlobalCashFlow(
     annualProjection: totalMonthly * 12,
     breakdown: {
       hotel: hotelLease,
+      cafeRoyal,
       carPark,
       userPortfolio: monthlyPortfolio,
     },
@@ -67,7 +75,8 @@ export function calculateGlobalCashFlow(
  * Default cash flow inputs
  */
 export const DEFAULT_CASH_FLOW_INPUTS: CashFlowInputs = {
-  hotelLease: 37_500, // £37.5k/month = £450k/year
+  hotelLease: 37_500, // £37.5k/month = £450k/year (Triple Net Lease)
+  cafeRoyalRevenue: 9_333, // £9.33k/month = £112k/year (£72k flats + £40k cafe)
   carParkNormal: 2_000, // £2k/month normal
   carParkEvent: 0, // Varies based on events
   userPortfolioValue: 1_200_000, // $1.2M
