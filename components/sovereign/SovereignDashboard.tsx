@@ -39,6 +39,15 @@ export default function SovereignDashboard() {
     // Calculate consolidation cost
     const consolidationCost = calculateTotalConsolidationCost(estateData.assets)
     
+    // Update shadow equity (assuming 12 months elapsed)
+    let shadowEquity = estateData.shadow_equity
+    if (shadowEquity) {
+      shadowEquity = updateShadowEquity(shadowEquity, 12)
+    }
+    
+    // Build pruning assets
+    const pruningAssets = buildPruningAssets(estateData.assets)
+    
     setPortfolio({
       ...estateData,
       sovereign_equity: {
@@ -47,6 +56,8 @@ export default function SovereignDashboard() {
       },
       cash_flow: cashFlow,
       oakwood_decay: oakwoodDecay,
+      shadow_equity: shadowEquity,
+      pruning_assets: pruningAssets,
     })
     
     setLoading(false)
@@ -60,14 +71,46 @@ export default function SovereignDashboard() {
     )
   }
 
-  const { sovereign_equity, cash_flow, oakwood_decay } = portfolio
+  const { sovereign_equity, cash_flow, oakwood_decay, shadow_equity, pruning_assets } = portfolio
 
   return (
     <div className="space-y-8 p-8">
       {/* Header */}
-      <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Sovereign Ledger</h1>
-        <p className="text-slate-400">True Net Worth vs Gross Value</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-white mb-2">Sovereign Ledger</h1>
+          <p className="text-slate-400">True Net Worth vs Gross Value - Global Sovereign Orchestration</p>
+        </div>
+        <div className="flex gap-3">
+          <Link
+            href="/sovereign?tab=consolidation"
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm"
+          >
+            Consolidation Roadmap
+          </Link>
+          <Link
+            href="/sovereign?tab=pruning"
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-colors text-sm"
+          >
+            Pruning Module
+          </Link>
+        </div>
+      </div>
+
+      {/* Net Equity View - Priority Display */}
+      <div className="bg-gradient-to-r from-amber-500/20 to-purple-500/20 border border-amber-500/30 rounded-xl p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-slate-400 mb-2">Sovereign Net Equity</p>
+            <p className="text-5xl font-bold text-white mb-2">
+              {formatGBP(sovereign_equity.dad_share_equity)}
+            </p>
+            <p className="text-sm text-slate-300">
+              Dad&apos;s Share: {sovereign_equity.gross_equity > 0 ? (sovereign_equity.dad_share_equity / sovereign_equity.gross_equity * 100).toFixed(1) : 0}% of Gross Equity
+            </p>
+          </div>
+          <Shield className="w-16 h-16 text-amber-400" />
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -244,6 +287,112 @@ export default function SovereignDashboard() {
                 <strong>Strategy:</strong> Sell Mymms Drive to clear Oakwood debt and stop the wealth leak.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vault Tracker */}
+      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+        <h2 className="text-xl font-bold text-white mb-4">The Vault Tracker</h2>
+        <p className="text-slate-400 mb-4">Assets moved into DIFC Foundation (Succession status)</p>
+        <div className="space-y-2">
+          {portfolio.assets.filter((a) => a.ownership.vaulted_to_difc).length > 0 ? (
+            portfolio.assets
+              .filter((a) => a.ownership.vaulted_to_difc)
+              .map((asset) => (
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between p-3 bg-slate-700 rounded-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <Shield className="w-5 h-5 text-amber-400" />
+                    <span className="text-white font-medium">{asset.name}</span>
+                  </div>
+                  <span className="text-sm text-slate-400">DIFC Foundation</span>
+                </div>
+              ))
+          ) : (
+            <p className="text-slate-400 text-sm">No assets vaulted to DIFC Foundation yet.</p>
+          )}
+        </div>
+      </div>
+
+      {/* Shadow Equity Tracker */}
+      {shadow_equity && (
+        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4">Debt-to-Equity Shadow Tracking</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-slate-400 mb-1">Loan Amount</p>
+              <p className="text-lg font-semibold text-white">
+                ${shadow_equity.loan_amount.toLocaleString()}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 mb-1">Interest Rate</p>
+              <p className="text-lg font-semibold text-white">
+                {shadow_equity.interest_rate}%
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 mb-1">Monthly Accrual</p>
+              <p className="text-lg font-semibold text-green-400">
+                ${shadow_equity.monthly_interest_accrual.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-slate-400 mb-1">Total Shadow Equity</p>
+              <p className="text-lg font-semibold text-amber-400">
+                ${shadow_equity.current_shadow_equity.toFixed(2)}
+              </p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-400 mt-4">
+            Target Entity: {shadow_equity.target_entity} | Capitalization:{' '}
+            {shadow_equity.capitalization_frequency}
+          </p>
+        </div>
+      )}
+
+      {/* Pruning Assets Summary */}
+      {pruning_assets && pruning_assets.length > 0 && (
+        <div className="bg-slate-800 border border-red-500/30 rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-white">Pruning Module</h2>
+            <Link
+              href="/sovereign?tab=pruning"
+              className="text-sm text-amber-400 hover:text-amber-300"
+            >
+              View All →
+            </Link>
+          </div>
+          <p className="text-slate-400 mb-4">
+            {pruning_assets.length} asset{pruning_assets.length !== 1 ? 's' : ''} for sale
+          </p>
+          <div className="space-y-2">
+            {pruning_assets.slice(0, 2).map((asset) => (
+              <div
+                key={asset.asset_id}
+                className="flex items-center justify-between p-3 bg-slate-700 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <TrendingDown className="w-5 h-5 text-red-400" />
+                  <span className="text-white font-medium">{asset.asset_name}</span>
+                  <span
+                    className={`px-2 py-1 text-xs rounded ${
+                      asset.urgency === 'CRITICAL'
+                        ? 'bg-red-500/20 text-red-400'
+                        : asset.urgency === 'HIGH'
+                          ? 'bg-orange-500/20 text-orange-400'
+                          : 'bg-yellow-500/20 text-yellow-400'
+                    }`}
+                  >
+                    {asset.urgency}
+                  </span>
+                </div>
+                <span className="text-sm text-slate-400">{asset.days_remaining} days remaining</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
