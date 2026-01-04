@@ -28,13 +28,21 @@ export default function SovereignCommandDashboard() {
     // Calculate cash flow
     const carParkAsset = estateData.assets.find((a) => a.id === 'wembley-car-park')
     const carParkNormal = DEFAULT_CASH_FLOW_INPUTS.carParkNormal
-    const carParkEvent = carParkAsset?.metadata.spaces
-      ? calculateMonthlyRevenue(
+    
+    // Calculate car park event revenue
+    let carParkEvent = 0
+    if (carParkAsset?.metadata.spaces && calculateMonthlyRevenue) {
+      try {
+        carParkEvent = calculateMonthlyRevenue(
           20, // Normal daily rate per space
           50, // Event rate per space
           carParkAsset.metadata.spaces
         )
-      : 0
+      } catch (error) {
+        console.error('Error calculating monthly revenue:', error)
+        carParkEvent = 0
+      }
+    }
 
     const flow = calculateGlobalCashFlow({
       ...DEFAULT_CASH_FLOW_INPUTS,

@@ -3,7 +3,7 @@
  * Mock API hook that toggles "Event Mode" pricing
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export interface WembleyEvent {
   id: string
