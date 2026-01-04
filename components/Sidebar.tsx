@@ -13,10 +13,13 @@ import {
   Settings,
   Link2,
   Brain,
-  Settings2
+  Settings2,
+  LogOut
 } from 'lucide-react'
 import Link from 'next/link'
-import { UserButton, useUser } from '@clerk/nextjs'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { LogOut } from 'lucide-react'
 
 export type Section = 'home' | 'hotel' | 'f&b' | 'portfolio' | 'finance' | 'legal-brain'
 
@@ -38,7 +41,35 @@ const menuItems = [
 ]
 
 export default function Sidebar({ activeSection, setActiveSection, criticalAlerts = 0, onClose, onOpenSettings }: SidebarProps) {
-  const { user, isLoaded } = useUser()
+  const [user, setUser] = useState<{ email?: string; name?: string; avatar?: string } | null>(null)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser()
+        if (authUser) {
+          setUser({
+            email: authUser.email,
+            name: authUser.user_metadata?.name || authUser.email?.split('@')[0],
+            avatar: authUser.user_metadata?.avatar_url,
+          })
+        }
+      } catch (error) {
+        console.error('Failed to load user:', error)
+      } finally {
+        setIsLoaded(true)
+      }
+    }
+
+    loadUser()
+  }, [supabase])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    window.location.href = '/'
+  }
 
   return (
     <aside className="w-72 h-full border-r border-[var(--border-primary)] bg-[var(--bg-secondary)] flex flex-col">
@@ -147,31 +178,36 @@ export default function Sidebar({ activeSection, setActiveSection, criticalAlert
         </div>
       </div>
 
-      {/* User Section with Clerk */}
+      {/* User Section */}
       <div className="p-4 border-t border-[var(--border-primary)]">
         {isLoaded && user ? (
           <div className="flex items-center gap-3 px-2">
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: 'w-10 h-10',
-                  userButtonPopoverCard: 'bg-[var(--bg-secondary)] border border-[var(--border-primary)]',
-                  userButtonPopoverActionButton: 'text-[var(--text-primary)] hover:bg-[var(--bg-hover)]',
-                  userButtonPopoverActionButtonText: 'text-[var(--text-primary)]',
-                  userButtonPopoverActionButtonIcon: 'text-[var(--text-muted)]',
-                  userButtonPopoverFooter: 'hidden',
-                },
-              }}
-            />
+            {user.avatar ? (
+              <img 
+                src={user.avatar} 
+                alt={user.name || 'User'} 
+                className="w-10 h-10 rounded-full"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-[var(--accent)]/20 flex items-center justify-center">
+                <User className="w-5 h-5 text-[var(--accent)]" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-[var(--text-primary)] truncate">
-                {user.firstName || user.emailAddresses[0]?.emailAddress?.split('@')[0] || 'User'}
+                {user.name || 'User'}
               </p>
               <p className="text-xs text-[var(--text-muted)] truncate">
-                {user.emailAddresses[0]?.emailAddress || 'Estate Manager'}
+                {user.email || 'Estate Manager'}
               </p>
             </div>
+            <button
+              onClick={handleSignOut}
+              className="p-2 hover:bg-[var(--bg-hover)] rounded-lg transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-4 h-4 text-[var(--text-muted)]" />
+            </button>
           </div>
         ) : (
           <div className="flex items-center gap-3 px-4 py-2">

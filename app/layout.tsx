@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { ClerkProvider } from '@clerk/nextjs'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { IntegrationsProvider } from '@/contexts/IntegrationsContext'
 import { ApprovalsProvider } from '@/contexts/ApprovalsContext'
@@ -19,24 +18,16 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: '#00d4ff',
-        },
-      }}
-    >
-      <html lang="en" data-theme="dark" suppressHydrationWarning>
-        <body className={`${inter.className} density-comfortable`}>
-          <ThemeProvider>
-            <IntegrationsProvider>
-              <ApprovalsProvider>
-                {children}
-              </ApprovalsProvider>
-            </IntegrationsProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en" data-theme="dark" suppressHydrationWarning>
+      <body className={`${inter.className} density-comfortable`}>
+        <ThemeProvider>
+          <IntegrationsProvider>
+            <ApprovalsProvider>
+              {children}
+            </ApprovalsProvider>
+          </IntegrationsProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   )
 }
