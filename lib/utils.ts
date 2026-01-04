@@ -25,6 +25,18 @@ export function formatGBPWithDecimals(amount: number): string {
 }
 
 /**
+ * Format a number as EUR currency
+ */
+export function formatEUR(amount: number): string {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount)
+}
+
+/**
  * Format a date in UK format (DD/MM/YYYY)
  */
 export function formatUKDate(date: Date): string {

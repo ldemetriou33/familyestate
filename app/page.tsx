@@ -1,9 +1,8 @@
-import Link from 'next/link'
-import { Building2, Shield, TrendingUp, Zap, ArrowRight, Hotel, UtensilsCrossed, Home } from 'lucide-react'
-import { createServerClient } from '@/lib/supabase/server'
-import { FloatingAdminButton } from '@/components/admin/FloatingAdminButton'
+'use client'
 
-// Mark as dynamic since we use cookies for Supabase
+import SovereignCommandDashboard from '@/components/sovereign/SovereignCommandDashboard'
+
+// Mark as dynamic since we use client-side hooks
 export const dynamic = 'force-dynamic'
 
 // Fetch data from Supabase (with fallback to seed data)
