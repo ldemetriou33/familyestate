@@ -159,6 +159,73 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
             </div>
           </div>
 
+          {/* Granular Ownership Splits */}
+          {(asset.owner_uncle_a_pct !== undefined || asset.owner_uncle_b_pct !== undefined || asset.legal_title || asset.beneficial_interest_pct !== undefined) && (
+            <div className="grid grid-cols-2 gap-4 border-t border-slate-200 pt-4">
+              {asset.owner_uncle_a_pct !== undefined && (
+                <div>
+                  <Label htmlFor="owner_uncle_a_pct">Uncle A Ownership (%)</Label>
+                  <Input
+                    id="owner_uncle_a_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={formData.owner_uncle_a_pct ?? ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, owner_uncle_a_pct: Number(e.target.value) })
+                    }
+                  />
+                </div>
+              )}
+              {asset.owner_uncle_b_pct !== undefined && (
+                <div>
+                  <Label htmlFor="owner_uncle_b_pct">Uncle B Ownership (%)</Label>
+                  <Input
+                    id="owner_uncle_b_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={formData.owner_uncle_b_pct ?? ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, owner_uncle_b_pct: Number(e.target.value) })
+                    }
+                  />
+                </div>
+              )}
+              {asset.legal_title && (
+                <div>
+                  <Label htmlFor="legal_title">Legal Title</Label>
+                  <Input
+                    id="legal_title"
+                    type="text"
+                    value={formData.legal_title ?? ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, legal_title: e.target.value })
+                    }
+                  />
+                </div>
+              )}
+              {asset.beneficial_interest_pct !== undefined && (
+                <div>
+                  <Label htmlFor="beneficial_interest_pct">Beneficial Interest (%)</Label>
+                  <Input
+                    id="beneficial_interest_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={formData.beneficial_interest_pct ?? ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, beneficial_interest_pct: Number(e.target.value) })
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Status & Tier */}
           <div className="grid grid-cols-2 gap-4">
             <div>
