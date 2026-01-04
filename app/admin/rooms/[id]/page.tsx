@@ -3,22 +3,41 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { ArrowLeft, Save, Loader2, Zap, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { updateUnit } from '@/app/actions/admin-actions'
+import { toast } from 'sonner'
+
+// Validation schema
+const unitSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, 'Room name is required'),
+  base_price: z.string().min(1, 'Base price is required'),
+  surge_price: z.string().optional(),
+  is_event_mode_active: z.boolean(),
+  amenities: z.array(z.string()),
+  capacity: z.string().min(1),
+  room_number: z.string().optional(),
+  description: z.string().optional(),
+  is_available: z.boolean(),
+  is_published: z.boolean(),
+})
+
+type UnitFormData = z.infer<typeof unitSchema>
 
 interface Room {
   id: string
   property_id: string
   name: string
   room_number: string | null
-  floor: number | null
   category: string
   base_price: number
   surge_price: number | null
   is_event_mode_active: boolean
   capacity: number
-  bed_type: string | null
-  square_meters: number | null
   description: string | null
   amenities: string[]
   is_available: boolean
@@ -37,23 +56,33 @@ export default function EditRoomPage() {
   const [room, setRoom] = useState<Room | null>(null)
   const [properties, setProperties] = useState<Array<{ id: string; name: string }>>([])
 
-  const [formData, setFormData] = useState({
-    propertyId: '',
-    name: '',
-    roomNumber: '',
-    floor: '',
-    category: 'Room',
-    basePrice: '',
-    isEventModeActive: false,
-    eventPremiumMultiplier: '1.5',
-    capacity: '2',
-    bedType: '',
-    squareMeters: '',
-    description: '',
-    amenities: [] as string[],
-    isAvailable: true,
-    isPublished: true,
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch,
+    setValue,
+  } = useForm<UnitFormData>({
+    resolver: zodResolver(unitSchema),
+    defaultValues: {
+      id: roomId,
+      name: '',
+      base_price: '',
+      surge_price: '',
+      is_event_mode_active: false,
+      amenities: [],
+      capacity: '2',
+      room_number: '',
+      description: '',
+      is_available: true,
+      is_published: true,
+    },
   })
+
+  const isEventModeActive = watch('is_event_mode_active')
+  const basePrice = watch('base_price')
+  const amenities = watch('amenities')
 
   useEffect(() => {
     const loadData = async () => {
@@ -80,29 +109,22 @@ export default function EditRoomPage() {
         setProperties(propsData || [])
 
         // Populate form
-        const multiplier = roomData.surge_price && roomData.base_price
-          ? (roomData.surge_price / roomData.base_price).toFixed(1)
-          : '1.5'
-
-        setFormData({
-          propertyId: roomData.property_id,
+        reset({
+          id: roomData.id,
           name: roomData.name,
-          roomNumber: roomData.room_number || '',
-          floor: roomData.floor?.toString() || '',
-          category: roomData.category,
-          basePrice: roomData.base_price.toString(),
-          isEventModeActive: roomData.is_event_mode_active,
-          eventPremiumMultiplier: multiplier,
-          capacity: roomData.capacity.toString(),
-          bedType: roomData.bed_type || '',
-          squareMeters: roomData.square_meters?.toString() || '',
-          description: roomData.description || '',
+          base_price: roomData.base_price.toString(),
+          surge_price: roomData.surge_price?.toString() || '',
+          is_event_mode_active: roomData.is_event_mode_active,
           amenities: roomData.amenities || [],
-          isAvailable: roomData.is_available,
-          isPublished: roomData.is_published,
+          capacity: roomData.capacity.toString(),
+          room_number: roomData.room_number || '',
+          description: roomData.description || '',
+          is_available: roomData.is_available,
+          is_published: roomData.is_published,
         })
       } catch (err: any) {
         setError(err.message || 'Failed to load room')
+        toast.error(err.message || 'Failed to load room')
       } finally {
         setLoading(false)
       }
@@ -111,45 +133,37 @@ export default function EditRoomPage() {
     if (roomId) {
       loadData()
     }
-  }, [roomId, supabase])
+  }, [roomId, supabase, reset])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const onSubmit = async (data: UnitFormData) => {
     setSaving(true)
     setError(null)
 
     try {
-      const basePrice = parseFloat(formData.basePrice)
-      const surgePrice = formData.isEventModeActive
-        ? basePrice * parseFloat(formData.eventPremiumMultiplier)
-        : null
+      const formData = new FormData()
+      
+      // Add all fields to FormData
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value))
+          } else if (typeof value === 'boolean') {
+            formData.append(key, value.toString())
+          } else {
+            formData.append(key, value.toString())
+          }
+        }
+      })
 
-      const { error: updateError } = await supabase
-        .from('units')
-        .update({
-          property_id: formData.propertyId,
-          name: formData.name,
-          room_number: formData.roomNumber || null,
-          floor: formData.floor ? parseInt(formData.floor) : null,
-          category: formData.category,
-          base_price: basePrice,
-          surge_price: surgePrice,
-          is_event_mode_active: formData.isEventModeActive,
-          capacity: parseInt(formData.capacity),
-          bed_type: formData.bedType || null,
-          square_meters: formData.squareMeters ? parseFloat(formData.squareMeters) : null,
-          description: formData.description || null,
-          amenities: formData.amenities,
-          is_available: formData.isAvailable,
-          is_published: formData.isPublished,
-        })
-        .eq('id', roomId)
-
-      if (updateError) throw updateError
-
+      await updateUnit(formData)
+      
+      toast.success('Room updated successfully!')
+      router.refresh()
       router.push('/admin/rooms')
     } catch (err: any) {
-      setError(err.message || 'Failed to update room')
+      const errorMessage = err.message || 'Failed to update room'
+      setError(errorMessage)
+      toast.error(errorMessage)
     } finally {
       setSaving(false)
     }
@@ -165,28 +179,19 @@ export default function EditRoomPage() {
         .eq('id', roomId)
 
       if (error) throw error
+      toast.success('Room deleted successfully!')
       router.push('/admin/rooms')
     } catch (err: any) {
-      setError(err.message || 'Failed to delete room')
+      toast.error(err.message || 'Failed to delete room')
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target
-    const checked = (e.target as HTMLInputElement).checked
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }))
-  }
-
   const toggleAmenity = (amenity: string) => {
-    setFormData(prev => ({
-      ...prev,
-      amenities: prev.amenities.includes(amenity)
-        ? prev.amenities.filter(a => a !== amenity)
-        : [...prev.amenities, amenity],
-    }))
+    const currentAmenities = amenities || []
+    const newAmenities = currentAmenities.includes(amenity)
+      ? currentAmenities.filter(a => a !== amenity)
+      : [...currentAmenities, amenity]
+    setValue('amenities', newAmenities)
   }
 
   const availableAmenities = [
@@ -194,8 +199,8 @@ export default function EditRoomPage() {
     'Kitchenette', 'Wembley Arch View', 'Parking', 'Gym Access'
   ]
 
-  const calculatedSurgePrice = formData.isEventModeActive && formData.basePrice
-    ? (parseFloat(formData.basePrice) * parseFloat(formData.eventPremiumMultiplier)).toFixed(2)
+  const calculatedSurgePrice = isEventModeActive && basePrice
+    ? (parseFloat(basePrice) * 1.5).toFixed(2)
     : null
 
   if (loading) {
@@ -243,7 +248,8 @@ export default function EditRoomPage() {
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <input type="hidden" {...register('id')} />
         {error && (
           <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400">
             {error}
@@ -256,56 +262,24 @@ export default function EditRoomPage() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Property *</label>
-              <select
-                name="propertyId"
-                value={formData.propertyId}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
-              >
-                {properties.map(prop => (
-                  <option key={prop.id} value={prop.id}>{prop.name}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
               <label className="block text-sm font-medium mb-2">Room Name *</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                required
+                {...register('name')}
                 className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
               />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-400">{errors.name.message}</p>
+              )}
             </div>
             
             <div>
               <label className="block text-sm font-medium mb-2">Room Number</label>
               <input
                 type="text"
-                name="roomNumber"
-                value={formData.roomNumber}
-                onChange={handleChange}
+                {...register('room_number')}
                 className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
               />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
-              >
-                <option value="Room">Room</option>
-                <option value="Suite">Suite</option>
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-              </select>
             </div>
           </div>
         </div>
@@ -319,24 +293,23 @@ export default function EditRoomPage() {
               <label className="block text-sm font-medium mb-2">Base Price (£) *</label>
               <input
                 type="number"
-                name="basePrice"
-                value={formData.basePrice}
-                onChange={handleChange}
-                required
                 step="0.01"
                 min="0"
+                {...register('base_price')}
                 className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
               />
+              {errors.base_price && (
+                <p className="mt-1 text-sm text-red-400">{errors.base_price.message}</p>
+              )}
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Bed Type</label>
+              <label className="block text-sm font-medium mb-2">Capacity</label>
               <input
-                type="text"
-                name="bedType"
-                value={formData.bedType}
-                onChange={handleChange}
-                placeholder="e.g., Super King, Double, Twin"
+                type="number"
+                min="1"
+                max="10"
+                {...register('capacity')}
                 className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
               />
             </div>
@@ -355,9 +328,7 @@ export default function EditRoomPage() {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  name="isEventModeActive"
-                  checked={formData.isEventModeActive}
-                  onChange={handleChange}
+                  {...register('is_event_mode_active')}
                   className="sr-only peer"
                 />
                 <div className="w-11 h-6 bg-slate-700 rounded-full peer peer-checked:bg-amber-500 transition-colors"></div>
@@ -365,21 +336,19 @@ export default function EditRoomPage() {
               </label>
             </div>
             
-            {formData.isEventModeActive && (
+            {isEventModeActive && (
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Surge Multiplier</label>
+                  <label className="block text-sm font-medium mb-2">Surge Price (£)</label>
                   <input
                     type="number"
-                    name="eventPremiumMultiplier"
-                    value={formData.eventPremiumMultiplier}
-                    onChange={handleChange}
-                    step="0.1"
-                    min="1"
-                    max="3"
+                    step="0.01"
+                    min="0"
+                    {...register('surge_price')}
+                    placeholder={calculatedSurgePrice || 'Auto-calculated'}
                     className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                   />
-                  <p className="text-xs text-slate-400 mt-1">1.5 = 50% increase</p>
+                  <p className="text-xs text-slate-400 mt-1">Leave empty for auto-calculation (1.5x base price)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Calculated Surge Price</label>
@@ -406,7 +375,7 @@ export default function EditRoomPage() {
               >
                 <input
                   type="checkbox"
-                  checked={formData.amenities.includes(amenity)}
+                  checked={amenities?.includes(amenity) || false}
                   onChange={() => toggleAmenity(amenity)}
                   className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500/50"
                 />
@@ -423,38 +392,10 @@ export default function EditRoomPage() {
           <div>
             <label className="block text-sm font-medium mb-2">Room Description</label>
             <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
               rows={5}
+              {...register('description')}
               className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500"
             />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Capacity</label>
-              <input
-                type="number"
-                name="capacity"
-                value={formData.capacity}
-                onChange={handleChange}
-                min="1"
-                max="10"
-                className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Square Meters</label>
-              <input
-                type="number"
-                name="squareMeters"
-                value={formData.squareMeters}
-                onChange={handleChange}
-                step="0.1"
-                className="w-full px-4 py-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-              />
-            </div>
           </div>
         </div>
 
@@ -466,9 +407,7 @@ export default function EditRoomPage() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                name="isAvailable"
-                checked={formData.isAvailable}
-                onChange={handleChange}
+                {...register('is_available')}
                 className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500/50"
               />
               <span>Available for Booking</span>
@@ -477,9 +416,7 @@ export default function EditRoomPage() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                name="isPublished"
-                checked={formData.isPublished}
-                onChange={handleChange}
+                {...register('is_published')}
                 className="w-5 h-5 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500/50"
               />
               <span>Publish Immediately</span>
@@ -517,4 +454,3 @@ export default function EditRoomPage() {
     </div>
   )
 }
-
