@@ -18,14 +18,18 @@ function DashboardContent() {
   const { assets, updateAsset, totals, currency } = useEstateContext()
   const [view, setView] = useState<ViewType>('overview')
 
-  // IHT exposure check (simplified - just check personal assets)
-  const personalAssets = assets.filter((a) => a.entity === 'Personal')
-  const personalAssetsValue = personalAssets.reduce((sum, asset) => {
+  // IHT exposure check (2026 BPR threshold: £2.5M per individual)
+  // Calculate principal's business assets (excluding personal assets)
+  const businessAssets = assets.filter((a) => a.entity !== 'Personal')
+  const principalBusinessAssetsValue = businessAssets.reduce((sum, asset) => {
     const valueInGBP = asset.currency === 'GBP' ? asset.value : asset.value * 0.85
-    return sum + valueInGBP
+    const netValue = valueInGBP - (asset.currency === 'GBP' ? asset.debt : asset.debt * 0.85)
+    const principalEquity = (netValue * asset.owner_dad_pct) / 100
+    return sum + principalEquity
   }, 0)
-  const ihtExposure = personalAssetsValue > 2_000_000
-  const ihtExcess = Math.max(0, personalAssetsValue - 2_000_000)
+  const ihtThreshold = 2_500_000 // £2.5M BPR cap
+  const ihtExposure = principalBusinessAssetsValue > ihtThreshold
+  const ihtExcess = Math.max(0, principalBusinessAssetsValue - ihtThreshold)
   const ihtEstimatedTax = ihtExcess * 0.2
 
   // Calculate cash flow (simplified - project from assets)
@@ -66,15 +70,24 @@ function DashboardContent() {
       <div className="ml-64">
         <DashboardHeader />
         <main className="p-6">
-          {/* IHT Alert */}
-          {ihtExposure && (
+          {/* IHT Status */}
+          {ihtExposure ? (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm font-semibold text-red-900">IHT Exposure Alert</span>
               </div>
               <p className="text-sm text-red-700">
-                Personal assets exceed £2M threshold by {formatGBP(ihtExcess)}. Estimated tax at
-                20% effective rate: {formatGBP(ihtEstimatedTax)}.
+                Principal business assets exceed £2.5M BPR cap by {formatGBP(ihtExcess)}. Estimated
+                tax at 20% effective rate: {formatGBP(ihtEstimatedTax)}.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-semibold text-green-900">IHT Status: Safe (Within Cap)</span>
+              </div>
+              <p className="text-sm text-green-700">
+                Principal business assets: {formatGBP(principalBusinessAssetsValue)} / {formatGBP(ihtThreshold)} BPR cap.
               </p>
             </div>
           )}

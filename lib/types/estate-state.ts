@@ -13,6 +13,10 @@ export interface EstateAsset {
   debt: number
   owner_dad_pct: number // Percentage (0-100)
   owner_uncle_pct: number // Percentage (0-100)
+  owner_uncle_a_pct?: number // Percentage (0-100) - Specific Uncle A split
+  owner_uncle_b_pct?: number // Percentage (0-100) - Specific Uncle B split
+  legal_title?: string // Legal title holder (e.g., "Grandma" for Oakwood Close)
+  beneficial_interest_pct?: number // Beneficial interest percentage (for beneficial interest calculations)
   status: AssetStatus
   tier: AssetTier
   currency: Currency

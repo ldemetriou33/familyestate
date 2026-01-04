@@ -46,6 +46,10 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
         debt: asset.debt,
         owner_dad_pct: asset.owner_dad_pct,
         owner_uncle_pct: asset.owner_uncle_pct,
+        owner_uncle_a_pct: asset.owner_uncle_a_pct,
+        owner_uncle_b_pct: asset.owner_uncle_b_pct,
+        legal_title: asset.legal_title,
+        beneficial_interest_pct: asset.beneficial_interest_pct,
         status: asset.status,
         tier: asset.tier,
       })

@@ -7,6 +7,7 @@ import {
   Users,
   AlertTriangle,
 } from 'lucide-react'
+import RegulatoryTimer from './RegulatoryTimer'
 
 const navigation = [
   { name: 'Overview', view: 'overview' as const, icon: LayoutDashboard },
@@ -55,6 +56,9 @@ export default function DashboardSidebar({ currentView = 'overview', onNavigate 
           )
         })}
       </nav>
+
+      {/* Regulatory Timers */}
+      <RegulatoryTimer />
     </div>
   )
 }

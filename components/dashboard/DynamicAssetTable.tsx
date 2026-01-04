@@ -5,6 +5,7 @@ import { Building2, Eye, Edit } from 'lucide-react'
 import type { EstateAsset } from '@/lib/types/estate-state'
 import { formatGBP, formatEUR } from '@/lib/utils'
 import EditAssetModal from './EditAssetModal'
+import OwnershipTooltip from './OwnershipTooltip'
 
 interface DynamicAssetTableProps {
   assets: EstateAsset[]
@@ -123,19 +124,21 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <span className="text-xs text-slate-600">
-                          Principal: <span className="font-medium">{asset.owner_dad_pct}%</span>
-                        </span>
-                        {asset.owner_uncle_pct > 0 && (
-                          <>
-                            <span className="text-slate-300">|</span>
-                            <span className="text-xs text-slate-600">
-                              Minority: <span className="font-medium">{asset.owner_uncle_pct}%</span>
-                            </span>
-                          </>
-                        )}
-                      </div>
+                      <OwnershipTooltip asset={asset}>
+                        <div className="flex items-center justify-center gap-2 cursor-help">
+                          <span className="text-xs text-slate-600">
+                            Principal: <span className="font-medium">{asset.owner_dad_pct}%</span>
+                          </span>
+                          {asset.owner_uncle_pct > 0 && (
+                            <>
+                              <span className="text-slate-300">|</span>
+                              <span className="text-xs text-slate-600">
+                                Minority: <span className="font-medium">{asset.owner_uncle_pct}%</span>
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </OwnershipTooltip>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(asset.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
