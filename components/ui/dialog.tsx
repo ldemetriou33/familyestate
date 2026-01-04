@@ -15,11 +15,22 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
+  React.useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
   if (!open) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={() => onOpenChange(false)}
     >
       <div className="fixed inset-0 bg-black/50" />
@@ -34,7 +45,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
       <div
         ref={ref}
         className={cn(
-          'relative z-50 bg-white rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-hidden',
+          'relative z-50 bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto',
           className
         )}
         {...props}
@@ -75,4 +86,3 @@ const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 )
 
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter }
-

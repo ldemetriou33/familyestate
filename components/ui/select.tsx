@@ -68,13 +68,26 @@ const SelectContent = React.forwardRef<
   const context = React.useContext(SelectContext)
   if (!context) throw new Error('SelectContent must be used within Select')
 
+  React.useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (context.open && !target.closest('.select-content') && !target.closest('[data-select-trigger]')) {
+        context.setOpen(false)
+      }
+    }
+    if (context.open) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [context])
+
   if (!context.open) return null
 
   return (
     <div
       ref={ref}
       className={cn(
-        'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white shadow-md',
+        'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-200 bg-white shadow-md select-content',
         className
       )}
       {...props}
@@ -113,4 +126,3 @@ const SelectItem = React.forwardRef<
 SelectItem.displayName = 'SelectItem'
 
 export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem }
-

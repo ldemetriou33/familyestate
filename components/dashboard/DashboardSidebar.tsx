@@ -1,20 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard,
   Building2,
   DollarSign,
   Users,
-  FileText,
-  Settings,
   AlertTriangle,
-  ChevronDown,
-  Plus,
 } from 'lucide-react'
-import type { Family } from '@/lib/types/saas'
 
 const navigation = [
   { name: 'Overview', view: 'overview' as const, icon: LayoutDashboard },
@@ -30,14 +22,12 @@ interface DashboardSidebarProps {
 }
 
 export default function DashboardSidebar({ currentView = 'overview', onNavigate }: DashboardSidebarProps) {
-
   return (
     <div className="w-64 bg-white border-r border-slate-200 h-screen fixed left-0 top-0 overflow-y-auto flex flex-col">
       <div className="p-6 border-b border-slate-200">
         <h1 className="text-xl font-bold text-slate-900">Abbey OS</h1>
         <p className="text-xs text-slate-500 mt-1">Asset Management</p>
       </div>
-
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-1">
@@ -68,5 +58,3 @@ export default function DashboardSidebar({ currentView = 'overview', onNavigate 
     </div>
   )
 }
-
-
