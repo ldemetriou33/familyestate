@@ -40,6 +40,8 @@ END $$;
 
 -- Fix properties table
 DO $$ 
+DECLARE
+    fk_constraint RECORD;
 BEGIN
     -- First, ensure properties table has an id column (primary key) and it's UUID type
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
@@ -59,28 +61,45 @@ BEGIN
             WHERE table_name='properties' AND column_name='id' AND data_type != 'uuid'
         ) THEN
             -- id exists but is wrong type (TEXT), convert to UUID
-            -- Step 1: Drop primary key if it exists
+            -- Step 1: Drop all foreign key constraints that reference properties.id
+            FOR fk_constraint IN 
+                SELECT constraint_name, table_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu 
+                    ON tc.constraint_name = kcu.constraint_name
+                WHERE tc.constraint_type = 'FOREIGN KEY'
+                    AND kcu.referenced_table_name = 'properties'
+                    AND kcu.referenced_column_name = 'id'
+            LOOP
+                EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', 
+                    fk_constraint.table_name, fk_constraint.constraint_name);
+            END LOOP;
+            
+            -- Step 2: Drop primary key if it exists
             IF EXISTS (
                 SELECT 1 FROM information_schema.table_constraints 
                 WHERE table_name='properties' AND constraint_type='PRIMARY KEY'
             ) THEN
-                ALTER TABLE properties DROP CONSTRAINT properties_pkey;
+                ALTER TABLE properties DROP CONSTRAINT properties_pkey CASCADE;
             END IF;
             
-            -- Step 2: Create new UUID column
+            -- Step 3: Create new UUID column
             ALTER TABLE properties ADD COLUMN id_new UUID DEFAULT uuid_generate_v4();
             
-            -- Step 3: Generate UUIDs for existing rows
+            -- Step 4: Generate UUIDs for existing rows
             UPDATE properties SET id_new = uuid_generate_v4() WHERE id_new IS NULL;
             
-            -- Step 4: Drop old TEXT id column
+            -- Step 5: Drop old TEXT id column
             ALTER TABLE properties DROP COLUMN id;
             
-            -- Step 5: Rename new column to id
+            -- Step 6: Rename new column to id
             ALTER TABLE properties RENAME COLUMN id_new TO id;
             
-            -- Step 6: Make it primary key
+            -- Step 7: Make it primary key
             ALTER TABLE properties ADD PRIMARY KEY (id);
+            
+            -- Note: Foreign keys will need to be re-added by their respective migrations
+            -- For now, we'll just ensure units.property_id foreign key is added below
         END IF;
     END IF;
     
