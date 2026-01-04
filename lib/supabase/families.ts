@@ -2,14 +2,14 @@
  * Family/Estate Management for Multi-Tenant SaaS
  */
 
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@/lib/supabase/server'
 import type { Family, FamilyUser, EstatePortfolio } from '@/lib/types/saas'
 
 /**
  * Get all families for the current user
  */
 export async function getUserFamilies(): Promise<Family[]> {
-  const supabase = await createClient()
+  const supabase = await createServerClient()
   
   const { data, error } = await supabase
     .from('family_users')
