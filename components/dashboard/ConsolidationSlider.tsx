@@ -20,12 +20,17 @@ export default function ConsolidationSlider({
   onCashInjectionChange,
 }: ConsolidationSliderProps) {
   const [cashInjection, setCashInjection] = useState(initialCashInjection)
+  const [scenario, setScenario] = useState<any>(null)
+
+  // Sync with parent when initialCashInjection changes
+  useEffect(() => {
+    setCashInjection(initialCashInjection)
+  }, [initialCashInjection])
 
   const handleSliderChange = (value: number) => {
     setCashInjection(value)
     onCashInjectionChange?.(value)
   }
-  const [scenario, setScenario] = useState<any>(null)
 
   useEffect(() => {
     const newScenario = runConsolidationScenario(assets, cashInjection)
