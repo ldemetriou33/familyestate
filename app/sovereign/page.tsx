@@ -9,6 +9,9 @@ import ConsolidationRoadmapView from '@/components/sovereign/ConsolidationRoadma
 import PruningModule from '@/components/sovereign/PruningModule'
 import EngineModule from '@/components/sovereign/EngineModule'
 
+// Mark as dynamic since we use useSearchParams
+export const dynamic = 'force-dynamic'
+
 function SovereignTabs() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
