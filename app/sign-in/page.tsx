@@ -99,7 +99,7 @@ export default function SignInPage() {
           </form>
 
           <p className="mt-6 text-sm text-slate-400 text-center">
-            We'll send you a secure link to sign in without a password
+            We&apos;ll send you a secure link to sign in without a password
           </p>
         </div>
       </div>
