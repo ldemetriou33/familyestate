@@ -32,6 +32,7 @@ interface AdminUser {
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/sovereign', label: 'Sovereign Ledger', icon: Brain },
   { href: '/admin/properties', label: 'Properties', icon: Building2 },
   { href: '/admin/rooms', label: 'Room Inventory', icon: BedDouble },
   { href: '/admin/cafe', label: 'Cafe Menu', icon: UtensilsCrossed },

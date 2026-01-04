@@ -83,6 +83,7 @@ export interface EventModeConfig {
   event_daily_rate: number // e.g., £50
   normal_daily_rate: number // e.g., £10
   event_dates: string[] // ISO dates
+  spaces?: number // Number of parking spaces
   projected_monthly_yield?: number
 }
 

@@ -296,6 +296,7 @@ export function seedEstateData(): EstatePortfolio {
       event_daily_rate: 50, // £50
       normal_daily_rate: 10, // £10
       event_dates: [], // Will be populated from API
+      spaces: 15,
       projected_monthly_yield: 0, // Will be calculated
     },
   ]
