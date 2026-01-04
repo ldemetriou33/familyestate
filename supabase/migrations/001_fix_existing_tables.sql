@@ -41,16 +41,46 @@ END $$;
 -- Fix properties table
 DO $$ 
 BEGIN
-    -- First, ensure properties table has an id column (primary key)
+    -- First, ensure properties table has an id column (primary key) and it's UUID type
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id') THEN
         -- Add id column if it doesn't exist
-        ALTER TABLE properties ADD COLUMN id UUID PRIMARY KEY DEFAULT uuid_generate_v4();
+        ALTER TABLE properties ADD COLUMN id UUID DEFAULT uuid_generate_v4();
+        -- Make it primary key if there isn't one
+        IF NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints 
+            WHERE table_name='properties' AND constraint_type='PRIMARY KEY'
+        ) THEN
+            ALTER TABLE properties ADD PRIMARY KEY (id);
+        END IF;
     ELSE
-        -- If id exists but isn't UUID, we might need to handle it differently
-        -- For now, just ensure it's the right type
-        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='properties' AND column_name='id' AND data_type != 'uuid') THEN
-            -- If id exists but is wrong type, we can't easily fix it - skip for now
-            RAISE NOTICE 'id column exists but is not UUID type';
+        -- id exists, check if it's UUID type
+        IF EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name='properties' AND column_name='id' AND data_type != 'uuid'
+        ) THEN
+            -- id exists but is wrong type (TEXT), convert to UUID
+            -- Step 1: Drop primary key if it exists
+            IF EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE table_name='properties' AND constraint_type='PRIMARY KEY'
+            ) THEN
+                ALTER TABLE properties DROP CONSTRAINT properties_pkey;
+            END IF;
+            
+            -- Step 2: Create new UUID column
+            ALTER TABLE properties ADD COLUMN id_new UUID DEFAULT uuid_generate_v4();
+            
+            -- Step 3: Generate UUIDs for existing rows
+            UPDATE properties SET id_new = uuid_generate_v4() WHERE id_new IS NULL;
+            
+            -- Step 4: Drop old TEXT id column
+            ALTER TABLE properties DROP COLUMN id;
+            
+            -- Step 5: Rename new column to id
+            ALTER TABLE properties RENAME COLUMN id_new TO id;
+            
+            -- Step 6: Make it primary key
+            ALTER TABLE properties ADD PRIMARY KEY (id);
         END IF;
     END IF;
     
