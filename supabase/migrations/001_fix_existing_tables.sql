@@ -62,20 +62,20 @@ BEGIN
         ) THEN
             -- id exists but is wrong type (TEXT), convert to UUID
             -- Step 1: Drop all foreign key constraints that reference properties.id
+            -- Using pg_constraint for more reliable foreign key detection
             FOR fk_constraint IN 
-                SELECT constraint_name, table_name
-                FROM information_schema.table_constraints tc
-                JOIN information_schema.key_column_usage kcu 
-                    ON tc.constraint_name = kcu.constraint_name
-                WHERE tc.constraint_type = 'FOREIGN KEY'
-                    AND kcu.referenced_table_name = 'properties'
-                    AND kcu.referenced_column_name = 'id'
+                SELECT 
+                    conrelid::regclass::text AS table_name,
+                    conname AS constraint_name
+                FROM pg_constraint
+                WHERE confrelid = 'properties'::regclass
+                    AND contype = 'f'
             LOOP
                 EXECUTE format('ALTER TABLE %I DROP CONSTRAINT IF EXISTS %I', 
                     fk_constraint.table_name, fk_constraint.constraint_name);
             END LOOP;
             
-            -- Step 2: Drop primary key if it exists
+            -- Step 2: Drop primary key if it exists (CASCADE will drop dependent objects)
             IF EXISTS (
                 SELECT 1 FROM information_schema.table_constraints 
                 WHERE table_name='properties' AND constraint_type='PRIMARY KEY'
