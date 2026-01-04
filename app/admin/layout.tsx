@@ -18,7 +18,8 @@ import {
   Megaphone,
   Home,
   UtensilsCrossed,
-  Database
+  Database,
+  DollarSign
 } from 'lucide-react'
 
 interface AdminUser {
@@ -34,6 +35,7 @@ const navItems = [
   { href: '/admin/properties', label: 'Properties', icon: Building2 },
   { href: '/admin/rooms', label: 'Room Inventory', icon: BedDouble },
   { href: '/admin/cafe', label: 'Cafe Menu', icon: UtensilsCrossed },
+  { href: '/admin/finance', label: 'Finance & Debt', icon: DollarSign },
   { href: '/admin/content', label: 'Site Content', icon: FileText },
   { href: '/admin/media', label: 'Media Library', icon: Image },
   { href: '/admin/operational', label: 'Operational Data', icon: Database },
