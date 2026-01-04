@@ -15,9 +15,10 @@ export function calculateEventModeYield(
   const daysInMonth = 30 // Simplified
   const normalDays = daysInMonth - eventDates.length
   const eventDays = eventDates.length
+  const spaces = config.spaces || 15
 
-  const normalRevenue = normalDays * config.normal_daily_rate * config.spaces || 15
-  const eventRevenue = eventDays * config.event_daily_rate * (config.spaces || 15)
+  const normalRevenue = normalDays * config.normal_daily_rate * spaces
+  const eventRevenue = eventDays * config.event_daily_rate * spaces
 
   return normalRevenue + eventRevenue
 }
@@ -29,13 +30,13 @@ export function calculateAnnualEventModeYield(
   config: EventModeConfig,
   eventDatesPerMonth: number = 2 // Average
 ): number {
-  const monthlyYield = calculateEventModeYield(config, [])
   // Rough estimate: 2 event days per month
   const eventDaysPerMonth = eventDatesPerMonth
   const normalDaysPerMonth = 30 - eventDaysPerMonth
+  const spaces = config.spaces || 15
 
-  const normalRevenue = normalDaysPerMonth * config.normal_daily_rate * (config.spaces || 15)
-  const eventRevenue = eventDaysPerMonth * config.event_daily_rate * (config.spaces || 15)
+  const normalRevenue = normalDaysPerMonth * config.normal_daily_rate * spaces
+  const eventRevenue = eventDaysPerMonth * config.event_daily_rate * spaces
 
   return (normalRevenue + eventRevenue) * 12
 }
