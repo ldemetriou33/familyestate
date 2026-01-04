@@ -118,7 +118,7 @@ function DashboardContent() {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold text-slate-900 mb-4">Regulatory Timeline</h2>
                 <div className="bg-white border border-slate-200 rounded-lg p-6">
-                  <RegulatoryTimer compact={false} />
+                  <RegulatoryTimer />
                 </div>
               </div>
             </>
