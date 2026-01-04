@@ -33,11 +33,18 @@ export default function SovereignCommandDashboard() {
     // Calculate car park event revenue
     let carParkEvent = 0
     if (carParkAsset?.metadata.spaces && calculateMonthlyRevenue) {
-      carParkEvent = calculateMonthlyRevenue(
-        20, // Normal daily rate per space
-        50, // Event rate per space
-        carParkAsset.metadata.spaces
-      )
+      try {
+        carParkEvent = calculateMonthlyRevenue(
+          20, // Normal daily rate per space
+          50, // Event rate per space
+          carParkAsset.metadata.spaces
+        )
+      } catch (error) {
+        console.error('Error calculating monthly revenue:', error)
+        carParkEvent = carParkNormal // Fallback
+      }
+    } else {
+      carParkEvent = carParkNormal // Fallback
     }
 
     const flow = calculateGlobalCashFlow({
@@ -131,7 +138,7 @@ export default function SovereignCommandDashboard() {
           transition={{ delay: 0.2 }}
           className="lg:col-span-7 bg-zinc-900 rounded-xl border border-zinc-800 p-6"
         >
-          {estate && (
+          {estate && estate.assets.length > 0 && (
             <ConsolidationSlider
               assets={estate.assets}
               initialCashInjection={cashInjection}

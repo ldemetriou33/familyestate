@@ -34,10 +34,12 @@ export default function ConsolidationSlider({
   }
 
   useEffect(() => {
+    if (assets.length === 0) return
     const newScenario = runConsolidationScenario(assets, cashInjection)
     setScenario(newScenario)
     onScenarioChange(newScenario)
-  }, [cashInjection, assets, onScenarioChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cashInjection, assets])
 
   if (!scenario) return null
 
