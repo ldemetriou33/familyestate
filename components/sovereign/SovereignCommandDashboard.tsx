@@ -41,7 +41,7 @@ export default function SovereignCommandDashboard() {
       carParkEvent: carParkEvent - carParkNormal, // Additional event revenue
     })
     setCashFlow(flow)
-  }, [cashInjection, calculateMonthlyRevenue]), [cashInjection, calculateMonthlyRevenue])
+  }, [cashInjection, calculateMonthlyRevenue])
 
   if (!estate || !consolidationScenario || !cashFlow) {
     return (
