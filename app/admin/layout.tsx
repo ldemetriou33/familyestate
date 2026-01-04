@@ -188,6 +188,7 @@ export default function AdminLayout({
           {children}
         </main>
       </div>
+      <Toaster position="top-right" richColors />
     </div>
   )
 }
