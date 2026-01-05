@@ -30,15 +30,13 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     name: 'Mymms Drive',
     value: 1_475_000, // Purchase Price -> Target Resale: £2,000,000
     debt: 1_070_000, // Bridge/Dev Loan
-    owner_dad_pct: 33.3,
-    owner_uncle_pct: 66.7,
-    owner_uncle_a_pct: 33.3,
-    owner_uncle_b_pct: 33.3,
+    owner_dad_pct: 100,
+    owner_uncle_pct: 0,
     status: 'Renovation',
     tier: 'Value-Add',
     currency: 'GBP',
     location: 'UK',
-    entity: 'MAD Ltd',
+    entity: 'Personal (Dad)',
     bought_date: 'Oct 2024',
     notes: 'Stamp Duty £125k. Reno Budget £200k (£100k spent so far)',
   },
@@ -125,6 +123,21 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     entity: 'Grandma',
     notes: 'Wealth Decay (Accruing Interest). Sold on death to break even -> Priority for refinancing',
     metadata: { note: 'Subject to Loan' },
+  },
+
+  // E. Additional Personal Assets
+  {
+    id: 'wembley-car-park',
+    name: 'Wembley Car Park',
+    value: 450_000,
+    debt: 0,
+    owner_dad_pct: 100,
+    owner_uncle_pct: 0,
+    status: 'OPERATIONAL',
+    tier: 'Core',
+    currency: 'GBP',
+    location: 'Wembley, UK',
+    entity: 'Personal (Dad)',
   },
 ]
 

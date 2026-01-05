@@ -34,8 +34,8 @@ function DashboardContent() {
   const ihtExcess = Math.max(0, principalBusinessAssetsValue - ihtThreshold)
   const ihtEstimatedTax = ihtExcess * 0.2
 
-  // Calculate cash flow (simplified - project from assets)
-  const cashFlowYTD = totals.principalEquity * 0.05 // 5% yield estimate
+  // Calculate cash flow using actual monthly payments and turnover
+  const cashFlowYTD = totals.cashFlow.monthlyFreeCashFlow * 12 // Annual free cash flow
 
   const handleNavigate = (viewName: ViewType) => {
     setView(viewName)
