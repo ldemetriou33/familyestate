@@ -53,7 +53,7 @@ export default function DashboardSidebar({ currentView = 'overview', onNavigate,
         className={`
           w-64 bg-white border-r border-slate-200 h-screen fixed left-0 top-0 overflow-y-auto flex flex-col z-50
           transform transition-transform duration-300 ease-in-out
-          lg:translate-x-0 lg:relative lg:z-auto
+          lg:translate-x-0 lg:relative lg:z-auto lg:flex-shrink-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
