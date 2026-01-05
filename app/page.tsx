@@ -113,7 +113,7 @@ function DashboardContent() {
                   debt={totals.totalDebt}
                   totalValue={totals.totalGrossValue}
                 />
-                <DebtMaturitySchedule assets={legacyAssets as any} />
+                <DebtMaturitySchedule assets={assets} />
               </div>
 
               {/* Regulatory/Tax Timers */}
