@@ -209,15 +209,28 @@ export const seedLiabilities: Liability[] = [
     created_at: new Date().toISOString()
   },
   
-  // Mymms Drive Debt
+  // Mymms Drive Debt - Bridge/Dev Loan
   {
-    id: 'liability-mymms',
+    id: 'liability-mymms-bridge',
     asset_id: ASSET_MYMMS_DRIVE,
     lender: 'Bridge/Dev Loan',
     amount: 1_070_000,
     rate: 5.5,
     maturity_date: '2026-12-31', // Short-term bridge loan
     type: 'Interest Only',
+    created_at: new Date().toISOString()
+  },
+  
+  // Mymms Drive - Secured Private Loan (Renovation Funding)
+  {
+    id: 'liability-mymms-private',
+    asset_id: ASSET_MYMMS_DRIVE,
+    lender: 'Secured Private Loan',
+    amount: 100_000,
+    rate: 10.0,
+    maturity_date: '2027-12-31',
+    type: 'Fixed',
+    monthly_payment: (100_000 * 0.10) / 12, // Simple interest calculation
     created_at: new Date().toISOString()
   },
   
