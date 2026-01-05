@@ -5,21 +5,21 @@ import {
   Building2,
   DollarSign,
   Users,
-  AlertTriangle,
+  FileText,
 } from 'lucide-react'
 import RegulatoryTimer from './RegulatoryTimer'
 
 const navigation = [
   { name: 'Overview', view: 'overview' as const, icon: LayoutDashboard },
-  { name: 'Assets', view: 'assets' as const, icon: Building2 },
+  { name: 'Entities', view: 'entities' as const, icon: Building2 },
   { name: 'Financials', view: 'financials' as const, icon: DollarSign },
   { name: 'Ownership', view: 'ownership' as const, icon: Users },
-  { name: 'Calculator', view: 'calculator' as const, icon: AlertTriangle },
+  { name: 'Documents', view: 'documents' as const, icon: FileText },
 ]
 
 interface DashboardSidebarProps {
-  currentView?: 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator'
-  onNavigate?: (view: 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator') => void
+  currentView?: 'overview' | 'entities' | 'assets' | 'financials' | 'ownership' | 'documents'
+  onNavigate?: (view: 'overview' | 'entities' | 'assets' | 'financials' | 'ownership' | 'documents') => void
 }
 
 export default function DashboardSidebar({ currentView = 'overview', onNavigate }: DashboardSidebarProps) {

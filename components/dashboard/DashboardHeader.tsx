@@ -24,6 +24,9 @@ export default function DashboardHeader() {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <span className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+          Role: Principal (Admin)
+        </span>
         <button className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
           <User className="w-4 h-4" />
           <span>Admin</span>
