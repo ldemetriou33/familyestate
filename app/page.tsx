@@ -20,7 +20,9 @@ function DashboardContent() {
 
   // IHT exposure check (2026 BPR threshold: £2.5M per individual)
   // Calculate principal's business assets (excluding personal assets)
-  const businessAssets = assets.filter((a) => a.entity !== 'Personal')
+  const businessAssets = assets.filter(
+    (a) => a.entity === 'MAD Ltd' || a.entity === 'Dem Bro Ltd'
+  )
   const principalBusinessAssetsValue = businessAssets.reduce((sum, asset) => {
     const valueInGBP = asset.currency === 'GBP' ? asset.value : asset.value * 0.85
     const netValue = valueInGBP - (asset.currency === 'GBP' ? asset.debt : asset.debt * 0.85)
