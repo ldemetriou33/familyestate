@@ -13,6 +13,51 @@ import OwnershipStructure from '@/components/dashboard/OwnershipStructure'
 import CapitalAllocationScenario from '@/components/dashboard/CapitalAllocationScenario'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import DashboardHeader from '@/components/dashboard/DashboardHeader'
+import type { EstateAsset } from '@/lib/types/estate-state'
+import type { SovereignAsset } from '@/lib/data/sovereign-seed'
+
+/**
+ * Convert SovereignAsset to EstateAsset format for DebtMaturitySchedule
+ */
+function convertSovereignToEstateAsset(asset: SovereignAsset): EstateAsset {
+  const debt = asset.debt?.principal || 0
+  const interestRate = asset.debt?.interestRate || 5.5
+  
+  // Map entity types
+  let entity: 'MAD Ltd' | 'Dem Bro Ltd' | 'Personal (Dad)' | 'Grandma' = 'Personal (Dad)'
+  if (asset.ownership.entity === 'MAD_LTD') entity = 'MAD Ltd'
+  else if (asset.ownership.entity === 'DEM_BRO_LTD') entity = 'Dem Bro Ltd'
+  else if (asset.ownership.entity === 'PERSONAL') entity = 'Personal (Dad)'
+  
+  // Map status
+  let status: 'Leased' | 'Renovation' | 'Strategic Hold' | 'For Sale' | 'OPERATIONAL' = 'OPERATIONAL'
+  if (asset.status === 'LEASED') status = 'Leased'
+  else if (asset.status === 'RENOVATION') status = 'Renovation'
+  else if (asset.status === 'STRATEGIC_HOLD') status = 'Strategic Hold'
+  else if (asset.status === 'PRUNE') status = 'For Sale'
+  
+  // Map tier
+  let tier: 'Core' | 'Value-Add' | 'Opportunistic' = 'Core'
+  if (asset.tier === 'S' || asset.tier === 'A') tier = 'Core'
+  else if (asset.tier === 'B') tier = 'Value-Add'
+  else tier = 'Opportunistic'
+  
+  return {
+    id: asset.id,
+    name: asset.name,
+    value: asset.valuation,
+    debt,
+    owner_dad_pct: asset.ownership.dad,
+    owner_uncle_pct: asset.ownership.uncles,
+    status,
+    tier,
+    currency: asset.currency,
+    location: asset.location === 'UK' ? `${asset.location}` : asset.location,
+    entity,
+    interest_rate: interestRate,
+    metadata: asset.metadata,
+  }
+}
 
 export default function SovereignCommandDashboard() {
   const [estate, setEstate] = useState<SovereignEstate | null>(null)
@@ -138,7 +183,7 @@ export default function SovereignCommandDashboard() {
 
           {/* Financial Summary */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <DebtMaturitySchedule assets={estate.assets} />
+            <DebtMaturitySchedule assets={estate.assets.map(convertSovereignToEstateAsset)} />
             <OwnershipStructure
               principalEquity={estate.dadEquity}
               minorityEquity={estate.unclesEquity}
