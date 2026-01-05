@@ -27,6 +27,7 @@ export interface EstateAsset {
   bought_date?: string // e.g., "Aug 2001"
   bought_price?: number
   monthly_payment?: number // For calculating accurate cash flow
+  interest_rate?: number // Specific interest rate (e.g., 5.5, 6.1, 3.3, 6.2)
   turnover?: number // Annual revenue
   notes?: string // History context
   metadata?: Record<string, unknown>

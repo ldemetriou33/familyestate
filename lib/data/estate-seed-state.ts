@@ -23,6 +23,7 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     bought_date: 'Aug 2001',
     bought_price: 365_000,
     turnover: 1_500_000, // Rooms £1.1M + Cafe rest
+    interest_rate: 5.5, // Fixed Interest Only
     notes: 'Spent £4M on Capex',
   },
   {
@@ -38,6 +39,7 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     location: 'UK',
     entity: 'Personal (Dad)',
     bought_date: 'Oct 2024',
+    interest_rate: 5.5, // Bridge/Dev Rate
     notes: 'Stamp Duty £125k. Reno Budget £200k (£100k spent so far)',
   },
 
@@ -55,6 +57,7 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     location: 'UK',
     entity: 'Dem Bro Ltd',
     turnover: 127_000, // £115k Flats + £12k Shop
+    interest_rate: 5.5, // Fixed
   },
   {
     id: 'cafe-royal',
@@ -69,6 +72,7 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     location: 'UK',
     entity: 'Dem Bro Ltd',
     turnover: 72_000, // £6k/mo from 6 studio flats
+    interest_rate: 5.5, // Fixed
     notes: 'Freehold/Cafe given to Brother. Dad owns 0% of downstairs cafe/freehold',
   },
 
@@ -87,7 +91,8 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     entity: 'Personal (Dad)',
     bought_date: 'March 1998',
     bought_price: 130_000,
-    monthly_payment: 2_800, // Implies ~6.1% Rate
+    monthly_payment: 2_800,
+    interest_rate: 6.1, // Higher Variable/Fixed
     turnover: 52_800, // £3,400/mo Flats + £12k/yr Shop
   },
   {
@@ -102,7 +107,8 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     currency: 'GBP',
     location: 'UK',
     entity: 'Personal (Dad)',
-    monthly_payment: 1_100, // Implies ~3.3% Rate - Cheap Money
+    monthly_payment: 1_100,
+    interest_rate: 3.3, // Cheap Legacy Rate
     turnover: 25_000,
   },
 
@@ -121,23 +127,26 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     currency: 'GBP',
     location: 'UK',
     entity: 'Grandma',
+    interest_rate: 6.2, // Compounding - No monthly payment; accrues to debt
     notes: 'Wealth Decay (Accruing Interest). Sold on death to break even -> Priority for refinancing',
     metadata: { note: 'Subject to Loan' },
   },
 
-  // E. Additional Personal Assets
+  // E. Additional Assets
   {
     id: 'wembley-car-park',
     name: 'Wembley Car Park',
     value: 450_000,
     debt: 0,
-    owner_dad_pct: 100,
-    owner_uncle_pct: 0,
+    owner_dad_pct: 33.3,
+    owner_uncle_pct: 66.7,
+    owner_uncle_a_pct: 33.3,
+    owner_uncle_b_pct: 33.3,
     status: 'OPERATIONAL',
     tier: 'Core',
     currency: 'GBP',
     location: 'Wembley, UK',
-    entity: 'Personal (Dad)',
+    entity: 'MAD Ltd',
   },
 ]
 

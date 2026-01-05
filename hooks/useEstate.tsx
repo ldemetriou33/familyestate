@@ -40,7 +40,7 @@ export function useEstate(initialData?: EstateAsset[]): EstateContextType {
 
     const ltv = totalGrossValue > 0 ? (totalDebt / totalGrossValue) * 100 : 0
 
-    // Calculate cash flow using actual monthly payments
+    // Calculate cash flow using actual monthly payments and specific interest rates
     let monthlyIncome = 0
     let monthlyDebtPayments = 0
 
@@ -50,15 +50,17 @@ export function useEstate(initialData?: EstateAsset[]): EstateContextType {
         monthlyIncome += asset.turnover / 12
       }
 
-      // Use actual monthly_payment if available, otherwise calculate from debt
+      // Use actual monthly_payment if available
       if (asset.monthly_payment) {
         monthlyDebtPayments += asset.monthly_payment
       } else if (asset.debt > 0) {
-        // For Hotel/Commercial assets, use 5.5% interest-only calculation
+        // Calculate from debt using specific interest rate
         const debtInGBP = convertToGBP(asset.debt, asset.currency)
-        const annualInterest = debtInGBP * 0.055 // 5.5% interest-only
+        const rate = asset.interest_rate || 5.5 // Default to 5.5% if not specified
+        const annualInterest = debtInGBP * (rate / 100)
         monthlyDebtPayments += annualInterest / 12
       }
+      // Note: Oakwood Close (6.2% compounding) has no monthly payment - interest accrues to debt
     }
 
     const monthlyFreeCashFlow = monthlyIncome - monthlyDebtPayments
