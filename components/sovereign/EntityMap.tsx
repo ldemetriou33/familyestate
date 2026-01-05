@@ -33,9 +33,9 @@ export default function EntityMap() {
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">Entity Map</h3>
-      <div className="space-y-3">
+    <div className="bg-white border border-slate-200 rounded-lg p-4 lg:p-6">
+      <h3 className="text-base lg:text-lg font-semibold text-slate-900 mb-3 lg:mb-4">Entity Map</h3>
+      <div className="space-y-2 lg:space-y-3">
         {entities.map((entity) => {
           const isExpanded = expandedEntities.has(entity.id)
           const assets = getAssetsByEntity(entity.id)
@@ -47,7 +47,7 @@ export default function EntityMap() {
               {/* Entity Header */}
               <button
                 onClick={() => toggleEntity(entity.id)}
-                className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between p-3 lg:p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors touch-manipulation"
               >
                 <div className="flex items-center gap-3">
                   {isExpanded ? (
@@ -71,9 +71,9 @@ export default function EntityMap() {
 
               {/* Entity Details (Expanded) */}
               {isExpanded && (
-                <div className="border-t border-slate-200 bg-slate-50 p-4">
+                <div className="border-t border-slate-200 bg-slate-50 p-3 lg:p-4">
                   {/* Entity Metrics */}
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div className="grid grid-cols-3 gap-2 lg:gap-4 mb-3 lg:mb-4">
                     <div>
                       <p className="text-xs text-slate-500 mb-1">Total Value</p>
                       <p className="text-sm font-semibold text-slate-900">{formatGBP(totals.totalValue)}</p>
@@ -113,7 +113,7 @@ export default function EntityMap() {
                       {assets.map((asset) => (
                         <div
                           key={asset.id}
-                          className="bg-white border border-slate-200 rounded p-3 flex items-center justify-between"
+                          className="bg-white border border-slate-200 rounded p-2.5 lg:p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2"
                         >
                           <div className="flex-1">
                             <p className="text-sm font-medium text-slate-900">{asset.name}</p>

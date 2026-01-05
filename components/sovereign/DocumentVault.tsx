@@ -49,21 +49,21 @@ export default function DocumentVault() {
   })
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900">Document Vault</h3>
-        <button className="flex items-center gap-2 px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+    <div className="bg-white border border-slate-200 rounded-lg p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3 lg:mb-4">
+        <h3 className="text-base lg:text-lg font-semibold text-slate-900">Document Vault</h3>
+        <button className="flex items-center gap-2 px-3 py-2 lg:py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation w-full sm:w-auto justify-center">
           <Upload className="w-4 h-4" />
           Upload
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-col sm:flex-row gap-2 mb-3 lg:mb-4">
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as any)}
-          className="text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="text-sm border border-slate-300 rounded px-3 py-2.5 lg:py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
         >
           <option value="All">All Types</option>
           <option value="Asset">Assets</option>
@@ -72,7 +72,7 @@ export default function DocumentVault() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as any)}
-          className="text-sm border border-slate-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="text-sm border border-slate-300 rounded px-3 py-2.5 lg:py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
         >
           <option value="All">All Status</option>
           <option value="Verified">Verified</option>

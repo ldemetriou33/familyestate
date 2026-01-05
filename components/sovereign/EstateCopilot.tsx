@@ -133,33 +133,33 @@ export default function EstateCopilot() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition-colors z-50"
+        className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 bg-blue-600 text-white rounded-full p-3 lg:p-4 shadow-lg hover:bg-blue-700 active:bg-blue-800 transition-colors z-50 touch-manipulation"
         aria-label="Open Estate Copilot"
       >
-        <MessageCircle className="w-6 h-6" />
+        <MessageCircle className="w-5 h-5 lg:w-6 lg:h-6" />
       </button>
     )
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white border border-slate-200 rounded-lg shadow-2xl flex flex-col z-50">
+    <div className="fixed inset-0 lg:inset-auto lg:bottom-6 lg:right-6 lg:w-96 lg:h-[600px] bg-white border border-slate-200 rounded-none lg:rounded-lg shadow-2xl flex flex-col z-50">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-blue-600 text-white rounded-t-lg">
+      <div className="flex items-center justify-between p-3 lg:p-4 border-b border-slate-200 bg-blue-600 text-white rounded-t-none lg:rounded-t-lg">
         <div className="flex items-center gap-2">
-          <Bot className="w-5 h-5" />
-          <span className="font-semibold">Ask Abbey</span>
+          <Bot className="w-4 h-4 lg:w-5 lg:h-5" />
+          <span className="text-sm lg:text-base font-semibold">Ask Abbey</span>
         </div>
         <button
           onClick={() => setIsOpen(false)}
-          className="hover:bg-blue-700 rounded p-1 transition-colors"
+          className="hover:bg-blue-700 active:bg-blue-800 rounded p-1.5 lg:p-1 transition-colors touch-manipulation"
           aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-5 h-5 lg:w-4 lg:h-4" />
         </button>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 lg:space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -180,7 +180,7 @@ export default function EstateCopilot() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-slate-200 p-4">
+      <div className="border-t border-slate-200 p-3 lg:p-4">
         <div className="flex gap-2">
           <input
             type="text"
@@ -188,14 +188,14 @@ export default function EstateCopilot() {
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about your estate..."
-            className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 border border-slate-300 rounded-lg px-3 py-2.5 lg:py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={handleSend}
-            className="bg-blue-600 text-white rounded-lg px-4 py-2 hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white rounded-lg px-3 lg:px-4 py-2.5 lg:py-2 hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation min-w-[44px]"
             aria-label="Send message"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 lg:w-4 lg:h-4" />
           </button>
         </div>
       </div>

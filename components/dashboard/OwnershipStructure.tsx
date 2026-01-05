@@ -43,9 +43,9 @@ export default function OwnershipStructure({
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">Equity Structure</h3>
-      <ResponsiveContainer width="100%" height={250}>
+    <div className="bg-white border border-slate-200 rounded-lg p-4 lg:p-6">
+      <h3 className="text-base lg:text-lg font-semibold text-slate-900 mb-3 lg:mb-4">Equity Structure</h3>
+      <ResponsiveContainer width="100%" height={200} className="lg:h-[250px]">
         <PieChart>
           <Pie
             data={data}
@@ -64,9 +64,9 @@ export default function OwnershipStructure({
           <Tooltip content={<CustomTooltip />} />
         </PieChart>
       </ResponsiveContainer>
-      <div className="mt-4 space-y-2">
+      <div className="mt-3 lg:mt-4 space-y-1.5 lg:space-y-2">
         {data.map((item, index) => (
-          <div key={index} className="flex items-center justify-between text-sm">
+          <div key={index} className="flex items-center justify-between text-xs lg:text-sm">
             <div className="flex items-center gap-2">
               <div
                 className="w-3 h-3 rounded"

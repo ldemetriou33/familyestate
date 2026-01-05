@@ -28,6 +28,7 @@ function DashboardContent() {
     initialize
   } = useSovereignStore()
   const [view, setView] = useState<ViewType>('overview')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Initialize store with seed data on mount
   useEffect(() => {
@@ -70,10 +71,15 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardSidebar onNavigate={handleNavigate} currentView={view} />
-      <div className="ml-64">
-        <DashboardHeader />
-        <main className="p-6">
+      <DashboardSidebar
+        onNavigate={handleNavigate}
+        currentView={view}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div className="lg:ml-64">
+        <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
+        <main className="p-4 lg:p-6">
           {/* IHT Alert */}
           {ihtExposure && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
@@ -114,16 +120,16 @@ function DashboardContent() {
 
           {view === 'entities' && (
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Entity Structure</h2>
+              <h2 className="text-lg lg:text-xl font-semibold text-slate-900 mb-3 lg:mb-4">Entity Structure</h2>
               <EntityMap />
             </div>
           )}
 
           {view === 'financials' && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-semibold text-slate-900">Financial Overview</h2>
+            <div className="space-y-4 lg:space-y-6">
+              <h2 className="text-lg lg:text-xl font-semibold text-slate-900">Financial Overview</h2>
               <DebtMaturityWall />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
                 <div className="bg-white border border-slate-200 rounded-lg p-4">
                   <p className="text-sm text-slate-500 mb-1">Monthly Income</p>
                   <p className="text-2xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome)}</p>
@@ -142,7 +148,7 @@ function DashboardContent() {
 
           {view === 'ownership' && (
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Ownership Structure</h2>
+              <h2 className="text-lg lg:text-xl font-semibold text-slate-900 mb-3 lg:mb-4">Ownership Structure</h2>
               <OwnershipStructure
                 principalEquity={principalEquity}
                 minorityEquity={minorityEquity}
@@ -154,7 +160,7 @@ function DashboardContent() {
 
           {view === 'documents' && (
             <div>
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Document Vault</h2>
+              <h2 className="text-lg lg:text-xl font-semibold text-slate-900 mb-3 lg:mb-4">Document Vault</h2>
               <DocumentVault />
             </div>
           )}

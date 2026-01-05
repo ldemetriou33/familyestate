@@ -50,13 +50,13 @@ export default function DebtMaturityWall() {
   }
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900">Debt Maturity Wall</h3>
+    <div className="bg-white border border-slate-200 rounded-lg p-4 lg:p-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 lg:mb-4">
+        <h3 className="text-base lg:text-lg font-semibold text-slate-900">Debt Maturity Wall</h3>
         {liabilitiesByMaturity.upcoming.length > 0 && (
           <div className="flex items-center gap-2 text-red-600">
-            <AlertTriangle className="w-4 h-4" />
-            <span className="text-sm font-medium">
+            <AlertTriangle className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+            <span className="text-xs lg:text-sm font-medium">
               {liabilitiesByMaturity.upcoming.length} maturing in next 12 months
             </span>
           </div>
@@ -65,8 +65,8 @@ export default function DebtMaturityWall() {
 
       {/* Upcoming Maturities (Red Alert) */}
       {liabilitiesByMaturity.upcoming.length > 0 && (
-        <div className="mb-6">
-          <h4 className="text-sm font-medium text-red-700 mb-3">⚠️ Upcoming Maturities</h4>
+        <div className="mb-4 lg:mb-6">
+          <h4 className="text-xs lg:text-sm font-medium text-red-700 mb-2 lg:mb-3">⚠️ Upcoming Maturities</h4>
           <div className="space-y-2">
             {liabilitiesByMaturity.upcoming.map((liability) => {
               const maturity = new Date(liability.maturity_date)
@@ -76,19 +76,19 @@ export default function DebtMaturityWall() {
               return (
                 <div
                   key={liability.id}
-                  className="bg-red-50 border-2 border-red-200 rounded-lg p-4"
+                  className="bg-red-50 border-2 border-red-200 rounded-lg p-3 lg:p-4"
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                     <div>
-                      <p className="font-medium text-red-900">{getAssetName(liability.asset_id)}</p>
-                      <p className="text-sm text-red-700">{liability.lender}</p>
+                      <p className="text-sm lg:text-base font-medium text-red-900">{getAssetName(liability.asset_id)}</p>
+                      <p className="text-xs lg:text-sm text-red-700">{liability.lender}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-red-900">{formatGBP(liability.amount)}</p>
+                    <div className="text-left sm:text-right">
+                      <p className="text-sm lg:text-base font-semibold text-red-900">{formatGBP(liability.amount)}</p>
                       <p className="text-xs text-red-600">{liability.rate}% {liability.type}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 mt-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 lg:gap-4 mt-2">
                     <div className="flex items-center gap-1 text-red-700">
                       <Calendar className="w-3 h-3" />
                       <span className="text-xs font-medium">
@@ -113,7 +113,7 @@ export default function DebtMaturityWall() {
 
       {/* Future Maturities */}
       <div>
-        <h4 className="text-sm font-medium text-slate-700 mb-3">Future Maturities</h4>
+        <h4 className="text-xs lg:text-sm font-medium text-slate-700 mb-2 lg:mb-3">Future Maturities</h4>
         <div className="space-y-2">
           {liabilitiesByMaturity.future.map((liability) => {
             const maturity = new Date(liability.maturity_date)
@@ -122,19 +122,19 @@ export default function DebtMaturityWall() {
             return (
               <div
                 key={liability.id}
-                className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors"
+                className="border border-slate-200 rounded-lg p-3 lg:p-4 hover:bg-slate-50 active:bg-slate-100 transition-colors touch-manipulation"
               >
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                   <div>
-                    <p className="font-medium text-slate-900">{getAssetName(liability.asset_id)}</p>
-                    <p className="text-sm text-slate-600">{liability.lender}</p>
+                    <p className="text-sm lg:text-base font-medium text-slate-900">{getAssetName(liability.asset_id)}</p>
+                    <p className="text-xs lg:text-sm text-slate-600">{liability.lender}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-slate-900">{formatGBP(liability.amount)}</p>
+                  <div className="text-left sm:text-right">
+                    <p className="text-sm lg:text-base font-semibold text-slate-900">{formatGBP(liability.amount)}</p>
                     <p className="text-xs text-slate-500">{liability.rate}% {liability.type}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 mt-2">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 lg:gap-4 mt-2">
                   <div className="flex items-center gap-1 text-slate-600">
                     <Calendar className="w-3 h-3" />
                     <span className="text-xs">

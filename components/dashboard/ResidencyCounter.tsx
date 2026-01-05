@@ -45,15 +45,15 @@ export default function ResidencyCounter() {
   }
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-slate-50">
+    <div className="p-3 lg:p-4 border-t border-slate-200 bg-slate-50">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-slate-600" />
-          <span className="text-sm font-medium text-slate-900">UK Residency Counter</span>
+          <Calendar className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-600" />
+          <span className="text-xs lg:text-sm font-medium text-slate-900">UK Residency Counter</span>
         </div>
         <div className="group relative">
-          <Info className="w-4 h-4 text-slate-400 cursor-help" />
-          <div className="absolute bottom-full right-0 mb-2 w-64 p-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+          <Info className="w-3.5 h-3.5 lg:w-4 lg:h-4 text-slate-400 cursor-help touch-manipulation" />
+          <div className="absolute bottom-full right-0 mb-2 w-56 lg:w-64 p-2 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
             Staying at Mymms Drive triggers the Accommodation Tie. Do not exceed 16 nights per year to maintain Dubai residency.
           </div>
         </div>
@@ -108,13 +108,13 @@ export default function ResidencyCounter() {
             <button
               onClick={handleIncrement}
               disabled={ukDaysUsed >= maxDays}
-              className="flex-1 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 px-3 py-2 lg:px-2 lg:py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 active:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[44px] lg:min-h-0"
             >
               +1 Day
             </button>
             <button
               onClick={handleReset}
-              className="px-2 py-1 text-xs bg-slate-200 text-slate-700 rounded hover:bg-slate-300 transition-colors"
+              className="px-3 py-2 lg:px-2 lg:py-1 text-xs bg-slate-200 text-slate-700 rounded hover:bg-slate-300 active:bg-slate-400 transition-colors touch-manipulation min-h-[44px] lg:min-h-0"
             >
               Reset
             </button>
