@@ -70,16 +70,16 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex">
       <DashboardSidebar
         onNavigate={handleNavigate}
         currentView={view}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
-      <div className="lg:ml-64">
+      <div className="flex-1 lg:ml-0 flex flex-col">
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 lg:p-4">
+        <main className="flex-1 p-4 lg:p-4 overflow-y-auto">
           {/* IHT Alert */}
           {ihtExposure && (
             <div className="mb-4 lg:mb-4 bg-red-50 border border-red-200 rounded-lg p-3 lg:p-4">
