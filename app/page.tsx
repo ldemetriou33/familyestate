@@ -1,166 +1,166 @@
 'use client'
 
-import { useState } from 'react'
-import { EstateProvider, useEstateContext } from '@/contexts/EstateContext'
+import { useState, useEffect } from 'react'
+import { useSovereignStore } from '@/lib/store/sovereign-store'
+import { seedSovereignData } from '@/lib/data/sovereign-relational-seed'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import DashboardHeader from '@/components/dashboard/DashboardHeader'
 import KPIRibbon from '@/components/dashboard/KPIRibbon'
-import DynamicAssetTable from '@/components/dashboard/DynamicAssetTable'
-import DebtMaturitySchedule from '@/components/dashboard/DebtMaturitySchedule'
+import EntityMap from '@/components/sovereign/EntityMap'
+import DebtMaturityWall from '@/components/sovereign/DebtMaturityWall'
+import EstateCopilot from '@/components/sovereign/EstateCopilot'
+import DocumentVault from '@/components/sovereign/DocumentVault'
 import OwnershipStructure from '@/components/dashboard/OwnershipStructure'
-import CapitalAllocationScenario from '@/components/dashboard/CapitalAllocationScenario'
 import RegulatoryTimer from '@/components/dashboard/RegulatoryTimer'
 import { formatGBP } from '@/lib/utils'
 
-type ViewType = 'overview' | 'assets' | 'financials' | 'ownership' | 'calculator'
+type ViewType = 'overview' | 'entities' | 'assets' | 'financials' | 'ownership' | 'documents'
 
 function DashboardContent() {
-  const { assets, updateAsset, totals, currency } = useEstateContext()
+  const {
+    entities,
+    assets,
+    liabilities,
+    getTotalAUM,
+    getPrincipalEquity,
+    getMinorityEquity,
+    getCashFlow,
+    initialize
+  } = useSovereignStore()
   const [view, setView] = useState<ViewType>('overview')
 
+  // Initialize store with seed data on mount
+  useEffect(() => {
+    const seedData = seedSovereignData()
+    initialize(seedData)
+  }, [initialize])
+
+  // Calculate totals from store
+  const totalAUM = getTotalAUM()
+  const principalEquity = getPrincipalEquity()
+  const minorityEquity = getMinorityEquity()
+  const totalDebt = liabilities.reduce((sum, l) => sum + l.amount, 0)
+  const ltv = totalAUM > 0 ? (totalDebt / totalAUM) * 100 : 0
+  const cashFlow = getCashFlow()
+  const cashFlowYTD = cashFlow.monthlyFreeCashFlow * 12
+
   // IHT exposure check (2026 BPR threshold: £2.5M per individual)
-  // Calculate principal's business assets (excluding personal assets)
-  const businessAssets = assets.filter(
-    (a) => a.entity === 'MAD Ltd' || a.entity === 'Dem Bro Ltd'
-  )
-  const principalBusinessAssetsValue = businessAssets.reduce((sum, asset) => {
-    const valueInGBP = asset.currency === 'GBP' ? asset.value : asset.value * 0.85
-    const netValue = valueInGBP - (asset.currency === 'GBP' ? asset.debt : asset.debt * 0.85)
-    const principalEquity = (netValue * asset.owner_dad_pct) / 100
-    return sum + principalEquity
+  // Calculate principal's business assets (corporate entities only)
+  const businessEntities = entities.filter((e) => e.type === 'Corporate')
+  const principalBusinessAssetsValue = businessEntities.reduce((sum, entity) => {
+    const entityAssets = assets.filter((a) => a.entity_id === entity.id)
+    const dadShare = entity.shareholders.find((s) => s.name === 'Dad')?.percentage || 0
+    
+    return entityAssets.reduce((entitySum, asset) => {
+      const assetLiabilities = liabilities.filter((l) => l.asset_id === asset.id)
+      const assetDebt = assetLiabilities.reduce((debtSum, l) => debtSum + l.amount, 0)
+      const netValue = asset.valuation - assetDebt
+      return entitySum + (netValue * dadShare) / 100
+    }, sum)
   }, 0)
+  
   const ihtThreshold = 2_500_000 // £2.5M BPR cap
   const ihtExposure = principalBusinessAssetsValue > ihtThreshold
   const ihtExcess = Math.max(0, principalBusinessAssetsValue - ihtThreshold)
   const ihtEstimatedTax = ihtExcess * 0.2
 
-  // Calculate cash flow using actual monthly payments and turnover
-  const cashFlowYTD = totals.cashFlow.monthlyFreeCashFlow * 12 // Annual free cash flow
-
   const handleNavigate = (viewName: ViewType) => {
     setView(viewName)
   }
 
-  // Convert assets format for legacy components (temporary adapter)
-  const legacyAssets = assets.map((asset) => ({
-    id: asset.id,
-    name: asset.name,
-    tier: asset.tier === 'Core' ? 'S' : asset.tier === 'Value-Add' ? 'B' : 'C',
-    location: asset.location.includes('UK') ? 'UK' : 'CYPRUS',
-    currency: asset.currency,
-    valuation: asset.value,
-    debt: asset.debt > 0
-      ? {
-          principal: asset.debt,
-          interestRate: 5.5,
-          type: 'FIXED' as const,
-          isCompound: false,
-        }
-      : undefined,
-    ownership: {
-      dad: asset.owner_dad_pct,
-      uncles: asset.owner_uncle_pct,
-      entity: asset.entity || 'MAD_LTD',
-    },
-    status: asset.status,
-    metadata: asset.metadata || {},
-  }))
-
   return (
     <div className="min-h-screen bg-slate-50">
-      <DashboardSidebar currentView={view} onNavigate={handleNavigate} />
+      <DashboardSidebar onNavigate={handleNavigate} currentView={view} />
       <div className="ml-64">
         <DashboardHeader />
         <main className="p-6">
-          {/* IHT Status */}
-          {ihtExposure ? (
+          {/* IHT Alert */}
+          {ihtExposure && (
             <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm font-semibold text-red-900">IHT Exposure Alert</span>
               </div>
               <p className="text-sm text-red-700">
-                Principal business assets exceed £2.5M BPR cap by {formatGBP(ihtExcess)}. Estimated
-                tax at 20% effective rate: {formatGBP(ihtEstimatedTax)}.
-              </p>
-            </div>
-          ) : (
-            <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-semibold text-green-900">IHT Status: Safe (Within Cap)</span>
-              </div>
-              <p className="text-sm text-green-700">
-                Principal business assets: {formatGBP(principalBusinessAssetsValue)} / {formatGBP(ihtThreshold)} BPR cap.
+                Business assets exceed £2.5M threshold by {formatGBP(ihtExcess)}. Estimated tax at 20%
+                effective rate: {formatGBP(ihtEstimatedTax)}.
               </p>
             </div>
           )}
 
-          {/* KPI Ribbon - Always visible */}
-          <KPIRibbon
-            aum={totals.totalGrossValue}
-            nav={totals.principalEquity}
-            ltv={totals.ltv}
-            cashFlowYTD={cashFlowYTD}
-          />
+          {/* KPI Ribbon */}
+          <KPIRibbon aum={totalAUM} nav={principalEquity} ltv={ltv} cashFlowYTD={cashFlowYTD} />
 
           {/* View Content */}
           {view === 'overview' && (
-            <>
+            <div className="space-y-6">
+              {/* Entity Map - Primary Navigation */}
+              <EntityMap />
+
               {/* Financial Summary */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <DebtMaturityWall />
                 <OwnershipStructure
-                  principalEquity={totals.principalEquity}
-                  minorityEquity={totals.minorityEquity}
-                  debt={totals.totalDebt}
-                  totalValue={totals.totalGrossValue}
+                  principalEquity={principalEquity}
+                  minorityEquity={minorityEquity}
+                  debt={totalDebt}
+                  totalValue={totalAUM}
                 />
-                <DebtMaturitySchedule assets={assets} />
               </div>
 
               {/* Regulatory/Tax Timers */}
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">Regulatory Timeline</h2>
-                <div className="bg-white border border-slate-200 rounded-lg p-6">
-                  <RegulatoryTimer />
-                </div>
-              </div>
-            </>
+              <RegulatoryTimer />
+            </div>
           )}
 
-          {view === 'assets' && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Asset Register</h2>
-              <DynamicAssetTable assets={assets} onUpdateAsset={updateAsset} />
+          {view === 'entities' && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Entity Structure</h2>
+              <EntityMap />
             </div>
           )}
 
           {view === 'financials' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <DebtMaturitySchedule assets={legacyAssets as any} />
-              <OwnershipStructure
-                principalEquity={totals.principalEquity}
-                minorityEquity={totals.minorityEquity}
-                debt={totals.totalDebt}
-                totalValue={totals.totalGrossValue}
-              />
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold text-slate-900">Financial Overview</h2>
+              <DebtMaturityWall />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white border border-slate-200 rounded-lg p-4">
+                  <p className="text-sm text-slate-500 mb-1">Monthly Income</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome)}</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-4">
+                  <p className="text-sm text-slate-500 mb-1">Monthly Debt Payments</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyDebtPayments)}</p>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-lg p-4">
+                  <p className="text-sm text-slate-500 mb-1">Free Cash Flow</p>
+                  <p className="text-2xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyFreeCashFlow)}</p>
+                </div>
+              </div>
             </div>
           )}
 
           {view === 'ownership' && (
-            <div className="mb-6">
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Ownership Structure</h2>
               <OwnershipStructure
-                principalEquity={totals.principalEquity}
-                minorityEquity={totals.minorityEquity}
-                debt={totals.totalDebt}
-                totalValue={totals.totalGrossValue}
+                principalEquity={principalEquity}
+                minorityEquity={minorityEquity}
+                debt={totalDebt}
+                totalValue={totalAUM}
               />
             </div>
           )}
 
-          {view === 'calculator' && (
-            <div className="mb-6">
-              <CapitalAllocationScenario assets={legacyAssets as any} />
+          {view === 'documents' && (
+            <div>
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Document Vault</h2>
+              <DocumentVault />
             </div>
           )}
+
+          {/* Estate Copilot - Floating Widget */}
+          <EstateCopilot />
         </main>
       </div>
     </div>
@@ -168,9 +168,7 @@ function DashboardContent() {
 }
 
 export default function HomePage() {
-  return (
-    <EstateProvider>
-      <DashboardContent />
-    </EstateProvider>
-  )
+  return <DashboardContent />
 }
+
+export const dynamic = 'force-dynamic'
