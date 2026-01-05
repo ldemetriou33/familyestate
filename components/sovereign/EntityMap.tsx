@@ -115,11 +115,16 @@ export default function EntityMap() {
                           key={asset.id}
                           className="bg-white border border-slate-200 rounded p-3 flex items-center justify-between"
                         >
-                          <div>
+                          <div className="flex-1">
                             <p className="text-sm font-medium text-slate-900">{asset.name}</p>
                             <p className="text-xs text-slate-500">
                               {asset.status} • {formatGBP(asset.valuation)}
                             </p>
+                            {asset.updated_at && asset.updated_by && (
+                              <p className="text-xs text-slate-400 mt-1">
+                                Last Updated: {asset.updated_by} • {new Date(asset.updated_at).toLocaleDateString('en-GB')}
+                              </p>
+                            )}
                           </div>
                           <div className="text-right">
                             <p className="text-xs text-slate-600">
