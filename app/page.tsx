@@ -79,10 +79,10 @@ function DashboardContent() {
       />
       <div className="lg:ml-64">
         <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-        <main className="p-4 lg:p-6">
+        <main className="p-4 lg:p-4">
           {/* IHT Alert */}
           {ihtExposure && (
-            <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="mb-4 lg:mb-4 bg-red-50 border border-red-200 rounded-lg p-3 lg:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-sm font-semibold text-red-900">IHT Exposure Alert</span>
               </div>
@@ -103,7 +103,7 @@ function DashboardContent() {
               <EntityMap />
 
               {/* Financial Summary */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <DebtMaturityWall />
                 <OwnershipStructure
                   principalEquity={principalEquity}
@@ -126,10 +126,10 @@ function DashboardContent() {
           )}
 
           {view === 'financials' && (
-            <div className="space-y-4 lg:space-y-6">
+            <div className="space-y-4">
               <h2 className="text-lg lg:text-xl font-semibold text-slate-900">Financial Overview</h2>
               <DebtMaturityWall />
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white border border-slate-200 rounded-lg p-4">
                   <p className="text-sm text-slate-500 mb-1">Monthly Income</p>
                   <p className="text-2xl font-bold text-slate-900">{formatGBP(cashFlow.monthlyIncome)}</p>
