@@ -107,6 +107,25 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      {asset.entity && (
+                        <span
+                          className={`px-2 py-1 text-xs font-medium rounded border ${
+                            asset.entity === 'MAD Ltd'
+                              ? 'bg-blue-100 text-blue-700 border-blue-200'
+                              : asset.entity === 'Dem Bro Ltd'
+                                ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                : asset.entity === 'Personal (Dad)'
+                                  ? 'bg-green-100 text-green-700 border-green-200'
+                                  : asset.entity === 'Grandma'
+                                    ? 'bg-rose-100 text-rose-700 border-rose-200'
+                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {asset.entity}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm text-slate-600">{asset.location}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
