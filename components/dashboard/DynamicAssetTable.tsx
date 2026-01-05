@@ -59,11 +59,11 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
   return (
     <>
       <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+        <div className="overflow-x-auto -mx-4 lg:mx-0">
+          <table className="w-full min-w-[640px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                <th className="px-3 lg:px-6 py-2.5 lg:py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Asset Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
@@ -100,13 +100,13 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
 
                 return (
                   <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 lg:px-6 py-2.5 lg:py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-slate-400" />
                         <span className="text-sm font-medium text-slate-900">{asset.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 lg:px-6 py-2.5 lg:py-4 whitespace-nowrap">
                       {asset.entity && (
                         <span
                           className={`px-2 py-1 text-xs font-medium rounded border ${
@@ -125,10 +125,10 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 lg:px-6 py-2.5 lg:py-4 whitespace-nowrap">
                       <span className="text-sm text-slate-600">{asset.location}</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 lg:px-6 py-2.5 lg:py-4 whitespace-nowrap">
                       <span className="text-sm text-slate-600">{asset.tier}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -162,11 +162,11 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                         </div>
                       </OwnershipTooltip>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">{getStatusBadge(asset.status)}</td>
+                    <td className="px-3 lg:px-6 py-2.5 lg:py-4 whitespace-nowrap">{getStatusBadge(asset.status)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <button
                         onClick={() => handleEdit(asset)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded border border-blue-200 transition-colors"
+                        className="inline-flex items-center gap-1 px-3 py-2 lg:py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 active:bg-blue-100 rounded border border-blue-200 transition-colors touch-manipulation min-h-[44px] lg:min-h-0"
                       >
                         <Edit className="w-3 h-3" />
                         Edit

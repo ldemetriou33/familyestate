@@ -70,7 +70,7 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] lg:w-full my-4">
         <DialogHeader>
           <DialogTitle>Edit Asset: {asset.name}</DialogTitle>
           <DialogDescription>
@@ -292,10 +292,19 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="min-h-[44px] lg:min-h-0 touch-manipulation"
+          >
             Cancel
           </Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button
+            onClick={handleSave}
+            className="min-h-[44px] lg:min-h-0 touch-manipulation"
+          >
+            Save Changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
