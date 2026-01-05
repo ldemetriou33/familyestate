@@ -1,19 +1,11 @@
 /**
- * Initial Estate Data for SPA
+ * Initial Estate Data for SPA - Actual Historical Data from Principal
  */
 
 import type { EstateAsset, Currency } from '@/lib/types/estate-state'
 
-// Currency conversion rates (simplified)
-const convertToGBP = (value: number, currency: Currency): number => {
-  if (currency === 'GBP') return value
-  if (currency === 'EUR') return value * 0.85
-  if (currency === 'USD') return value * 0.79
-  return value
-}
-
 export const INITIAL_ESTATE_DATA: EstateAsset[] = [
-  // Core Engine Assets
+  // A. MAD Ltd Assets (33% Dad, 33% Uncle A, 33% Uncle B)
   {
     id: 'abbey-point-hotel',
     name: 'Abbey Point Hotel',
@@ -28,10 +20,33 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     currency: 'GBP',
     location: 'Wembley, UK',
     entity: 'MAD Ltd',
+    bought_date: 'Aug 2001',
+    bought_price: 365_000,
+    turnover: 1_500_000, // Rooms £1.1M + Cafe rest
+    notes: 'Spent £4M on Capex',
   },
   {
+    id: 'mymms-drive',
+    name: 'Mymms Drive',
+    value: 1_475_000, // Purchase Price -> Target Resale: £2,000,000
+    debt: 1_070_000, // Bridge/Dev Loan
+    owner_dad_pct: 33.3,
+    owner_uncle_pct: 66.7,
+    owner_uncle_a_pct: 33.3,
+    owner_uncle_b_pct: 33.3,
+    status: 'Renovation',
+    tier: 'Value-Add',
+    currency: 'GBP',
+    location: 'UK',
+    entity: 'MAD Ltd',
+    bought_date: 'Oct 2024',
+    notes: 'Stamp Duty £125k. Reno Budget £200k (£100k spent so far)',
+  },
+
+  // B. Dem Bro Ltd Assets (33% Dad, 33% Uncle A, 33% Uncle B)
+  {
     id: 'lavender-hill',
-    name: 'Lavender Hill',
+    name: '113 Lavender Hill',
     value: 2_000_000,
     debt: 1_500_000,
     owner_dad_pct: 33.3,
@@ -40,12 +55,13 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     tier: 'Core',
     currency: 'GBP',
     location: 'UK',
-    entity: 'MAD Ltd',
+    entity: 'Dem Bro Ltd',
+    turnover: 127_000, // £115k Flats + £12k Shop
   },
   {
     id: 'cafe-royal',
-    name: 'Cafe Royal',
-    value: 850_000,
+    name: 'Cafe Royal (The Flats)',
+    value: 850_000, // Leasehold/Business Value - Flats only
     debt: 600_000,
     owner_dad_pct: 33.3,
     owner_uncle_pct: 66.7,
@@ -53,68 +69,51 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     tier: 'Core',
     currency: 'GBP',
     location: 'UK',
-    entity: 'MAD Ltd',
+    entity: 'Dem Bro Ltd',
+    turnover: 72_000, // £6k/mo from 6 studio flats
+    notes: 'Freehold/Cafe given to Brother. Dad owns 0% of downstairs cafe/freehold',
   },
+
+  // C. Personal Assets (Dad - 100%)
   {
-    id: 'wembley-car-park',
-    name: 'Wembley Car Park',
-    value: 450_000,
-    debt: 0,
+    id: 'east-street',
+    name: 'East Street',
+    value: 1_000_000, // Updated from £500k
+    debt: 550_000,
     owner_dad_pct: 100,
     owner_uncle_pct: 0,
-    status: 'OPERATIONAL',
-    tier: 'Core',
-    currency: 'GBP',
-    location: 'Wembley, UK',
-    entity: 'MAD Ltd',
-  },
-  // Sovereign Assets (Cyprus)
-  {
-    id: 'ora-house',
-    name: 'Ora House (Cyprus HQ)',
-    value: 480_000,
-    debt: 0,
-    owner_dad_pct: 33.3,
-    owner_uncle_pct: 66.7,
-    status: 'Strategic Hold',
-    tier: 'Core',
-    currency: 'EUR',
-    location: 'Cyprus',
-    entity: 'Dem Bro Ltd',
-  },
-  {
-    id: 'parekklisia-land',
-    name: 'Parekklisia Land',
-    value: 265_000,
-    debt: 0,
-    owner_dad_pct: 33.3,
-    owner_uncle_pct: 66.7,
-    status: 'Strategic Hold',
-    tier: 'Value-Add',
-    currency: 'EUR',
-    location: 'Cyprus',
-    entity: 'Dem Bro Ltd',
-  },
-  // Liquidity Assets
-  {
-    id: 'mymms-drive',
-    name: 'Mymms Drive',
-    value: 2_000_000,
-    debt: 1_070_000,
-    owner_dad_pct: 100,
-    owner_uncle_pct: 0,
-    status: 'Renovation',
-    tier: 'Value-Add',
+    status: 'For Sale',
+    tier: 'Opportunistic',
     currency: 'GBP',
     location: 'UK',
-    entity: 'Personal',
+    entity: 'Personal (Dad)',
+    bought_date: 'March 1998',
+    bought_price: 130_000,
+    monthly_payment: 2_800, // Implies ~6.1% Rate
+    turnover: 52_800, // £3,400/mo Flats + £12k/yr Shop
   },
-  // Liability Assets
+  {
+    id: 'milton-ave',
+    name: '91 Milton Avenue',
+    value: 675_000,
+    debt: 400_000,
+    owner_dad_pct: 100,
+    owner_uncle_pct: 0,
+    status: 'For Sale',
+    tier: 'Opportunistic',
+    currency: 'GBP',
+    location: 'UK',
+    entity: 'Personal (Dad)',
+    monthly_payment: 1_100, // Implies ~3.3% Rate - Cheap Money
+    turnover: 25_000,
+  },
+
+  // D. Legacy/Family Assets
   {
     id: 'oakwood-close',
-    name: 'Oakwood Close',
+    name: '6 Oakwood Close (Grandma)',
     value: 750_000,
-    debt: 400_000,
+    debt: 400_000, // Equity Release
     owner_dad_pct: 100,
     owner_uncle_pct: 0,
     legal_title: 'Grandma',
@@ -123,36 +122,10 @@ export const INITIAL_ESTATE_DATA: EstateAsset[] = [
     tier: 'Opportunistic',
     currency: 'GBP',
     location: 'UK',
-    entity: 'Personal',
+    entity: 'Grandma',
+    notes: 'Wealth Decay (Accruing Interest). Sold on death to break even -> Priority for refinancing',
     metadata: { note: 'Subject to Loan' },
-  },
-  {
-    id: 'milton-ave',
-    name: '91 Milton Avenue',
-    value: 675_000,
-    debt: 400_000, // FIXED
-    owner_dad_pct: 100,
-    owner_uncle_pct: 0,
-    status: 'For Sale',
-    tier: 'Opportunistic',
-    currency: 'GBP',
-    location: 'UK',
-    entity: 'Personal',
-  },
-  {
-    id: 'east-street',
-    name: 'East Street',
-    value: 500_000,
-    debt: 300_000, // FIXED - Estimated
-    owner_dad_pct: 100,
-    owner_uncle_pct: 0,
-    status: 'For Sale',
-    tier: 'Opportunistic',
-    currency: 'GBP',
-    location: 'UK',
-    entity: 'Personal',
   },
 ]
 
 export const DEFAULT_CURRENCY: Currency = 'GBP'
-

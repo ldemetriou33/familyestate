@@ -67,6 +67,9 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                   Asset Name
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  Entity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Location
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider">

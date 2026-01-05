@@ -6,6 +6,8 @@ export type AssetStatus = 'Leased' | 'Renovation' | 'Strategic Hold' | 'For Sale
 export type AssetTier = 'Core' | 'Value-Add' | 'Opportunistic'
 export type Currency = 'GBP' | 'EUR' | 'USD'
 
+export type EntityType = 'MAD Ltd' | 'Dem Bro Ltd' | 'Personal (Dad)' | 'Grandma'
+
 export interface EstateAsset {
   id: string
   name: string
@@ -21,7 +23,12 @@ export interface EstateAsset {
   tier: AssetTier
   currency: Currency
   location: string
-  entity?: string
+  entity?: EntityType
+  bought_date?: string // e.g., "Aug 2001"
+  bought_price?: number
+  monthly_payment?: number // For calculating accurate cash flow
+  turnover?: number // Annual revenue
+  notes?: string // History context
   metadata?: Record<string, unknown>
 }
 
