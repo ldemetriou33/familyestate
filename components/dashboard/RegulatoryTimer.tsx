@@ -55,11 +55,11 @@ export default function RegulatoryTimer() {
   }, [])
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-slate-50">
-      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
+    <div className="p-3 lg:p-4 border-t border-slate-200 bg-slate-50">
+      <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 lg:mb-3">
         Regulatory Timers
       </h3>
-      <div className="space-y-3">
+      <div className="space-y-2 lg:space-y-3">
         {DEADLINES.map((deadline) => {
           const daysRemaining = calculateDaysRemaining(deadline.targetDate)
           const isOverdue = daysRemaining < 0
@@ -69,7 +69,7 @@ export default function RegulatoryTimer() {
           return (
             <div
               key={deadline.id}
-              className={`p-3 rounded-lg border text-xs ${statusColor}`}
+              className={`p-2.5 lg:p-3 rounded-lg border text-xs ${statusColor}`}
             >
               <div className="flex items-start gap-2 mb-1">
                 <Icon className="w-3 h-3 mt-0.5 flex-shrink-0" />
