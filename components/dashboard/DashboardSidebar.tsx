@@ -103,6 +103,7 @@ export default function DashboardSidebar({ currentView = 'overview', onNavigate,
       
       {/* Residency Counter */}
       <ResidencyCounter />
-    </div>
+      </div>
+    </>
   )
 }
