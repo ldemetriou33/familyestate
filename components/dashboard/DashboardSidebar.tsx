@@ -8,6 +8,7 @@ import {
   FileText,
 } from 'lucide-react'
 import RegulatoryTimer from './RegulatoryTimer'
+import ResidencyCounter from './ResidencyCounter'
 
 const navigation = [
   { name: 'Overview', view: 'overview' as const, icon: LayoutDashboard },
@@ -59,6 +60,9 @@ export default function DashboardSidebar({ currentView = 'overview', onNavigate 
 
       {/* Regulatory Timers */}
       <RegulatoryTimer />
+      
+      {/* Residency Counter */}
+      <ResidencyCounter />
     </div>
   )
 }

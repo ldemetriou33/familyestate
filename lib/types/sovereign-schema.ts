@@ -19,12 +19,13 @@ export interface Asset {
   name: string
   valuation: number
   revenue_monthly: number
-  status: 'Operational' | 'Renovation' | 'Strategic Hold' | 'For Sale'
+  status: 'Operational' | 'Renovation' | 'Strategic Hold' | 'For Sale' | 'Primary Residence'
   currency: 'GBP' | 'EUR' | 'USD'
   location: string
   bought_date?: string
   bought_price?: number
   notes?: string
+  tax_status?: 'PPR Exempt' | 'Taxable' | 'BPR Eligible'
   created_at?: string
   updated_at?: string
   updated_by?: string

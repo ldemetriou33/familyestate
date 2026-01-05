@@ -123,12 +123,13 @@ export const seedAssets: Asset[] = [
     entity_id: ENTITY_PRINCIPAL,
     name: 'Mymms Drive',
     valuation: 1_475_000, // Purchase Price -> Target Resale: £2,000,000
-    revenue_monthly: 0, // Renovation - no revenue yet
-    status: 'Renovation',
+    revenue_monthly: 0, // Primary Residence - no revenue
+    status: 'Primary Residence',
     currency: 'GBP',
     location: 'UK',
     bought_date: 'Oct 2024',
-    notes: 'Stamp Duty £125k. Reno Budget £200k (£100k spent so far)',
+    tax_status: 'PPR Exempt',
+    notes: 'Accommodation Tie Risk - Principal must stay < 16 nights in UK to maintain Dubai residency. Stamp Duty £125k. Reno Budget £200k (£100k spent so far)',
     created_at: new Date().toISOString()
   },
   {
