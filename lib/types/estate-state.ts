@@ -47,6 +47,11 @@ export interface EstateContextType {
     principalEquity: number
     minorityEquity: number
     ltv: number
+    cashFlow: {
+      monthlyIncome: number
+      monthlyDebtPayments: number
+      monthlyFreeCashFlow: number
+    }
   }
 }
 
