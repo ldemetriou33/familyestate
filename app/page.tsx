@@ -169,6 +169,7 @@ function DashboardContent() {
           {/* Estate Copilot - Floating Widget */}
           <EstateCopilot />
         </main>
+        <InstallPrompt />
       </div>
     </div>
   )
