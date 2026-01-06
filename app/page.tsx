@@ -13,6 +13,7 @@ import DocumentVault from '@/components/sovereign/DocumentVault'
 import OwnershipStructure from '@/components/dashboard/OwnershipStructure'
 import RegulatoryTimer from '@/components/dashboard/RegulatoryTimer'
 import { formatGBP } from '@/lib/utils'
+import InstallPrompt from '@/components/pwa/InstallPrompt'
 
 type ViewType = 'overview' | 'entities' | 'assets' | 'financials' | 'ownership' | 'documents'
 
