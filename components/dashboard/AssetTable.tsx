@@ -132,13 +132,13 @@ export default function AssetTable({ assets }: AssetTableProps) {
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-xs text-slate-600">
-                        Principal: <span className="font-medium">{asset.ownership.dad}%</span>
+                        John Demetriou: <span className="font-medium">{asset.ownership.dad}%</span>
                       </span>
                       {asset.ownership.uncles > 0 && (
                         <>
                           <span className="text-slate-300">|</span>
                           <span className="text-xs text-slate-600">
-                            Minority: <span className="font-medium">{asset.ownership.uncles}%</span>
+                            Others: <span className="font-medium">{asset.ownership.uncles}%</span>
                           </span>
                         </>
                       )}

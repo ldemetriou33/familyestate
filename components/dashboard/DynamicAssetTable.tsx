@@ -149,13 +149,13 @@ export default function DynamicAssetTable({ assets, onUpdateAsset }: DynamicAsse
                       <OwnershipTooltip asset={asset}>
                         <div className="flex items-center justify-center gap-2 cursor-help">
                           <span className="text-xs text-slate-600">
-                            Principal: <span className="font-medium">{asset.owner_dad_pct}%</span>
+                            John Demetriou: <span className="font-medium">{asset.owner_dad_pct}%</span>
                           </span>
                           {asset.owner_uncle_pct > 0 && (
                             <>
                               <span className="text-slate-300">|</span>
                               <span className="text-xs text-slate-600">
-                                Minority: <span className="font-medium">{asset.owner_uncle_pct}%</span>
+                                Others: <span className="font-medium">{asset.owner_uncle_pct}%</span>
                               </span>
                             </>
                           )}

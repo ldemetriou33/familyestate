@@ -20,8 +20,8 @@ export default function OwnershipStructure({
   const debtPercentage = (debt / totalValue) * 100
 
   const data = [
-    { name: 'Principal', value: principalPercentage, amount: principalEquity },
-    { name: 'Minority Interest', value: minorityPercentage, amount: minorityEquity },
+    { name: 'John Demetriou', value: principalPercentage, amount: principalEquity },
+    { name: 'Others', value: minorityPercentage, amount: minorityEquity },
     { name: 'Debt', value: debtPercentage, amount: debt },
   ]
 

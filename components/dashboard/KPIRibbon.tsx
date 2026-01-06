@@ -22,7 +22,7 @@ export default function KPIRibbon({ aum, nav, ltv, cashFlowYTD }: KPIRibbonProps
     {
       label: 'Net Asset Value',
       value: formatGBP(nav),
-      subtitle: "Principal's Equity",
+      subtitle: "John Demetriou's Equity",
       icon: TrendingUp,
       color: 'text-slate-700',
     },

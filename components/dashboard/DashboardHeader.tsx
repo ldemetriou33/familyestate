@@ -40,7 +40,7 @@ export default function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       </div>
       <div className="flex items-center gap-2 lg:gap-3 flex-shrink-0">
         <span className="hidden sm:inline-block px-2 lg:px-3 py-1 lg:py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
-          Role: Principal (Admin)
+          Role: John Demetriou (Admin)
         </span>
         <button className="flex items-center gap-1.5 lg:gap-2 px-2 lg:px-3 py-1.5 text-xs lg:text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors touch-manipulation">
           <User className="w-4 h-4" />

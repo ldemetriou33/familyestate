@@ -123,7 +123,7 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
           {/* Ownership */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="owner_dad_pct">Principal Ownership (%)</Label>
+              <Label htmlFor="owner_dad_pct">John Demetriou Ownership (%)</Label>
               <Input
                 id="owner_dad_pct"
                 type="number"
@@ -141,7 +141,7 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
             </div>
 
             <div>
-              <Label htmlFor="owner_uncle_pct">Minority Ownership (%)</Label>
+              <Label htmlFor="owner_uncle_pct">Others Ownership (%)</Label>
               <Input
                 id="owner_uncle_pct"
                 type="number"
@@ -276,13 +276,13 @@ export default function EditAssetModal({ asset, open, onOpenChange, onSave }: Ed
                 </p>
               </div>
               <div>
-                <p className="text-slate-500">Principal Equity</p>
+                <p className="text-slate-500">John Demetriou Equity</p>
                 <p className="font-semibold text-slate-900">
                   {formatCurrency(principalEquity, asset.currency)}
                 </p>
               </div>
               <div>
-                <p className="text-slate-500">Minority Equity</p>
+                <p className="text-slate-500">Others Equity</p>
                 <p className="font-semibold text-slate-900">
                   {formatCurrency(minorityEquity, asset.currency)}
                 </p>

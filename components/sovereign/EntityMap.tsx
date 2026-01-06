@@ -101,7 +101,7 @@ export default function EntityMap() {
                     </div>
                     {dadShare > 0 && (
                       <p className="text-xs text-slate-500 mt-2">
-                        Principal Equity: {formatGBP((totals.netEquity * dadShare) / 100)}
+                        John Demetriou Equity: {formatGBP((totals.netEquity * dadShare) / 100)}
                       </p>
                     )}
                   </div>
